@@ -4,11 +4,9 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   withDelay,
   withSequence,
   withRepeat,
-  interpolateColor,
   Easing,
   SharedValue,
 } from 'react-native-reanimated';
@@ -19,6 +17,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Colors } from '../constants/Colors';
 import { SparklesBackground } from '../components/SparklesBackground';
+import { AnimatedCheckbox } from '../components/AnimatedCheckbox';
 
 // Logo with smooth glow effect (same as login.tsx)
 function LogoWithGlow({ theme }: { theme: 'light' | 'dark' }) {
@@ -285,40 +284,26 @@ function LoadingStep({
   loaderProgress: SharedValue<number>;
   textColor: string;
 }) {
-  // Gray icon opacity (fades out as progress increases)
-  const grayIconOpacity = useAnimatedStyle(() => {
-    const opacity = loaderProgress.value >= index
-      ? loaderProgress.value >= index + 1
-        ? 0
-        : 1 - (loaderProgress.value - index)
-      : 1;
+  // Track if this step is completed
+  const [isCompleted, setIsCompleted] = useState(false);
 
-    return { opacity };
-  });
-
-  // Green icon opacity (fades in as progress increases)
-  const greenIconOpacity = useAnimatedStyle(() => {
-    const opacity = loaderProgress.value >= index
-      ? loaderProgress.value >= index + 1
-        ? 1
-        : loaderProgress.value - index
-      : 0;
-
-    return { opacity };
-  });
-
-  // Scale bounce when completing
-  const scaleStyle = useAnimatedStyle(() => {
-    const isComplete = loaderProgress.value >= index + 1;
-    const scale = withSpring(isComplete ? 1.1 : 1, {
-      damping: 15,
-      stiffness: 150,
-    });
-
-    return {
-      transform: [{ scale }],
+  // Monitor loaderProgress and update isCompleted
+  useEffect(() => {
+    const checkProgress = () => {
+      const currentProgress = loaderProgress.value;
+      if (currentProgress >= index + 1 && !isCompleted) {
+        setIsCompleted(true);
+      }
     };
-  });
+
+    // Check immediately
+    checkProgress();
+
+    // Set up interval to check progress
+    const interval = setInterval(checkProgress, 100);
+
+    return () => clearInterval(interval);
+  }, [loaderProgress, index, isCompleted]);
 
   const textOpacity = useAnimatedStyle(() => {
     // Active when progress is between index and index+1
@@ -330,16 +315,9 @@ function LoadingStep({
 
   return (
     <View className="flex-row items-center mb-5">
-      <Animated.View style={[scaleStyle, { marginRight: 12, width: 20, height: 20 }]}>
-        {/* Gray icon (default state) */}
-        <Animated.View style={[grayIconOpacity, { position: 'absolute' }]}>
-          <Ionicons name="checkmark-circle" size={20} color="#AAAAAA" />
-        </Animated.View>
-        {/* Green icon (completed state) */}
-        <Animated.View style={[greenIconOpacity, { position: 'absolute' }]}>
-          <Ionicons name="checkmark-circle" size={20} color="#28a745" />
-        </Animated.View>
-      </Animated.View>
+      <View style={{ marginRight: 12, width: 24, height: 24 }}>
+        <AnimatedCheckbox progress={isCompleted ? 1 : 0} size={24} />
+      </View>
       <Animated.Text
         style={[textOpacity, { color: textColor }]}
         className="text-base font-normal"

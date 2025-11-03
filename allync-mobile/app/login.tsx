@@ -28,6 +28,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Colors } from '../constants/Colors';
 import { SparklesBackground } from '../components/SparklesBackground';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -413,30 +414,8 @@ export default function Login() {
           </Text>
         </TouchableOpacity>
 
-        {/* Theme Toggle */}
-        <TouchableOpacity
-          onPress={toggleTheme}
-          style={{
-            backgroundColor: 'rgba(173, 181, 189, 0.15)',
-            paddingHorizontal: 12,
-            paddingVertical: 8,
-            borderRadius: 20,
-            borderWidth: 1,
-            borderColor: 'rgba(173, 181, 189, 0.3)',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <Ionicons
-            name={theme === 'dark' ? 'moon' : 'sunny'}
-            size={16}
-            color={colors.text}
-          />
-          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>
-            {theme === 'dark' ? 'Dark' : 'Light'}
-          </Text>
-        </TouchableOpacity>
+        {/* Theme Toggle with Lottie Animation */}
+        <ThemeToggle theme={theme} onToggle={toggleTheme} textColor={colors.text} />
       </View>
 
       <KeyboardAvoidingView
