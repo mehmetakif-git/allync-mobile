@@ -28,6 +28,65 @@ import { Colors } from '../constants/Colors';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
+// Logo with smooth glow effect
+function LogoWithGlow() {
+  const glowOpacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    glowOpacity.value = withRepeat(
+      withTiming(0.8, {
+        duration: 2500,
+        easing: Easing.bezier(0.45, 0.05, 0.55, 0.95),
+      }),
+      -1,
+      true
+    );
+  }, []);
+
+  const glowStyle = useAnimatedStyle(() => {
+    return {
+      opacity: glowOpacity.value,
+    };
+  });
+
+  return (
+    <View className="items-center justify-center mb-4" style={{ width: 80, height: 80 }}>
+      {/* Glow layers - multiple for smooth effect */}
+      <Animated.View
+        style={[
+          glowStyle,
+          {
+            position: 'absolute',
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            backgroundColor: 'rgba(248, 249, 250, 0.15)',
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          glowStyle,
+          {
+            position: 'absolute',
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            backgroundColor: 'rgba(248, 249, 250, 0.25)',
+          },
+        ]}
+      />
+
+      {/* Logo image */}
+      <Image
+        source={require('../assets/logo-white.png')}
+        style={{ width: 80, height: 80, zIndex: 10 }}
+        resizeMode="contain"
+      />
+    </View>
+  );
+}
+
 // Simple animated text component
 function ShinyText({ children }: { children: string }) {
   const opacity = useSharedValue(0.8);
@@ -94,13 +153,20 @@ function ShinyButton({
 
   const buttonStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ scale: scaleAnimation.value }],
+      transform: [
+        { scale: scaleAnimation.value },
+        { translateY: isPressed ? 1 : 0 }
+      ],
     };
   });
 
-  const glowStyle = useAnimatedStyle(() => {
+  const shadowStyle = useAnimatedStyle(() => {
     return {
-      opacity: 0.3 + glowAnimation.value * 0.4,
+      shadowOpacity: isPressed ? 0.1 : 0.25,
+      shadowOffset: {
+        width: 0,
+        height: isPressed ? 2 : 8,
+      },
     };
   });
 
@@ -110,53 +176,59 @@ function ShinyButton({
       className="mt-6"
     >
       <AnimatedTouchable
-        style={buttonStyle}
-        className="rounded-lg"
+        style={[buttonStyle, shadowStyle]}
+        className="rounded-xl overflow-hidden"
         activeOpacity={1}
         onPress={onPress}
         onPressIn={() => setIsPressed(true)}
         onPressOut={() => setIsPressed(false)}
         disabled={disabled}
       >
-        <View className="relative rounded-lg shadow-lg shadow-black/25">
-        {/* Glow Effect */}
-        <Animated.View
-          style={[
-            glowStyle,
-            {
-              position: 'absolute',
-              top: -8,
-              left: -8,
-              right: -8,
-              bottom: -8,
-              borderRadius: 20,
-              overflow: 'hidden',
-            }
+        {/* Glassmorphism background */}
+        <LinearGradient
+          colors={[
+            'rgba(173, 181, 189, 0.25)',
+            'rgba(173, 181, 189, 0.15)',
+            'rgba(173, 181, 189, 0.2)',
           ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          className="py-5 px-8 items-center justify-center border border-white/10"
         >
-          <LinearGradient
-            colors={[
-              'rgba(248, 249, 250, 0.2)',
-              'rgba(248, 249, 250, 0.1)',
-              'rgba(248, 249, 250, 0.05)',
-            ]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={{ flex: 1, borderRadius: 20 }}
+          {/* Glass shine effect */}
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '50%',
+              backgroundColor: 'rgba(255, 255, 255, 0.12)',
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+            }}
           />
-        </Animated.View>
 
-        {/* Button Content */}
-        <View className="bg-cyber-gray/[0.18] py-5 px-8 items-center justify-center rounded-lg border border-cyber-gray/30">
+          {/* Blur backdrop effect simulation */}
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(248, 249, 250, 0.05)',
+            }}
+          />
+
           {loading ? (
-            <ActivityIndicator color={Colors.titanium} />
+            <ActivityIndicator color={Colors.titanium} style={{ zIndex: 10 }} />
           ) : (
-            <Text className="text-lg font-bold text-text-primary tracking-wider">
+            <Text className="text-lg font-semibold text-text-primary tracking-wide" style={{ zIndex: 10 }}>
               Sign In →
             </Text>
           )}
-        </View>
-      </View>
+        </LinearGradient>
       </AnimatedTouchable>
     </Animated.View>
   );
@@ -318,12 +390,7 @@ export default function Login() {
             entering={FadeInDown.duration(800).springify()}
             className="items-center mb-8"
           >
-            <Image
-              source={require('../assets/logo-white.png')}
-              style={{ width: 80, height: 80 }}
-              resizeMode="contain"
-              className="mb-4"
-            />
+            <LogoWithGlow />
             <ShinyText>Allync</ShinyText>
             <View className="flex-row items-center gap-1 mt-2">
               <Ionicons name="sparkles" size={18} color={Colors.text.secondary} style={{ marginRight: 4 }} />
