@@ -1,12 +1,12 @@
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
-import { View, StyleSheet, Platform, Pressable } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Colors } from '../../constants/Colors';
@@ -27,7 +27,7 @@ function AnimatedTabButton({
   const translateY = useSharedValue(focused ? -2 : 0);
 
   // Animate when focused state changes
-  React.useEffect(() => {
+  useEffect(() => {
     scale.value = withSpring(focused ? 1.1 : 1, {
       damping: 15,
       stiffness: 150,
@@ -51,8 +51,6 @@ function AnimatedTabButton({
     </Animated.View>
   );
 }
-
-const React = require('react');
 
 export default function TabsLayout() {
   const { theme, colors } = useTheme();
@@ -113,8 +111,13 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabButton
+              focused={focused}
+              color={color}
+              size={size}
+              iconName="home"
+            />
           ),
         }}
       />
@@ -122,8 +125,13 @@ export default function TabsLayout() {
         name="services"
         options={{
           title: 'Services',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="server" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabButton
+              focused={focused}
+              color={color}
+              size={size}
+              iconName="server"
+            />
           ),
         }}
       />
@@ -131,8 +139,13 @@ export default function TabsLayout() {
         name="invoices"
         options={{
           title: 'Invoices',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabButton
+              focused={focused}
+              color={color}
+              size={size}
+              iconName="receipt"
+            />
           ),
         }}
       />
@@ -140,8 +153,13 @@ export default function TabsLayout() {
         name="support"
         options={{
           title: 'Support',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <AnimatedTabButton
+              focused={focused}
+              color={color}
+              size={size}
+              iconName="chatbubbles"
+            />
           ),
         }}
       />
