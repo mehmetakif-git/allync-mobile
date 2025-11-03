@@ -20,13 +20,14 @@ export const AnimatedCheckbox = ({ progress, size = 20 }: AnimatedCheckboxProps)
   }, [progress, hasPlayed]);
 
   return (
-    <View style={{ width: size, height: size }}>
+    <View style={{ width: size, height: size, overflow: 'hidden' }}>
       <LottieView
         ref={animationRef}
         source={require('../assets/animations/checkbox.json')}
         style={{ width: size, height: size }}
         loop={false}
         autoPlay={false}
+        resizeMode="cover"
       />
     </View>
   );

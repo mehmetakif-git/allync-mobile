@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -223,14 +225,32 @@ function ShinyButton({
           />
 
           {loading ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, zIndex: 10 }}>
-              <ActivityIndicator color={Colors.titanium} />
-              <Text className="text-lg font-semibold text-text-primary tracking-wide">
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              zIndex: 10,
+              minHeight: 24
+            }}>
+              <ActivityIndicator color={Colors.titanium} size="small" />
+              <Text style={{
+                color: Colors.titanium,
+                fontSize: 16,
+                fontWeight: '600',
+                letterSpacing: 0.5
+              }}>
                 {loadingText}
               </Text>
             </View>
           ) : (
-            <Text className="text-lg font-semibold text-text-primary tracking-wide" style={{ zIndex: 10 }}>
+            <Text style={{
+              color: Colors.titanium,
+              fontSize: 16,
+              fontWeight: '600',
+              letterSpacing: 0.5,
+              zIndex: 10
+            }}>
               {text} →
             </Text>
           )}
@@ -392,37 +412,50 @@ export default function Login() {
       <SparklesBackground particleCount={50} particleColor={particleColor} />
 
       {/* Top-right toggles */}
-      <View style={{ position: 'absolute', top: 50, right: 20, zIndex: 100, flexDirection: 'row', gap: 12 }}>
+      <View style={{ position: 'absolute', top: 50, right: 20, zIndex: 100, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         {/* Language Toggle */}
         <TouchableOpacity
           onPress={() => setLanguage(language === 'en' ? 'tr' : 'en')}
           style={{
             backgroundColor: 'rgba(173, 181, 189, 0.15)',
-            paddingHorizontal: 12,
+            paddingHorizontal: 16,
             paddingVertical: 8,
             borderRadius: 20,
             borderWidth: 1,
             borderColor: 'rgba(173, 181, 189, 0.3)',
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 6,
+            gap: 8,
           }}
         >
-          <Ionicons name="language" size={16} color={colors.text} />
-          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>
+          <Ionicons name="language" size={20} color={colors.text} />
+          <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
             {language.toUpperCase()}
           </Text>
         </TouchableOpacity>
 
         {/* Theme Toggle with Lottie Animation */}
-        <ThemeToggle theme={theme} onToggle={toggleTheme} textColor={colors.text} />
+        <ThemeToggle theme={theme} onToggle={toggleTheme} />
       </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <View className="flex-1 px-6 pt-16 pb-10 justify-center">
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+            paddingTop: 64,
+            paddingBottom: 40,
+            maxWidth: Platform.OS === 'web' ? 500 : '100%',
+            width: '100%',
+            alignSelf: 'center',
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
+        <View style={{ flex: 1, justifyContent: 'center' }}>
           {/* Logo/Title */}
           <Animated.View
             entering={FadeInDown.duration(800).springify()}
@@ -497,6 +530,7 @@ export default function Login() {
             </Text>
           </Animated.View>
         </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
