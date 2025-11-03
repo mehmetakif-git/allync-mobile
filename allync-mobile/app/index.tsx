@@ -149,34 +149,45 @@ export default function Index() {
   return (
     <Animated.View style={[{ flex: 1 }, screenStyle]}>
       <LinearGradient colors={['#2B2C2C', '#1a1b1b']} className="flex-1">
-        <View className="flex-1 items-center justify-center px-8">
+        <View className="flex-1 px-6 pt-16 pb-10">
           {/* PHASE 1: Logo & Slogan Group */}
-          <Animated.View style={[logoGroupStyle, { alignItems: 'center' }]}>
-            {/* Logo with subtle glow */}
-            <View className="relative items-center justify-center mb-6">
+          <Animated.View style={[logoGroupStyle, { alignItems: 'center', marginBottom: 32 }]}>
+            {/* Logo with dual-layer glow (matching login.tsx) */}
+            <View className="relative items-center justify-center" style={{ width: 80, height: 80, marginBottom: 24 }}>
+              {/* Glow layer 1 */}
               <View
                 style={{
                   position: 'absolute',
-                  width: 130,
-                  height: 130,
-                  borderRadius: 65,
-                  backgroundColor: 'rgba(248, 249, 250, 0.08)',
+                  width: 100,
+                  height: 100,
+                  borderRadius: 50,
+                  backgroundColor: 'rgba(248, 249, 250, 0.15)',
+                }}
+              />
+              {/* Glow layer 2 */}
+              <View
+                style={{
+                  position: 'absolute',
+                  width: 90,
+                  height: 90,
+                  borderRadius: 45,
+                  backgroundColor: 'rgba(248, 249, 250, 0.25)',
                 }}
               />
               <Image
                 source={require('../assets/logo-white.png')}
-                style={{ width: 100, height: 100 }}
+                style={{ width: 80, height: 80, zIndex: 10 }}
                 resizeMode="contain"
               />
             </View>
 
             {/* Brand name */}
-            <Text className="text-5xl font-bold text-titanium text-center mb-3">
+            <Text className="text-5xl font-bold text-titanium text-center">
               Allync
             </Text>
 
-            {/* Slogan */}
-            <View className="flex-row items-center">
+            {/* Slogan with fade animation */}
+            <Animated.View style={[sloganStyle, { flexDirection: 'row', alignItems: 'center', marginTop: 12 }]}>
               <Ionicons
                 name="sparkles"
                 size={16}
@@ -186,11 +197,11 @@ export default function Index() {
               <Text className="text-base text-text-secondary font-medium italic">
                 Beyond human automation
               </Text>
-            </View>
+            </Animated.View>
           </Animated.View>
 
           {/* PHASE 2: Multi-Step Loader */}
-          <Animated.View style={[loaderStyle, { marginTop: 60, width: '100%', maxWidth: 320 }]}>
+          <Animated.View style={[loaderStyle, { marginTop: 20, width: '100%', maxWidth: 320 }]}>
             {loadingStates.map((state, index) => (
               <LoadingStep
                 key={index}
