@@ -24,12 +24,15 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Colors } from '../constants/Colors';
+import { SparklesBackground } from '../components/SparklesBackground';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 // Logo with smooth glow effect
-function LogoWithGlow() {
+function LogoWithGlow({ theme }: { theme: 'light' | 'dark' }) {
   const glowOpacity = useSharedValue(0.3);
 
   useEffect(() => {
@@ -49,6 +52,18 @@ function LogoWithGlow() {
     };
   });
 
+  const logoSource = theme === 'light'
+    ? require('../assets/logo-black.png')
+    : require('../assets/logo-white.png');
+
+  const glowColor1 = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.15)'
+    : 'rgba(248, 249, 250, 0.15)';
+
+  const glowColor2 = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.25)'
+    : 'rgba(248, 249, 250, 0.25)';
+
   return (
     <View className="items-center justify-center mb-4" style={{ width: 80, height: 80 }}>
       {/* Glow layers - multiple for smooth effect */}
@@ -60,7 +75,7 @@ function LogoWithGlow() {
             width: 100,
             height: 100,
             borderRadius: 50,
-            backgroundColor: 'rgba(248, 249, 250, 0.15)',
+            backgroundColor: glowColor1,
           },
         ]}
       />
@@ -72,14 +87,14 @@ function LogoWithGlow() {
             width: 90,
             height: 90,
             borderRadius: 45,
-            backgroundColor: 'rgba(248, 249, 250, 0.25)',
+            backgroundColor: glowColor2,
           },
         ]}
       />
 
       {/* Logo image */}
       <Image
-        source={require('../assets/logo-white.png')}
+        source={logoSource}
         style={{ width: 80, height: 80, zIndex: 10 }}
         resizeMode="contain"
       />
@@ -87,34 +102,15 @@ function LogoWithGlow() {
   );
 }
 
-// Simple animated text component
-function ShinyText({ children }: { children: string }) {
-  const opacity = useSharedValue(0.8);
-
-  useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1500 }),
-        withTiming(0.8, { duration: 1500 })
-      ),
-      -1,
-      false
-    );
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  });
-
+// Simple text component without shimmer
+function ShinyText({ children, color }: { children: string; color: string }) {
   return (
-    <Animated.Text
-      style={animatedStyle}
-      className="text-5xl font-bold text-titanium text-center"
+    <Text
+      style={{ color }}
+      className="text-5xl font-bold text-center"
     >
       {children}
-    </Animated.Text>
+    </Text>
   );
 }
 
@@ -123,10 +119,14 @@ function ShinyButton({
   onPress,
   loading,
   disabled,
+  text,
+  loadingText,
 }: {
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
+  text: string;
+  loadingText: string;
 }) {
   const [isPressed, setIsPressed] = useState(false);
   const scaleAnimation = useSharedValue(1);
@@ -222,10 +222,15 @@ function ShinyButton({
           />
 
           {loading ? (
-            <ActivityIndicator color={Colors.titanium} style={{ zIndex: 10 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, zIndex: 10 }}>
+              <ActivityIndicator color={Colors.titanium} />
+              <Text className="text-lg font-semibold text-text-primary tracking-wide">
+                {loadingText}
+              </Text>
+            </View>
           ) : (
             <Text className="text-lg font-semibold text-text-primary tracking-wide" style={{ zIndex: 10 }}>
-              Sign In →
+              {text} →
             </Text>
           )}
         </LinearGradient>
@@ -356,6 +361,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
+  const { theme, toggleTheme, colors } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -375,11 +382,63 @@ export default function Login() {
     }
   };
 
+  const particleColor = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.4)'
+    : 'rgba(248, 249, 250, 0.4)';
+
   return (
-    <LinearGradient
-      colors={['#2B2C2C', '#1a1b1b']}
-      className="flex-1"
-    >
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <SparklesBackground particleCount={50} particleColor={particleColor} />
+
+      {/* Top-right toggles */}
+      <View style={{ position: 'absolute', top: 50, right: 20, zIndex: 100, flexDirection: 'row', gap: 12 }}>
+        {/* Language Toggle */}
+        <TouchableOpacity
+          onPress={() => setLanguage(language === 'en' ? 'tr' : 'en')}
+          style={{
+            backgroundColor: 'rgba(173, 181, 189, 0.15)',
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: 'rgba(173, 181, 189, 0.3)',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Ionicons name="language" size={16} color={colors.text} />
+          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>
+            {language.toUpperCase()}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Theme Toggle */}
+        <TouchableOpacity
+          onPress={toggleTheme}
+          style={{
+            backgroundColor: 'rgba(173, 181, 189, 0.15)',
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: 'rgba(173, 181, 189, 0.3)',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Ionicons
+            name={theme === 'dark' ? 'moon' : 'sunny'}
+            size={16}
+            color={colors.text}
+          />
+          <Text style={{ color: colors.text, fontSize: 12, fontWeight: '600' }}>
+            {theme === 'dark' ? 'Dark' : 'Light'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -390,12 +449,12 @@ export default function Login() {
             entering={FadeInDown.duration(800).springify()}
             className="items-center mb-8"
           >
-            <LogoWithGlow />
-            <ShinyText>Allync</ShinyText>
+            <LogoWithGlow theme={theme} />
+            <ShinyText color={colors.text}>{t.appName}</ShinyText>
             <View className="flex-row items-center gap-1 mt-2">
               <Ionicons name="sparkles" size={18} color={Colors.text.secondary} style={{ marginRight: 4 }} />
-              <Text className="text-base text-text-secondary font-medium italic">
-                Beyond human automation
+              <Text style={{ color: colors.textSecondary }} className="text-base font-medium italic">
+                {t.slogan}
               </Text>
             </View>
           </Animated.View>
@@ -406,14 +465,14 @@ export default function Login() {
             className="mb-8 rounded-xl overflow-hidden"
           >
             <View className="p-6 border border-cyber-gray/20 rounded-xl bg-cyber-gray/[0.03]">
-              <Text className="text-2xl font-bold text-text-primary mb-6 text-center">
-                Welcome Back
+              <Text style={{ color: colors.text }} className="text-2xl font-bold mb-6 text-center">
+                {t.welcomeBack}
               </Text>
 
               {/* Email Input */}
               <View className="mb-4">
-                <Text className="text-sm text-text-secondary mb-2 font-medium">
-                  Email
+                <Text style={{ color: colors.textSecondary }} className="text-sm mb-2 font-medium">
+                  {t.emailPlaceholder}
                 </Text>
                 <AnimatedInput
                   value={email}
@@ -426,8 +485,8 @@ export default function Login() {
 
               {/* Password Input */}
               <View className="mb-4">
-                <Text className="text-sm text-text-secondary mb-2 font-medium">
-                  Password
+                <Text style={{ color: colors.textSecondary }} className="text-sm mb-2 font-medium">
+                  {t.passwordPlaceholder}
                 </Text>
                 <AnimatedInput
                   value={password}
@@ -443,6 +502,8 @@ export default function Login() {
                 onPress={handleLogin}
                 loading={loading}
                 disabled={loading}
+                text={t.signInButton}
+                loadingText={t.signingIn}
               />
             </View>
           </Animated.View>
@@ -452,12 +513,12 @@ export default function Login() {
             entering={FadeInUp.duration(800).delay(600).springify()}
             className="items-center"
           >
-            <Text className="text-sm text-text-tertiary text-center">
-              Secure access to your company dashboard
+            <Text style={{ color: colors.textTertiary }} className="text-sm text-center">
+              {t.secureAccess}
             </Text>
           </Animated.View>
         </View>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }

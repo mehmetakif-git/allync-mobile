@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,6 +7,7 @@ import Animated, {
   withSpring,
   withDelay,
   withSequence,
+  withRepeat,
   interpolateColor,
   Easing,
   SharedValue,
@@ -15,20 +15,108 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { Colors } from '../constants/Colors';
+import { SparklesBackground } from '../components/SparklesBackground';
 
-const loadingStates = [
-  { text: 'Initializing secure connection' },
-  { text: 'Loading your dashboard' },
-  { text: 'Syncing services and data' },
-  { text: 'Preparing your workspace' },
-  { text: 'Almost ready' },
-];
+// Logo with smooth glow effect (same as login.tsx)
+function LogoWithGlow({ theme }: { theme: 'light' | 'dark' }) {
+  const glowOpacity = useSharedValue(0.3);
+
+  useEffect(() => {
+    glowOpacity.value = withRepeat(
+      withTiming(0.8, {
+        duration: 2500,
+        easing: Easing.bezier(0.45, 0.05, 0.55, 0.95),
+      }),
+      -1,
+      true
+    );
+  }, []);
+
+  const glowStyle = useAnimatedStyle(() => {
+    return {
+      opacity: glowOpacity.value,
+    };
+  });
+
+  const logoSource = theme === 'light'
+    ? require('../assets/logo-black.png')
+    : require('../assets/logo-white.png');
+
+  const glowColor1 = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.15)'
+    : 'rgba(248, 249, 250, 0.15)';
+
+  const glowColor2 = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.25)'
+    : 'rgba(248, 249, 250, 0.25)';
+
+  return (
+    <View className="items-center justify-center mb-4" style={{ width: 80, height: 80 }}>
+      {/* Glow layers - multiple for smooth effect */}
+      <Animated.View
+        style={[
+          glowStyle,
+          {
+            position: 'absolute',
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            backgroundColor: glowColor1,
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          glowStyle,
+          {
+            position: 'absolute',
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            backgroundColor: glowColor2,
+          },
+        ]}
+      />
+
+      {/* Logo image */}
+      <Image
+        source={logoSource}
+        style={{ width: 80, height: 80, zIndex: 10 }}
+        resizeMode="contain"
+      />
+    </View>
+  );
+}
+
+// Simple text component without shimmer
+function ShinyText({ children, color }: { children: string; color: string }) {
+  return (
+    <Text
+      style={{ color }}
+      className="text-5xl font-bold text-center"
+    >
+      {children}
+    </Text>
+  );
+}
 
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
+  const { colors, theme } = useTheme();
+  const { t } = useLanguage();
   const router = useRouter();
   const [shouldNavigate, setShouldNavigate] = useState(false);
+
+  const loadingStates = [
+    { text: t.loadingSteps.initConnection },
+    { text: t.loadingSteps.loadDashboard },
+    { text: t.loadingSteps.syncData },
+    { text: t.loadingSteps.prepareWorkspace },
+    { text: t.loadingSteps.almostReady },
+  ];
 
   // PHASE 1: Logo & Slogan animations
   const logoOpacity = useSharedValue(0);
@@ -146,73 +234,41 @@ export default function Index() {
     opacity: screenOpacity.value,
   }));
 
+  const particleColor = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.4)'
+    : 'rgba(248, 249, 250, 0.4)';
+
   return (
     <Animated.View style={[{ flex: 1 }, screenStyle]}>
-      <LinearGradient colors={['#2B2C2C', '#1a1b1b']} className="flex-1">
-        <View className="flex-1 px-6 pt-16 pb-10">
-          {/* PHASE 1: Logo & Slogan Group */}
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <SparklesBackground particleCount={50} particleColor={particleColor} />
+        <View className="flex-1 px-6 pt-16 pb-10 justify-center">
+          {/* PHASE 1: Logo & Slogan Group (same layout as login.tsx) */}
           <Animated.View style={[logoGroupStyle, { alignItems: 'center', marginBottom: 32 }]}>
-            {/* Logo with dual-layer glow (matching login.tsx) */}
-            <View className="relative items-center justify-center" style={{ width: 80, height: 80, marginBottom: 24 }}>
-              {/* Glow layer 1 */}
-              <View
-                style={{
-                  position: 'absolute',
-                  width: 100,
-                  height: 100,
-                  borderRadius: 50,
-                  backgroundColor: 'rgba(248, 249, 250, 0.15)',
-                }}
-              />
-              {/* Glow layer 2 */}
-              <View
-                style={{
-                  position: 'absolute',
-                  width: 90,
-                  height: 90,
-                  borderRadius: 45,
-                  backgroundColor: 'rgba(248, 249, 250, 0.25)',
-                }}
-              />
-              <Image
-                source={require('../assets/logo-white.png')}
-                style={{ width: 80, height: 80, zIndex: 10 }}
-                resizeMode="contain"
-              />
-            </View>
-
-            {/* Brand name */}
-            <Text className="text-5xl font-bold text-titanium text-center">
-              Allync
-            </Text>
-
-            {/* Slogan with fade animation */}
-            <Animated.View style={[sloganStyle, { flexDirection: 'row', alignItems: 'center', marginTop: 12 }]}>
-              <Ionicons
-                name="sparkles"
-                size={16}
-                color={Colors.text.secondary}
-                style={{ marginRight: 6 }}
-              />
-              <Text className="text-base text-text-secondary font-medium italic">
-                Beyond human automation
+            <LogoWithGlow theme={theme} />
+            <ShinyText color={colors.text}>{t.appName}</ShinyText>
+            <Animated.View style={[sloganStyle, { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }]}>
+              <Ionicons name="sparkles" size={18} color={colors.textSecondary} style={{ marginRight: 4 }} />
+              <Text style={{ color: colors.textSecondary }} className="text-base font-medium italic">
+                {t.slogan}
               </Text>
             </Animated.View>
           </Animated.View>
 
           {/* PHASE 2: Multi-Step Loader */}
-          <Animated.View style={[loaderStyle, { marginTop: 20, width: '100%', maxWidth: 320 }]}>
+          <Animated.View style={[loaderStyle, { width: '100%', maxWidth: 320, alignSelf: 'center' }]}>
             {loadingStates.map((state, index) => (
               <LoadingStep
                 key={index}
                 text={state.text}
                 index={index}
                 loaderProgress={loaderProgress}
+                textColor={colors.textSecondary}
               />
             ))}
           </Animated.View>
         </View>
-      </LinearGradient>
+      </View>
     </Animated.View>
   );
 }
@@ -222,10 +278,12 @@ function LoadingStep({
   text,
   index,
   loaderProgress,
+  textColor,
 }: {
   text: string;
   index: number;
   loaderProgress: SharedValue<number>;
+  textColor: string;
 }) {
   // Gray icon opacity (fades out as progress increases)
   const grayIconOpacity = useAnimatedStyle(() => {
@@ -283,8 +341,8 @@ function LoadingStep({
         </Animated.View>
       </Animated.View>
       <Animated.Text
-        style={textOpacity}
-        className="text-base text-text-secondary font-normal"
+        style={[textOpacity, { color: textColor }]}
+        className="text-base font-normal"
       >
         {text}
       </Animated.Text>
