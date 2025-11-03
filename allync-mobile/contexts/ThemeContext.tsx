@@ -49,19 +49,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    loadTheme();
+    // Always start with dark mode, ignore any saved theme
+    setTheme('dark');
+    // Optionally clear any saved theme preference
+    AsyncStorage.setItem('theme', 'dark').catch((error) => {
+      console.error('Failed to set initial theme:', error);
+    });
   }, []);
-
-  const loadTheme = async () => {
-    try {
-      const savedTheme = await AsyncStorage.getItem('theme');
-      if (savedTheme === 'light' || savedTheme === 'dark') {
-        setTheme(savedTheme);
-      }
-    } catch (error) {
-      console.error('Failed to load theme:', error);
-    }
-  };
 
   const toggleTheme = async () => {
     try {

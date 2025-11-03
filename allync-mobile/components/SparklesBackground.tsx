@@ -124,5 +124,6 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
+    zIndex: 0, // On top of background color, below all content
   },
 });

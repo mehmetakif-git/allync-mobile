@@ -13,8 +13,8 @@ export const AnimatedCheckbox = ({ progress, size = 20 }: AnimatedCheckboxProps)
 
   useEffect(() => {
     if (animationRef.current && progress >= 1 && !hasPlayed) {
-      // Play the check animation when progress reaches 1
-      animationRef.current.play(0, 60);
+      // Play the check animation when progress reaches 1 (42 frames total)
+      animationRef.current.play();
       setHasPlayed(true);
     }
   }, [progress, hasPlayed]);

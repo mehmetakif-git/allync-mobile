@@ -11,8 +11,10 @@ import {
   Image,
   Dimensions,
   ScrollView,
+  StyleSheet,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -117,146 +119,55 @@ function ShinyText({ children, color }: { children: string; color: string }) {
   );
 }
 
-// Shiny Button Component with Glow Effect
+// Minimal Sign In Button - Coal & Titanium colors only
 function ShinyButton({
   onPress,
   loading,
   disabled,
   text,
   loadingText,
+  theme,
 }: {
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
   text: string;
   loadingText: string;
+  theme: 'light' | 'dark';
 }) {
-  const [isPressed, setIsPressed] = useState(false);
-  const scaleAnimation = useSharedValue(1);
-  const glowAnimation = useSharedValue(0);
-
-  useEffect(() => {
-    // Smooth continuous pulsing glow effect
-    glowAnimation.value = withRepeat(
-      withTiming(1, {
-        duration: 3000,
-        easing: Easing.inOut(Easing.ease)
-      }),
-      -1,
-      true
-    );
-  }, []);
-
-  useEffect(() => {
-    scaleAnimation.value = withTiming(isPressed ? 0.98 : 1, {
-      duration: 150,
-      easing: Easing.bezier(0.4, 0, 0.2, 1),
-    });
-  }, [isPressed]);
-
-  const buttonStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { scale: scaleAnimation.value },
-        { translateY: isPressed ? 1 : 0 }
-      ],
-    };
-  });
-
-  const shadowStyle = useAnimatedStyle(() => {
-    return {
-      shadowOpacity: isPressed ? 0.1 : 0.25,
-      shadowOffset: {
-        width: 0,
-        height: isPressed ? 2 : 8,
-      },
-    };
-  });
-
   return (
-    <Animated.View
-      entering={FadeInUp.duration(800).delay(400).springify()}
-      className="mt-6"
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled || loading}
+      activeOpacity={0.8}
+      style={{ marginTop: 24 }}
     >
-      <AnimatedTouchable
-        style={[buttonStyle, shadowStyle]}
-        className="rounded-xl overflow-hidden"
-        activeOpacity={1}
-        onPress={onPress}
-        onPressIn={() => setIsPressed(true)}
-        onPressOut={() => setIsPressed(false)}
-        disabled={disabled}
+      <View
+        style={{
+          backgroundColor: theme === 'dark' ? Colors.titanium : 'rgba(248, 249, 250, 0.95)',
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          borderRadius: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: theme === 'light' ? 1 : 0,
+          borderColor: theme === 'light' ? 'rgba(43, 44, 44, 0.15)' : 'transparent',
+        }}
       >
-        {/* Glassmorphism background */}
-        <LinearGradient
-          colors={[
-            'rgba(173, 181, 189, 0.25)',
-            'rgba(173, 181, 189, 0.15)',
-            'rgba(173, 181, 189, 0.2)',
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          className="py-5 px-8 items-center justify-center border border-white/10"
-        >
-          {/* Glass shine effect */}
-          <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.12)',
-              borderTopLeftRadius: 12,
-              borderTopRightRadius: 12,
-            }}
-          />
-
-          {/* Blur backdrop effect simulation */}
-          <View
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(248, 249, 250, 0.05)',
-            }}
-          />
-
-          {loading ? (
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              zIndex: 10,
-              minHeight: 24
-            }}>
-              <ActivityIndicator color={Colors.titanium} size="small" />
-              <Text style={{
-                color: Colors.titanium,
-                fontSize: 16,
-                fontWeight: '600',
-                letterSpacing: 0.5
-              }}>
-                {loadingText}
-              </Text>
-            </View>
-          ) : (
-            <Text style={{
-              color: Colors.titanium,
-              fontSize: 16,
-              fontWeight: '600',
-              letterSpacing: 0.5,
-              zIndex: 10
-            }}>
-              {text} →
+        {loading ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <ActivityIndicator size="small" color={Colors.coal} />
+            <Text style={{ color: Colors.coal, fontSize: 15, fontWeight: '600' }}>
+              {loadingText}
             </Text>
-          )}
-        </LinearGradient>
-      </AnimatedTouchable>
-    </Animated.View>
+          </View>
+        ) : (
+          <Text style={{ color: Colors.coal, fontSize: 15, fontWeight: '600' }}>
+            {text}
+          </Text>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -408,11 +319,14 @@ export default function Login() {
     : 'rgba(248, 249, 250, 0.4)';
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <SparklesBackground particleCount={50} particleColor={particleColor} />
+    <View style={{ flex: 1 }}>
+      {/* Background color layer - bottom */}
+      <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.background, zIndex: -2 }} />
 
-      {/* Top-right toggles */}
-      <View style={{ position: 'absolute', top: 50, right: 20, zIndex: 100, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+      {/* All content - middle (below sparkles) */}
+      <View style={{ flex: 1, zIndex: -1 }}>
+        {/* Top-right toggles */}
+        <View style={{ position: 'absolute', top: 50, right: 20, zIndex: 100, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
         {/* Language Toggle */}
         <TouchableOpacity
           onPress={() => setLanguage(language === 'en' ? 'tr' : 'en')}
@@ -474,12 +388,37 @@ export default function Login() {
           {/* Login Form */}
           <Animated.View
             entering={FadeInUp.duration(800).delay(200).springify()}
-            className="mb-8 rounded-xl overflow-hidden"
+            className="mb-8"
+            style={{
+              borderRadius: 16,
+              overflow: 'hidden',
+              shadowColor: theme === 'dark' ? '#000' : '#2B2C2C',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: theme === 'dark' ? 0.6 : 0.3,
+              shadowRadius: 16,
+              elevation: 12,
+            }}
           >
-            <View className="p-6 border border-cyber-gray/20 rounded-xl bg-cyber-gray/[0.03]">
-              <Text style={{ color: colors.text }} className="text-2xl font-bold mb-6 text-center">
-                {t.welcomeBack}
-              </Text>
+            {/* Glassmorphism blur background */}
+            <BlurView
+              intensity={theme === 'dark' ? 30 : 50}
+              tint={theme === 'dark' ? 'dark' : 'light'}
+              style={{
+                borderRadius: 16,
+                overflow: 'hidden',
+                borderWidth: 1,
+                borderColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.15)' : 'rgba(43, 44, 44, 0.2)',
+              }}
+            >
+              <View
+                style={{
+                  padding: 24,
+                  backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.65)' : 'rgba(248, 249, 250, 0.75)',
+                }}
+              >
+                <Text style={{ color: colors.text }} className="text-2xl font-bold mb-6 text-center">
+                  {t.welcomeBack}
+                </Text>
 
               {/* Email Input */}
               <View className="mb-4">
@@ -516,8 +455,10 @@ export default function Login() {
                 disabled={loading}
                 text={t.signInButton}
                 loadingText={t.signingIn}
+                theme={theme}
               />
-            </View>
+              </View>
+            </BlurView>
           </Animated.View>
 
           {/* Footer */}
@@ -532,6 +473,10 @@ export default function Login() {
         </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      </View>
+
+      {/* Sparkles on top - always visible */}
+      <SparklesBackground particleCount={50} particleColor={particleColor} />
     </View>
   );
 }

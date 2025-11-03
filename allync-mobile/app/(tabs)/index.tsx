@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeIn, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { useRouter } from 'expo-router';
 import { Colors, Gradients } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
@@ -15,6 +17,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function Home() {
   const { user, signOut } = useAuth();
+  const { theme, colors } = useTheme();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -131,20 +134,57 @@ export default function Home() {
     },
   ] : [];
 
+  // Theme-aware styles
+  const dynamicStyles = {
+    greeting: {
+      color: colors.textTertiary,
+    },
+    userName: {
+      color: colors.text,
+    },
+    statValue: {
+      color: colors.text,
+    },
+    statTitle: {
+      color: colors.textSecondary,
+    },
+    sectionTitle: {
+      color: colors.text,
+    },
+    sectionSubtitle: {
+      color: colors.textTertiary,
+    },
+    actionTitle: {
+      color: colors.text,
+    },
+    actionSubtitle: {
+      color: colors.textTertiary,
+    },
+    activityText: {
+      color: colors.text,
+    },
+    activitySubtext: {
+      color: colors.textTertiary,
+    },
+    avatarText: {
+      color: Colors.titanium,
+    },
+  };
+
   // Show loading state while fetching data
   if (loading && !stats) {
     return (
-      <LinearGradient colors={Gradients.primary} style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.blue[500]} />
-          <Text style={styles.loadingText}>Loading dashboard...</Text>
+          <ActivityIndicator size="large" color={theme === 'dark' ? Colors.blue[500] : Colors.deepBlue} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading dashboard...</Text>
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient colors={Gradients.primary} style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -164,14 +204,14 @@ export default function Home() {
                 colors={[Colors.blue[500], Colors.cyan[500]]}
                 style={styles.avatar}
               >
-                <Text style={styles.avatarText}>
+                <Text style={[styles.avatarText, dynamicStyles.avatarText]}>
                   {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </Text>
               </LinearGradient>
             </View>
             <View>
-              <Text style={styles.greeting}>Welcome back,</Text>
-              <Text style={styles.userName}>{user?.email?.split('@')[0] || 'User'}</Text>
+              <Text style={[styles.greeting, dynamicStyles.greeting]}>Welcome back,</Text>
+              <Text style={[styles.userName, dynamicStyles.userName]}>{user?.email?.split('@')[0] || 'User'}</Text>
             </View>
           </View>
           <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
@@ -193,22 +233,36 @@ export default function Home() {
               style={styles.statCard}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={stat.bgGradient}
-                style={styles.statCardGradient}
-              >
-                <View style={styles.statHeader}>
-                  <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
-                    <Ionicons name={stat.icon as any} size={22} color={stat.color} />
+              <View style={styles.statCardWrapper}>
+                {/* Colored gradient background */}
+                <LinearGradient
+                  colors={stat.bgGradient}
+                  style={StyleSheet.absoluteFillObject}
+                />
+
+                {/* Glass overlay */}
+                <BlurView
+                  intensity={theme === 'dark' ? 40 : 50}
+                  tint={theme === 'dark' ? 'dark' : 'light'}
+                  style={[styles.statCardGlass, {
+                    backgroundColor: theme === 'dark'
+                      ? 'rgba(43, 44, 44, 0.3)'
+                      : 'rgba(248, 249, 250, 0.4)',
+                  }]}
+                >
+                  <View style={styles.statHeader}>
+                    <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
+                      <Ionicons name={stat.icon as any} size={22} color={stat.color} />
+                    </View>
+                    <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
+                      <View style={[styles.statDot, { backgroundColor: stat.color }]} />
+                    </View>
                   </View>
-                  <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
-                    <View style={[styles.statDot, { backgroundColor: stat.color }]} />
-                  </View>
-                </View>
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statTitle}>{stat.title}</Text>
-                <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
-              </LinearGradient>
+                  <Text style={[styles.statValue, dynamicStyles.statValue]}>{stat.value}</Text>
+                  <Text style={[styles.statTitle, dynamicStyles.statTitle]}>{stat.title}</Text>
+                  <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
+                </BlurView>
+              </View>
             </AnimatedTouchable>
           ))}
         </View>
@@ -219,8 +273,10 @@ export default function Home() {
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <Text style={styles.sectionSubtitle}>Frequently used actions</Text>
+            <View>
+              <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Quick Actions</Text>
+              <Text style={[styles.sectionSubtitle, dynamicStyles.sectionSubtitle]}>Frequently used actions</Text>
+            </View>
           </View>
           <View style={styles.actionsContainer}>
             <QuickAction
@@ -230,6 +286,7 @@ export default function Home() {
               color={Colors.blue[500]}
               gradient={['rgba(59, 130, 246, 0.2)', 'rgba(59, 130, 246, 0.05)']}
               onPress={() => router.push('/(tabs)/support')}
+              theme={theme}
             />
             <QuickAction
               icon="card-outline"
@@ -238,6 +295,7 @@ export default function Home() {
               color={Colors.cyan[500]}
               gradient={['rgba(6, 182, 212, 0.2)', 'rgba(6, 182, 212, 0.05)']}
               onPress={() => router.push('/(tabs)/invoices')}
+              theme={theme}
             />
             <QuickAction
               icon="server-outline"
@@ -246,6 +304,7 @@ export default function Home() {
               color={Colors.purple[500]}
               gradient={['rgba(168, 85, 247, 0.2)', 'rgba(168, 85, 247, 0.05)']}
               onPress={() => router.push('/(tabs)/services')}
+              theme={theme}
             />
           </View>
         </AnimatedView>
@@ -256,24 +315,38 @@ export default function Home() {
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Recent Activity</Text>
             <TouchableOpacity>
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.activityCard}>
+          <View style={styles.activityCardWrapper}>
+            {/* Colored gradient background */}
             <LinearGradient
-              colors={['rgba(59, 130, 246, 0.1)', 'rgba(6, 182, 212, 0.05)']}
-              style={styles.activityCardGradient}
+              colors={['rgba(59, 130, 246, 0.15)', 'rgba(6, 182, 212, 0.08)']}
+              style={StyleSheet.absoluteFillObject}
+            />
+
+            {/* Glass overlay */}
+            <BlurView
+              intensity={theme === 'dark' ? 40 : 50}
+              tint={theme === 'dark' ? 'dark' : 'light'}
+              style={[styles.activityCardGlass, {
+                backgroundColor: theme === 'dark'
+                  ? 'rgba(43, 44, 44, 0.3)'
+                  : 'rgba(248, 249, 250, 0.4)',
+              }]}
             >
-              <Ionicons name="time-outline" size={48} color={Colors.text.tertiary} />
-              <Text style={styles.activityText}>No recent activity</Text>
-              <Text style={styles.activitySubtext}>Your recent activity will appear here</Text>
-            </LinearGradient>
+              <View style={styles.activityCardContent}>
+                <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
+                <Text style={[styles.activityText, dynamicStyles.activityText]}>No recent activity</Text>
+                <Text style={[styles.activitySubtext, dynamicStyles.activitySubtext]}>Your recent activity will appear here</Text>
+              </View>
+            </BlurView>
           </View>
         </AnimatedView>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -284,6 +357,7 @@ function QuickAction({
   color,
   gradient,
   onPress,
+  theme,
 }: {
   icon: string;
   title: string;
@@ -291,19 +365,37 @@ function QuickAction({
   color: string;
   gradient: string[];
   onPress: () => void;
+  theme: 'light' | 'dark';
 }) {
+  const textColor = theme === 'dark' ? Colors.text.primary : Colors.coal;
+  const subtitleColor = theme === 'dark' ? Colors.text.tertiary : 'rgba(43, 44, 44, 0.5)';
+
   return (
     <TouchableOpacity style={styles.actionButton} onPress={onPress} activeOpacity={0.7}>
-      <LinearGradient
-        colors={gradient}
-        style={styles.actionButtonGradient}
-      >
-        <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
-          <Ionicons name={icon as any} size={24} color={color} />
-        </View>
-        <Text style={styles.actionTitle}>{title}</Text>
-        <Text style={styles.actionSubtitle}>{subtitle}</Text>
-      </LinearGradient>
+      <View style={styles.actionButtonWrapper}>
+        {/* Colored gradient background */}
+        <LinearGradient
+          colors={gradient}
+          style={StyleSheet.absoluteFillObject}
+        />
+
+        {/* Glass overlay */}
+        <BlurView
+          intensity={theme === 'dark' ? 40 : 50}
+          tint={theme === 'dark' ? 'dark' : 'light'}
+          style={[styles.actionButtonGlass, {
+            backgroundColor: theme === 'dark'
+              ? 'rgba(43, 44, 44, 0.3)'
+              : 'rgba(248, 249, 250, 0.4)',
+          }]}
+        >
+          <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
+            <Ionicons name={icon as any} size={24} color={color} />
+          </View>
+          <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
+          <Text style={[styles.actionSubtitle, { color: subtitleColor }]}>{subtitle}</Text>
+        </BlurView>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -328,7 +420,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: Spacing['5xl'],
-    paddingBottom: Spacing['4xl'],
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
   },
   header: {
     flexDirection: 'row',
@@ -385,12 +477,21 @@ const styles = StyleSheet.create({
   statCard: {
     width: '48%',
   },
+  statCardWrapper: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  statCardGlass: {
+    padding: Spacing.lg,
+  },
   statCardGradient: {
     padding: Spacing.lg,
     borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    ...Shadows.md,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    overflow: 'hidden',
   },
   statHeader: {
     flexDirection: 'row',
@@ -466,13 +567,23 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
+  actionButtonWrapper: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  actionButtonGlass: {
+    padding: Spacing.lg,
+    alignItems: 'center',
+  },
   actionButtonGradient: {
     padding: Spacing.lg,
     borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
-    ...Shadows.sm,
+    overflow: 'hidden',
   },
   actionIconContainer: {
     width: 48,
@@ -494,15 +605,23 @@ const styles = StyleSheet.create({
     color: Colors.text.tertiary,
     textAlign: 'center',
   },
+  activityCardWrapper: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  activityCardGlass: {
+    // Glass overlay style
+  },
   activityCard: {
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  activityCardGradient: {
+  activityCardContent: {
     padding: Spacing['3xl'],
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: BorderRadius.xl,
     alignItems: 'center',
   },
   activityText: {

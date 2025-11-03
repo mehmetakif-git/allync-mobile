@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Image } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -13,7 +13,6 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Colors } from '../constants/Colors';
 import { SparklesBackground } from '../components/SparklesBackground';
@@ -104,10 +103,17 @@ function ShinyText({ children, color }: { children: string; color: string }) {
 
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
-  const { colors, theme } = useTheme();
   const { t } = useLanguage();
   const router = useRouter();
   const [shouldNavigate, setShouldNavigate] = useState(false);
+
+  // Always use dark mode colors for loading screen (independent of theme)
+  const colors = {
+    background: Colors.coal,
+    text: Colors.titanium,
+    textSecondary: Colors.cyberGray,
+  };
+  const theme = 'dark' as const;
 
   const loadingStates = [
     { text: t.loadingSteps.initConnection },
@@ -239,9 +245,12 @@ export default function Index() {
 
   return (
     <Animated.View style={[{ flex: 1 }, screenStyle]}>
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <SparklesBackground particleCount={50} particleColor={particleColor} />
-        <View className="flex-1 px-6 pt-16 pb-10 justify-center">
+      <View style={{ flex: 1 }}>
+        {/* Background color layer - bottom */}
+        <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: colors.background, zIndex: -2 }} />
+
+        {/* All content - middle (below sparkles) */}
+        <View style={{ flex: 1, zIndex: -1 }} className="px-6 pt-16 pb-10 justify-center">
           {/* PHASE 1: Logo & Slogan Group (same layout as login.tsx) */}
           <Animated.View style={[logoGroupStyle, { alignItems: 'center', marginBottom: 32 }]}>
             <LogoWithGlow theme={theme} />
@@ -267,6 +276,9 @@ export default function Index() {
             ))}
           </Animated.View>
         </View>
+
+        {/* Sparkles on top - always visible */}
+        <SparklesBackground particleCount={50} particleColor={particleColor} />
       </View>
     </Animated.View>
   );
@@ -286,11 +298,23 @@ function LoadingStep({
 }) {
   // Track if this step is completed
   const [isCompleted, setIsCompleted] = useState(false);
+  const [checkboxProgress, setCheckboxProgress] = useState(0);
 
-  // Monitor loaderProgress and update isCompleted
+  // Monitor loaderProgress and update isCompleted with delay
   useEffect(() => {
     const checkProgress = () => {
       const currentProgress = loaderProgress.value;
+
+      // Start checkbox animation when step is halfway through (more smooth sync)
+      if (currentProgress >= index + 0.5 && currentProgress < index + 1 && checkboxProgress === 0) {
+        setCheckboxProgress(0.5);
+        // Complete checkbox animation 200ms after it starts
+        setTimeout(() => {
+          setCheckboxProgress(1);
+        }, 200);
+      }
+
+      // Mark as fully completed when step finishes
       if (currentProgress >= index + 1 && !isCompleted) {
         setIsCompleted(true);
       }
@@ -300,10 +324,10 @@ function LoadingStep({
     checkProgress();
 
     // Set up interval to check progress
-    const interval = setInterval(checkProgress, 100);
+    const interval = setInterval(checkProgress, 50); // Check more frequently for smoother sync
 
     return () => clearInterval(interval);
-  }, [loaderProgress, index, isCompleted]);
+  }, [loaderProgress, index, isCompleted, checkboxProgress]);
 
   const textOpacity = useAnimatedStyle(() => {
     // Active when progress is between index and index+1
@@ -316,7 +340,7 @@ function LoadingStep({
   return (
     <View className="flex-row items-center mb-5">
       <View style={{ marginRight: 12, width: 24, height: 24 }}>
-        <AnimatedCheckbox progress={isCompleted ? 1 : 0} size={24} />
+        <AnimatedCheckbox progress={checkboxProgress} size={24} />
       </View>
       <Animated.Text
         style={[textOpacity, { color: textColor }]}
