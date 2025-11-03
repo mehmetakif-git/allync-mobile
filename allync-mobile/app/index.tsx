@@ -33,7 +33,7 @@ export default function Index() {
   // PHASE 1: Logo & Slogan animations
   const logoOpacity = useSharedValue(0);
   const logoScale = useSharedValue(1.5);
-  const logoTranslateY = useSharedValue(0);
+  const sloganOpacity = useSharedValue(0);
 
   // PHASE 2: Loader animations
   const loaderOpacity = useSharedValue(0);
@@ -61,35 +61,31 @@ export default function Index() {
   }, [shouldNavigate]);
 
   const startAnimationSequence = () => {
-    // PHASE 1.A: Fade in logo (opacity 0 -> 1)
+    const easeOut = Easing.bezier(0.25, 0.1, 0.25, 1.0);
+
+    // PHASE 1.A: Logo and slogan group fade in and scale down simultaneously
     logoOpacity.value = withTiming(1, {
       duration: 800,
-      easing: Easing.bezier(0.4, 0, 0.2, 1),
+      easing: easeOut,
     });
 
-    // PHASE 1.B: Scale down & move up (after fade in)
-    logoScale.value = withDelay(
-      800,
-      withSpring(1.0, {
-        damping: 20,
-        stiffness: 90,
-      })
+    logoScale.value = withTiming(1.0, {
+      duration: 700,
+      easing: easeOut,
+    });
+
+    // PHASE 1.B: Slogan fades in with slight delay
+    sloganOpacity.value = withDelay(
+      400,
+      withTiming(1, { duration: 500 })
     );
 
-    logoTranslateY.value = withDelay(
-      800,
-      withSpring(-120, {
-        damping: 20,
-        stiffness: 90,
-      })
-    );
-
-    // PHASE 2: Show loader after logo moves up
+    // PHASE 2: Show loader after logo animation completes
     loaderOpacity.value = withDelay(
-      1400,
+      1000,
       withTiming(1, {
         duration: 600,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        easing: easeOut,
       })
     );
 
@@ -110,12 +106,12 @@ export default function Index() {
     });
 
     loaderProgress.value = withDelay(
-      1400,
+      1000,
       withSequence(...sequenceSteps)
     );
 
     // PHASE 3: Fade out screen after all steps complete
-    const totalAnimationTime = 1400 + loadingStates.length * (stepDuration + stepDelay) + 400;
+    const totalAnimationTime = 1000 + loadingStates.length * (stepDuration + stepDelay) + 400;
     screenOpacity.value = withDelay(
       totalAnimationTime,
       withTiming(0, {
@@ -133,10 +129,11 @@ export default function Index() {
   // PHASE 1: Logo & Slogan animated styles
   const logoGroupStyle = useAnimatedStyle(() => ({
     opacity: logoOpacity.value,
-    transform: [
-      { scale: logoScale.value },
-      { translateY: logoTranslateY.value },
-    ],
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const sloganStyle = useAnimatedStyle(() => ({
+    opacity: sloganOpacity.value,
   }));
 
   // PHASE 2: Loader animated style
