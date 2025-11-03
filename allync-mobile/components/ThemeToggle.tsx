@@ -10,15 +10,25 @@ interface ThemeToggleProps {
 export const ThemeToggle = ({ theme, onToggle }: ThemeToggleProps) => {
   const animationRef = useRef<LottieView>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (animationRef.current && !isAnimating) {
+    // Set initial frame based on theme on first mount
+    if (animationRef.current && !isInitialized) {
+      const initialFrame = theme === 'dark' ? 0 : 60;
+      animationRef.current.play(initialFrame, initialFrame);
+      setIsInitialized(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (animationRef.current && isInitialized && !isAnimating) {
       setIsAnimating(true);
       // Play smooth transition based on theme
       if (theme === 'dark') {
-        animationRef.current.play(0, 60); // Moon animation
+        animationRef.current.play(60, 0); // Sun to Moon
       } else {
-        animationRef.current.play(60, 120); // Sun animation
+        animationRef.current.play(0, 60); // Moon to Sun
       }
       // Reset animation lock after animation completes
       setTimeout(() => setIsAnimating(false), 500);
