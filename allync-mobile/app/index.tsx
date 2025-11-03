@@ -1,225 +1,351 @@
-import { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { useEffect, useState } from 'react';
+import { View, Text, Image } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+  withSequence,
+  withRepeat,
+  interpolateColor,
+  Easing,
+  SharedValue,
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { Colors, Gradients } from '../constants/Colors';
-import { Typography } from '../constants/Typography';
-import { Spacing, BorderRadius } from '../constants/Spacing';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { Colors } from '../constants/Colors';
+import { SparklesBackground } from '../components/SparklesBackground';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
-export default function Index() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+// Logo with smooth glow effect (same as login.tsx)
+function LogoWithGlow({ theme }: { theme: 'light' | 'dark' }) {
+  const glowOpacity = useSharedValue(0.3);
 
   useEffect(() => {
-    if (!loading && user) {
-      // User is already logged in, redirect to dashboard
-      router.replace('/(tabs)');
-    }
-  }, [user, loading]);
-
-  if (loading) {
-    return (
-      <LinearGradient colors={Gradients.primary} style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.blue[500]} />
-        </View>
-      </LinearGradient>
+    glowOpacity.value = withRepeat(
+      withTiming(0.8, {
+        duration: 2500,
+        easing: Easing.bezier(0.45, 0.05, 0.55, 0.95),
+      }),
+      -1,
+      true
     );
-  }
+  }, []);
+
+  const glowStyle = useAnimatedStyle(() => {
+    return {
+      opacity: glowOpacity.value,
+    };
+  });
+
+  const logoSource = theme === 'light'
+    ? require('../assets/logo-black.png')
+    : require('../assets/logo-white.png');
+
+  const glowColor1 = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.15)'
+    : 'rgba(248, 249, 250, 0.15)';
+
+  const glowColor2 = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.25)'
+    : 'rgba(248, 249, 250, 0.25)';
 
   return (
-    <LinearGradient
-      colors={Gradients.primary}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        {/* Logo/Title */}
-        <Animated.View
-          entering={FadeInDown.duration(800).springify()}
-          style={styles.header}
-        >
-          <Image
-            source={require('../assets/logo-white.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <LinearGradient
-            colors={['#F8F9FA', '#0D6EFD', '#0a58ca', '#F8F9FA']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.titleGradient}
-          >
-            <Text style={styles.title}>Allync</Text>
-          </LinearGradient>
-          <View style={styles.sloganContainer}>
-            <Ionicons name="sparkles" size={16} color={Colors.deepBlue} />
-            <Text style={styles.slogan}>Beyond human automation</Text>
-          </View>
-        </Animated.View>
+    <View className="items-center justify-center mb-4" style={{ width: 80, height: 80 }}>
+      {/* Glow layers - multiple for smooth effect */}
+      <Animated.View
+        style={[
+          glowStyle,
+          {
+            position: 'absolute',
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            backgroundColor: glowColor1,
+          },
+        ]}
+      />
+      <Animated.View
+        style={[
+          glowStyle,
+          {
+            position: 'absolute',
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            backgroundColor: glowColor2,
+          },
+        ]}
+      />
 
-        {/* Welcome Card */}
-        <Animated.View
-          entering={FadeInUp.duration(800).delay(200).springify()}
-          style={styles.card}
-        >
-          <LinearGradient
-            colors={['rgba(59, 130, 246, 0.1)', 'rgba(6, 182, 212, 0.1)']}
-            style={styles.cardGradient}
-          >
-            <Text style={styles.cardTitle}>Welcome! 👋</Text>
-            <Text style={styles.cardText}>
-              Your mobile dashboard is ready. Manage your services, invoices, and support tickets on the go.
-            </Text>
-          </LinearGradient>
-        </Animated.View>
-
-        {/* Action Button */}
-        <AnimatedTouchable
-          entering={FadeInUp.duration(800).delay(400).springify()}
-          style={styles.button}
-          activeOpacity={0.8}
-          onPress={() => router.push('/login')}
-        >
-          <LinearGradient
-            colors={[Colors.deepBlue, '#0a58ca']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.buttonGradient}
-          >
-            <Text style={styles.buttonText}>Get Started</Text>
-          </LinearGradient>
-        </AnimatedTouchable>
-
-        {/* Features */}
-        <Animated.View
-          entering={FadeInUp.duration(800).delay(600).springify()}
-          style={styles.features}
-        >
-          <Feature icon="📊" text="Real-time Stats" />
-          <Feature icon="💳" text="Quick Payments" />
-          <Feature icon="🎫" text="Support Tickets" />
-        </Animated.View>
-      </View>
-    </LinearGradient>
-  );
-}
-
-function Feature({ icon, text }: { icon: string; text: string }) {
-  return (
-    <View style={styles.feature}>
-      <Text style={styles.featureIcon}>{icon}</Text>
-      <Text style={styles.featureText}>{text}</Text>
+      {/* Logo image */}
+      <Image
+        source={logoSource}
+        style={{ width: 80, height: 80, zIndex: 10 }}
+        resizeMode="contain"
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing['6xl'],
-    paddingBottom: Spacing['4xl'],
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: Spacing['5xl'],
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    marginBottom: Spacing.xl,
-  },
-  titleGradient: {
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.md,
-  },
-  title: {
-    fontSize: Typography.fontSize['5xl'],
-    fontWeight: Typography.fontWeight.bold,
-    color: 'transparent',
-  },
-  sloganContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  slogan: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text.tertiary,
-    fontWeight: Typography.fontWeight.medium,
-    fontStyle: 'italic',
-    marginLeft: 4,
-  },
-  subtitle: {
-    fontSize: Typography.fontSize.lg,
-    color: Colors.text.secondary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  card: {
-    marginBottom: Spacing['3xl'],
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-  },
-  cardGradient: {
-    padding: Spacing.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: BorderRadius.xl,
-  },
-  cardTitle: {
-    fontSize: Typography.fontSize['2xl'],
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text.primary,
-    marginBottom: Spacing.md,
-  },
-  cardText: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.text.secondary,
-    lineHeight: Typography.lineHeight.lg,
-  },
-  button: {
-    marginBottom: Spacing['3xl'],
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    alignItems: 'center',
-    borderRadius: BorderRadius.lg,
-  },
-  buttonText: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text.primary,
-  },
-  features: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  feature: {
-    alignItems: 'center',
-  },
-  featureIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
-  },
-  featureText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text.secondary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-});
+// Simple text component without shimmer
+function ShinyText({ children, color }: { children: string; color: string }) {
+  return (
+    <Text
+      style={{ color }}
+      className="text-5xl font-bold text-center"
+    >
+      {children}
+    </Text>
+  );
+}
+
+export default function Index() {
+  const { user, loading: authLoading } = useAuth();
+  const { colors, theme } = useTheme();
+  const { t } = useLanguage();
+  const router = useRouter();
+  const [shouldNavigate, setShouldNavigate] = useState(false);
+
+  const loadingStates = [
+    { text: t.loadingSteps.initConnection },
+    { text: t.loadingSteps.loadDashboard },
+    { text: t.loadingSteps.syncData },
+    { text: t.loadingSteps.prepareWorkspace },
+    { text: t.loadingSteps.almostReady },
+  ];
+
+  // PHASE 1: Logo & Slogan animations
+  const logoOpacity = useSharedValue(0);
+  const logoScale = useSharedValue(1.5);
+  const sloganOpacity = useSharedValue(0);
+
+  // PHASE 2: Loader animations
+  const loaderOpacity = useSharedValue(0);
+  const loaderProgress = useSharedValue(0);
+
+  // PHASE 3: Screen fade out
+  const screenOpacity = useSharedValue(1);
+
+  useEffect(() => {
+    // Redirect to dashboard if user is already logged in
+    if (!authLoading && user) {
+      router.replace('/(tabs)');
+      return;
+    }
+
+    // Start animation sequence
+    startAnimationSequence();
+  }, [authLoading, user]);
+
+  // Navigate when shouldNavigate becomes true
+  useEffect(() => {
+    if (shouldNavigate) {
+      router.replace('/login');
+    }
+  }, [shouldNavigate]);
+
+  const startAnimationSequence = () => {
+    const easeOut = Easing.bezier(0.25, 0.1, 0.25, 1.0);
+
+    // PHASE 1.A: Logo and slogan group fade in and scale down simultaneously
+    logoOpacity.value = withTiming(1, {
+      duration: 800,
+      easing: easeOut,
+    });
+
+    logoScale.value = withTiming(1.0, {
+      duration: 700,
+      easing: easeOut,
+    });
+
+    // PHASE 1.B: Slogan fades in with slight delay
+    sloganOpacity.value = withDelay(
+      400,
+      withTiming(1, { duration: 500 })
+    );
+
+    // PHASE 2: Show loader after logo animation completes
+    loaderOpacity.value = withDelay(
+      1000,
+      withTiming(1, {
+        duration: 600,
+        easing: easeOut,
+      })
+    );
+
+    // PHASE 2: Multi-step loader progression with withSequence
+    // Each step takes 500ms with 200ms delay between
+    const stepDuration = 500;
+    const stepDelay = 200;
+
+    // Build the sequence: 0 -> 1 -> 2 -> 3 -> 4 -> 5
+    const sequenceSteps = loadingStates.map((_, index) => {
+      return withDelay(
+        stepDelay,
+        withTiming(index + 1, {
+          duration: stepDuration,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+        })
+      );
+    });
+
+    loaderProgress.value = withDelay(
+      1000,
+      withSequence(...sequenceSteps)
+    );
+
+    // PHASE 3: Fade out screen after all steps complete
+    const totalAnimationTime = 1000 + loadingStates.length * (stepDuration + stepDelay) + 400;
+    screenOpacity.value = withDelay(
+      totalAnimationTime,
+      withTiming(0, {
+        duration: 500,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+      })
+    );
+
+    // Navigate after animation completes
+    setTimeout(() => {
+      setShouldNavigate(true);
+    }, totalAnimationTime + 500);
+  };
+
+  // PHASE 1: Logo & Slogan animated styles
+  const logoGroupStyle = useAnimatedStyle(() => ({
+    opacity: logoOpacity.value,
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const sloganStyle = useAnimatedStyle(() => ({
+    opacity: sloganOpacity.value,
+  }));
+
+  // PHASE 2: Loader animated style
+  const loaderStyle = useAnimatedStyle(() => ({
+    opacity: loaderOpacity.value,
+  }));
+
+  // PHASE 3: Screen fade out style
+  const screenStyle = useAnimatedStyle(() => ({
+    opacity: screenOpacity.value,
+  }));
+
+  const particleColor = theme === 'light'
+    ? 'rgba(26, 27, 27, 0.4)'
+    : 'rgba(248, 249, 250, 0.4)';
+
+  return (
+    <Animated.View style={[{ flex: 1 }, screenStyle]}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <SparklesBackground particleCount={50} particleColor={particleColor} />
+        <View className="flex-1 px-6 pt-16 pb-10 justify-center">
+          {/* PHASE 1: Logo & Slogan Group (same layout as login.tsx) */}
+          <Animated.View style={[logoGroupStyle, { alignItems: 'center', marginBottom: 32 }]}>
+            <LogoWithGlow theme={theme} />
+            <ShinyText color={colors.text}>{t.appName}</ShinyText>
+            <Animated.View style={[sloganStyle, { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 }]}>
+              <Ionicons name="sparkles" size={18} color={colors.textSecondary} style={{ marginRight: 4 }} />
+              <Text style={{ color: colors.textSecondary }} className="text-base font-medium italic">
+                {t.slogan}
+              </Text>
+            </Animated.View>
+          </Animated.View>
+
+          {/* PHASE 2: Multi-Step Loader */}
+          <Animated.View style={[loaderStyle, { width: '100%', maxWidth: 320, alignSelf: 'center' }]}>
+            {loadingStates.map((state, index) => (
+              <LoadingStep
+                key={index}
+                text={state.text}
+                index={index}
+                loaderProgress={loaderProgress}
+                textColor={colors.textSecondary}
+              />
+            ))}
+          </Animated.View>
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
+// Individual loading step component
+function LoadingStep({
+  text,
+  index,
+  loaderProgress,
+  textColor,
+}: {
+  text: string;
+  index: number;
+  loaderProgress: SharedValue<number>;
+  textColor: string;
+}) {
+  // Gray icon opacity (fades out as progress increases)
+  const grayIconOpacity = useAnimatedStyle(() => {
+    const opacity = loaderProgress.value >= index
+      ? loaderProgress.value >= index + 1
+        ? 0
+        : 1 - (loaderProgress.value - index)
+      : 1;
+
+    return { opacity };
+  });
+
+  // Green icon opacity (fades in as progress increases)
+  const greenIconOpacity = useAnimatedStyle(() => {
+    const opacity = loaderProgress.value >= index
+      ? loaderProgress.value >= index + 1
+        ? 1
+        : loaderProgress.value - index
+      : 0;
+
+    return { opacity };
+  });
+
+  // Scale bounce when completing
+  const scaleStyle = useAnimatedStyle(() => {
+    const isComplete = loaderProgress.value >= index + 1;
+    const scale = withSpring(isComplete ? 1.1 : 1, {
+      damping: 15,
+      stiffness: 150,
+    });
+
+    return {
+      transform: [{ scale }],
+    };
+  });
+
+  const textOpacity = useAnimatedStyle(() => {
+    // Active when progress is between index and index+1
+    const isActive = loaderProgress.value >= index && loaderProgress.value < index + 1;
+    return {
+      opacity: withTiming(isActive ? 1 : 0.6, { duration: 300 }),
+    };
+  });
+
+  return (
+    <View className="flex-row items-center mb-5">
+      <Animated.View style={[scaleStyle, { marginRight: 12, width: 20, height: 20 }]}>
+        {/* Gray icon (default state) */}
+        <Animated.View style={[grayIconOpacity, { position: 'absolute' }]}>
+          <Ionicons name="checkmark-circle" size={20} color="#AAAAAA" />
+        </Animated.View>
+        {/* Green icon (completed state) */}
+        <Animated.View style={[greenIconOpacity, { position: 'absolute' }]}>
+          <Ionicons name="checkmark-circle" size={20} color="#28a745" />
+        </Animated.View>
+      </Animated.View>
+      <Animated.Text
+        style={[textOpacity, { color: textColor }]}
+        className="text-base font-normal"
+      >
+        {text}
+      </Animated.Text>
+    </View>
+  );
+}
