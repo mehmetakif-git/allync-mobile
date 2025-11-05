@@ -38,20 +38,11 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#3b82f6"
-        }
-      ]
+      "expo-notifications"
     ],
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
       },
       "supabaseUrl": "https://rlrnurzpeanloppntldg.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJscm51cnpwZWFubG9wcG50bGRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMDY5NTYsImV4cCI6MjA3NTc4Mjk1Nn0.d50ICp_1Rgg57c3kUCeZfTM86qZegaWXv56mQLAX6UQ"

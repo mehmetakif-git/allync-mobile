@@ -2,7 +2,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, A
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeInDown, FadeIn, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { BlurView as RNCBlurView } from '@react-native-community/blur';
+import Animated, { FadeInDown, FadeIn, useAnimatedStyle, withSpring, withRepeat, withSequence, withTiming, useSharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -11,6 +12,10 @@ import { Colors, Gradients } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius, Shadows } from '../../constants/Spacing';
 import { getDashboardStats, getUserCompanyId, formatCurrency, type DashboardStats } from '../../lib/api/dashboard';
+import { getRecentActivityLogs, type ActivityLog } from '../../lib/api/activityLogs';
+import { PageTransition } from '../../components/PageTransition';
+import NotificationsPanel from '../../components/NotificationsPanel';
+import DashboardHeader from '../../components/DashboardHeader';
 
 const AnimatedView = Animated.View;
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -23,6 +28,16 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(2); // Mock data
+  const [hasNewNotification, setHasNewNotification] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
+
+  const bellScale = useSharedValue(1);
+
+  const bellAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: bellScale.value }],
+  }));
 
   // Fetch company ID on mount
   useEffect(() => {
@@ -49,8 +64,13 @@ export default function Home() {
 
     try {
       setLoading(true);
-      const data = await getDashboardStats(companyId);
-      setStats(data);
+      const [statsData, activityData] = await Promise.all([
+        getDashboardStats(companyId),
+        getRecentActivityLogs(companyId, 5),
+      ]);
+      setStats(statsData);
+      setRecentActivity(activityData);
+      console.log('📊 [Home] Recent activity logs:', activityData);
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       Alert.alert('Error', 'Failed to load dashboard data');
@@ -184,45 +204,26 @@ export default function Home() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+    <PageTransition>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header Component */}
+        <DashboardHeader
+          userName={user?.email?.split('@')[0] || 'User'}
+          userInitial={user?.email?.charAt(0).toUpperCase() || 'U'}
+          onNotificationPress={() => setShowNotifications(true)}
+          onSignOutPress={handleSignOut}
+          unreadCount={unreadCount}
+          bellAnimatedStyle={bellAnimatedStyle}
+        />
+
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.blue[500]} />
         }
       >
-        {/* Header with Avatar */}
-        <AnimatedView
-          entering={FadeInDown.duration(600).springify()}
-          style={styles.header}
-        >
-          <View style={styles.headerLeft}>
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={[Colors.blue[500], Colors.cyan[500]]}
-                style={styles.avatar}
-              >
-                <Text style={[styles.avatarText, dynamicStyles.avatarText]}>
-                  {user?.email?.charAt(0).toUpperCase() || 'U'}
-                </Text>
-              </LinearGradient>
-            </View>
-            <View>
-              <Text style={[styles.greeting, dynamicStyles.greeting]}>Welcome back,</Text>
-              <Text style={[styles.userName, dynamicStyles.userName]}>{user?.email?.split('@')[0] || 'User'}</Text>
-            </View>
-          </View>
-          <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
-            <LinearGradient
-              colors={['rgba(239, 68, 68, 0.2)', 'rgba(239, 68, 68, 0.1)']}
-              style={styles.signOutGradient}
-            >
-              <Ionicons name="log-out-outline" size={20} color={Colors.red[400]} />
-            </LinearGradient>
-          </TouchableOpacity>
-        </AnimatedView>
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
@@ -241,27 +242,91 @@ export default function Home() {
                 />
 
                 {/* Glass overlay */}
-                <BlurView
-                  intensity={theme === 'dark' ? 40 : 50}
-                  tint={theme === 'dark' ? 'dark' : 'light'}
-                  style={[styles.statCardGlass, {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.3)'
-                      : 'rgba(248, 249, 250, 0.4)',
-                  }]}
-                >
-                  <View style={styles.statHeader}>
-                    <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
-                      <Ionicons name={stat.icon as any} size={22} color={stat.color} />
+                {Platform.OS === 'ios' ? (
+                  <BlurView
+                    intensity={theme === 'dark' ? 40 : 50}
+                    tint={theme === 'dark' ? 'dark' : 'light'}
+                    style={[styles.statCardGlass, {
+                      backgroundColor: theme === 'dark'
+                        ? 'rgba(43, 44, 44, 0.3)'
+                        : 'rgba(248, 249, 250, 0.4)',
+                    }]}
+                  >
+                    <View style={styles.statHeader}>
+                      <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
+                        <Ionicons name={stat.icon as any} size={22} color={stat.color} />
+                      </View>
+                      <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
+                        <View style={[styles.statDot, { backgroundColor: stat.color }]} />
+                      </View>
                     </View>
-                    <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
-                      <View style={[styles.statDot, { backgroundColor: stat.color }]} />
+                    <Text style={[styles.statValue, dynamicStyles.statValue]}>{stat.value}</Text>
+                    <Text style={[styles.statTitle, dynamicStyles.statTitle]}>{stat.title}</Text>
+                    <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
+                  </BlurView>
+                ) : (
+                  <>
+                    <RNCBlurView
+                      style={StyleSheet.absoluteFillObject}
+                      blurType={theme === 'dark' ? 'dark' : 'light'}
+                      blurAmount={5}
+                      reducedTransparencyFallbackColor={
+                        theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+                      }
+                    >
+                      <View
+                        style={[
+                          StyleSheet.absoluteFillObject,
+                          {
+                            backgroundColor: theme === 'dark'
+                              ? 'rgba(10, 14, 39, 0.45)'
+                              : 'rgba(248, 249, 250, 0.5)',
+                          },
+                        ]}
+                      />
+
+                      {/* Top edge highlight gradient */}
+                      <LinearGradient
+                        colors={
+                          theme === 'dark'
+                            ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
+                            : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 0.5 }}
+                        style={StyleSheet.absoluteFillObject}
+                        pointerEvents="none"
+                      />
+
+                      {/* Bottom subtle shine */}
+                      <LinearGradient
+                        colors={
+                          theme === 'dark'
+                            ? ['transparent', 'rgba(255, 255, 255, 0.04)']
+                            : ['transparent', 'rgba(255, 255, 255, 0.25)']
+                        }
+                        start={{ x: 0, y: 0.6 }}
+                        end={{ x: 0, y: 1 }}
+                        style={StyleSheet.absoluteFillObject}
+                        pointerEvents="none"
+                      />
+                    </RNCBlurView>
+
+                    <View style={styles.statCardGlass}>
+                      <View style={styles.statHeader}>
+                        <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
+                          <Ionicons name={stat.icon as any} size={22} color={stat.color} />
+                        </View>
+                        <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
+                          <View style={[styles.statDot, { backgroundColor: stat.color }]} />
+                        </View>
+                      </View>
+                      <Text style={[styles.statValue, dynamicStyles.statValue]}>{stat.value}</Text>
+                      <Text style={[styles.statTitle, dynamicStyles.statTitle]}>{stat.title}</Text>
+                      <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
                     </View>
-                  </View>
-                  <Text style={[styles.statValue, dynamicStyles.statValue]}>{stat.value}</Text>
-                  <Text style={[styles.statTitle, dynamicStyles.statTitle]}>{stat.title}</Text>
-                  <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
-                </BlurView>
+                  </>
+                )}
               </View>
             </AnimatedTouchable>
           ))}
@@ -316,9 +381,11 @@ export default function Home() {
         >
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Recent Activity</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
+            {recentActivity.length > 0 && (
+              <TouchableOpacity>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.activityCardWrapper}>
             {/* Colored gradient background */}
@@ -328,25 +395,130 @@ export default function Home() {
             />
 
             {/* Glass overlay */}
-            <BlurView
-              intensity={theme === 'dark' ? 40 : 50}
-              tint={theme === 'dark' ? 'dark' : 'light'}
-              style={[styles.activityCardGlass, {
-                backgroundColor: theme === 'dark'
-                  ? 'rgba(43, 44, 44, 0.3)'
-                  : 'rgba(248, 249, 250, 0.4)',
-              }]}
-            >
-              <View style={styles.activityCardContent}>
-                <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
-                <Text style={[styles.activityText, dynamicStyles.activityText]}>No recent activity</Text>
-                <Text style={[styles.activitySubtext, dynamicStyles.activitySubtext]}>Your recent activity will appear here</Text>
-              </View>
-            </BlurView>
+            {Platform.OS === 'ios' ? (
+              <BlurView
+                intensity={theme === 'dark' ? 40 : 50}
+                tint={theme === 'dark' ? 'dark' : 'light'}
+                style={[styles.activityCardGlass, {
+                  backgroundColor: theme === 'dark'
+                    ? 'rgba(43, 44, 44, 0.3)'
+                    : 'rgba(248, 249, 250, 0.4)',
+                }]}
+              >
+                {recentActivity.length === 0 ? (
+                  <View style={styles.activityCardContent}>
+                    <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
+                    <Text style={[styles.activityText, dynamicStyles.activityText]}>No recent activity</Text>
+                    <Text style={[styles.activitySubtext, dynamicStyles.activitySubtext]}>Your recent activity will appear here</Text>
+                  </View>
+                ) : (
+                  <View style={styles.activityList}>
+                    {recentActivity.map((activity, index) => (
+                      <View key={activity.id} style={styles.activityItem}>
+                        <View style={[styles.activityIconContainer, { backgroundColor: `${Colors.blue[500]}30` }]}>
+                          <Ionicons name="flash" size={16} color={Colors.blue[500]} />
+                        </View>
+                        <View style={styles.activityItemContent}>
+                          <Text style={[styles.activityItemTitle, { color: colors.text }]} numberOfLines={1}>
+                            {activity.action}
+                          </Text>
+                          <Text style={[styles.activityItemTime, { color: colors.textTertiary }]}>
+                            {new Date(activity.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </BlurView>
+            ) : (
+              <>
+                <RNCBlurView
+                  style={StyleSheet.absoluteFillObject}
+                  blurType={theme === 'dark' ? 'dark' : 'light'}
+                  blurAmount={5}
+                  reducedTransparencyFallbackColor={
+                    theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+                  }
+                >
+                  <View
+                    style={[
+                      StyleSheet.absoluteFillObject,
+                      {
+                        backgroundColor: theme === 'dark'
+                          ? 'rgba(10, 14, 39, 0.45)'
+                          : 'rgba(248, 249, 250, 0.5)',
+                      },
+                    ]}
+                  />
+
+                  {/* Top edge highlight gradient */}
+                  <LinearGradient
+                    colors={
+                      theme === 'dark'
+                        ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
+                        : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
+                    }
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 0.5 }}
+                    style={StyleSheet.absoluteFillObject}
+                    pointerEvents="none"
+                  />
+
+                  {/* Bottom subtle shine */}
+                  <LinearGradient
+                    colors={
+                      theme === 'dark'
+                        ? ['transparent', 'rgba(255, 255, 255, 0.04)']
+                        : ['transparent', 'rgba(255, 255, 255, 0.25)']
+                    }
+                    start={{ x: 0, y: 0.6 }}
+                    end={{ x: 0, y: 1 }}
+                    style={StyleSheet.absoluteFillObject}
+                    pointerEvents="none"
+                  />
+                </RNCBlurView>
+
+                {recentActivity.length === 0 ? (
+                  <View style={styles.activityCardContent}>
+                    <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
+                    <Text style={[styles.activityText, dynamicStyles.activityText]}>No recent activity</Text>
+                    <Text style={[styles.activitySubtext, dynamicStyles.activitySubtext]}>Your recent activity will appear here</Text>
+                  </View>
+                ) : (
+                  <View style={styles.activityList}>
+                    {recentActivity.map((activity, index) => (
+                      <View key={activity.id} style={styles.activityItem}>
+                        <View style={[styles.activityIconContainer, { backgroundColor: `${Colors.blue[500]}30` }]}>
+                          <Ionicons name="flash" size={16} color={Colors.blue[500]} />
+                        </View>
+                        <View style={styles.activityItemContent}>
+                          <Text style={[styles.activityItemTitle, { color: colors.text }]} numberOfLines={1}>
+                            {activity.action}
+                          </Text>
+                          <Text style={[styles.activityItemTime, { color: colors.textTertiary }]}>
+                            {new Date(activity.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
           </View>
         </AnimatedView>
       </ScrollView>
+
+      {/* Notifications Panel */}
+      <NotificationsPanel
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+        onNotificationRead={() => setUnreadCount((prev) => Math.max(0, prev - 1))}
+        onMarkAllRead={() => setUnreadCount(0)}
+      />
     </View>
+    </PageTransition>
   );
 }
 
@@ -380,21 +552,79 @@ function QuickAction({
         />
 
         {/* Glass overlay */}
-        <BlurView
-          intensity={theme === 'dark' ? 40 : 50}
-          tint={theme === 'dark' ? 'dark' : 'light'}
-          style={[styles.actionButtonGlass, {
-            backgroundColor: theme === 'dark'
-              ? 'rgba(43, 44, 44, 0.3)'
-              : 'rgba(248, 249, 250, 0.4)',
-          }]}
-        >
-          <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
-            <Ionicons name={icon as any} size={24} color={color} />
-          </View>
-          <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
-          <Text style={[styles.actionSubtitle, { color: subtitleColor }]}>{subtitle}</Text>
-        </BlurView>
+        {Platform.OS === 'ios' ? (
+          <BlurView
+            intensity={theme === 'dark' ? 40 : 50}
+            tint={theme === 'dark' ? 'dark' : 'light'}
+            style={[styles.actionButtonGlass, {
+              backgroundColor: theme === 'dark'
+                ? 'rgba(43, 44, 44, 0.3)'
+                : 'rgba(248, 249, 250, 0.4)',
+            }]}
+          >
+            <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
+              <Ionicons name={icon as any} size={24} color={color} />
+            </View>
+            <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
+            <Text style={[styles.actionSubtitle, { color: subtitleColor }]}>{subtitle}</Text>
+          </BlurView>
+        ) : (
+          <>
+            <RNCBlurView
+              style={StyleSheet.absoluteFillObject}
+              blurType={theme === 'dark' ? 'dark' : 'light'}
+              blurAmount={5}
+              reducedTransparencyFallbackColor={
+                theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+              }
+            >
+              <View
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    backgroundColor: theme === 'dark'
+                      ? 'rgba(10, 14, 39, 0.45)'
+                      : 'rgba(248, 249, 250, 0.5)',
+                  },
+                ]}
+              />
+
+              {/* Top edge highlight gradient */}
+              <LinearGradient
+                colors={
+                  theme === 'dark'
+                    ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
+                    : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 0.5 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+              />
+
+              {/* Bottom subtle shine */}
+              <LinearGradient
+                colors={
+                  theme === 'dark'
+                    ? ['transparent', 'rgba(255, 255, 255, 0.04)']
+                    : ['transparent', 'rgba(255, 255, 255, 0.25)']
+                }
+                start={{ x: 0, y: 0.6 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+              />
+            </RNCBlurView>
+
+            <View style={styles.actionButtonGlass}>
+              <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
+                <Ionicons name={icon as any} size={24} color={color} />
+              </View>
+              <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
+              <Text style={[styles.actionSubtitle, { color: subtitleColor }]}>{subtitle}</Text>
+            </View>
+          </>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -419,54 +649,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingTop: Spacing['5xl'],
+    paddingTop: Spacing.md,
     paddingBottom: Platform.OS === 'ios' ? 120 : 100,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing['3xl'],
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  avatarContainer: {
-    ...Shadows.md,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text.primary,
-  },
-  greeting: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text.tertiary,
-    marginBottom: 2,
-  },
-  userName: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text.primary,
-    textTransform: 'capitalize',
-  },
-  signOutButton: {
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-  },
-  signOutGradient: {
-    padding: Spacing.sm,
-    borderRadius: BorderRadius.md,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -635,5 +819,33 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     color: Colors.text.tertiary,
     textAlign: 'center',
+  },
+  activityList: {
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  activityIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityItemContent: {
+    flex: 1,
+  },
+  activityItemTitle: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    marginBottom: 2,
+  },
+  activityItemTime: {
+    fontSize: Typography.fontSize.xs,
   },
 });

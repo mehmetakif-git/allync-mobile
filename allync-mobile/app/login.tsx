@@ -305,12 +305,16 @@ export default function Login() {
 
     setLoading(true);
     const { error } = await signIn(email, password);
-    setLoading(false);
 
     if (error) {
+      setLoading(false);
       Alert.alert('Login Failed', error.message);
     } else {
-      router.replace('/(tabs)');
+      // Keep loading state and delay navigation for smooth transition
+      setTimeout(() => {
+        setLoading(false);
+        router.replace('/(tabs)');
+      }, 600); // Small delay for smooth transition
     }
   };
 

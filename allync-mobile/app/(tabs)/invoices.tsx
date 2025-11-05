@@ -3,15 +3,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, Gradients } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing } from '../../constants/Spacing';
+import { PageTransition } from '../../components/PageTransition';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function Invoices() {
+  const { colors } = useTheme();
+
   return (
-    <LinearGradient colors={Gradients.primary} style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Invoices</Text>
-        <Text style={styles.subtitle}>Your invoices and payment history will appear here</Text>
-      </ScrollView>
-    </LinearGradient>
+    <PageTransition>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+          <Text style={[styles.title, { color: colors.text }]}>Invoices</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Your invoices and payment history will appear here</Text>
+        </ScrollView>
+      </View>
+    </PageTransition>
   );
 }
 
@@ -31,12 +37,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.fontSize['3xl'],
     fontWeight: Typography.fontWeight.bold,
-    color: Colors.text.primary,
     marginBottom: Spacing.md,
   },
   subtitle: {
     fontSize: Typography.fontSize.base,
-    color: Colors.text.secondary,
     textAlign: 'center',
   },
 });
