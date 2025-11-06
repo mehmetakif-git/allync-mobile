@@ -7,7 +7,6 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/Colors';
 import { Typography } from '../constants/Typography';
 import { Spacing, BorderRadius } from '../constants/Spacing';
-
 interface ConfirmationDialogProps {
   visible: boolean;
   onClose: () => void;
@@ -21,9 +20,7 @@ interface ConfirmationDialogProps {
   iconColor?: string;
   iconBg?: string;
 }
-
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
 export default function ConfirmationDialog({
   visible,
   onClose,
@@ -37,10 +34,8 @@ export default function ConfirmationDialog({
   iconColor = Colors.orange[500],
   iconBg = `${Colors.orange[500]}20`,
 }: ConfirmationDialogProps) {
-  const { theme, colors } = useTheme();
-
+  const { colors } = useTheme();
   if (!visible) return null;
-
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <View style={styles.overlay}>
@@ -56,13 +51,12 @@ export default function ConfirmationDialog({
             style={StyleSheet.absoluteFillObject}
           >
             <BlurView
-              intensity={theme === 'dark' ? 95 : 100}
-              tint={theme === 'dark' ? 'dark' : 'light'}
+              intensity={true ? 95 : 100}
+              tint={'dark'}
               style={StyleSheet.absoluteFillObject}
             />
           </TouchableOpacity>
         </Animated.View>
-
         {/* Dialog Card */}
         <AnimatedTouchable
           entering={ZoomIn.duration(300).springify().damping(15).stiffness(150)}
@@ -71,10 +65,9 @@ export default function ConfirmationDialog({
           style={[
             styles.dialogCard,
             {
-              backgroundColor:
-                theme === 'dark' ? 'rgba(43, 44, 44, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+              backgroundColor: 'rgba(43, 44, 44, 0.3)',
               borderColor:
-                theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                'rgba(248, 249, 250, 0.1)',
             },
           ]}
         >
@@ -90,7 +83,7 @@ export default function ConfirmationDialog({
                   styles.closeButton,
                   {
                     backgroundColor:
-                      theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                      'rgba(248, 249, 250, 0.1)',
                   },
                 ]}
                 activeOpacity={0.7}
@@ -99,13 +92,11 @@ export default function ConfirmationDialog({
               </TouchableOpacity>
             )}
           </View>
-
           {/* Content */}
           <View style={styles.content}>
             <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
             <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
           </View>
-
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity
@@ -116,7 +107,7 @@ export default function ConfirmationDialog({
                 styles.cancelButton,
                 {
                   backgroundColor:
-                    theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                    'rgba(248, 249, 250, 0.1)',
                   opacity: isLoading ? 0.5 : 1,
                 },
               ]}
@@ -132,7 +123,6 @@ export default function ConfirmationDialog({
                 Cancel
               </Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               onPress={onConfirm}
               disabled={isLoading}
@@ -165,7 +155,6 @@ export default function ConfirmationDialog({
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

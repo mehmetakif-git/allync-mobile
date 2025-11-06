@@ -4,14 +4,12 @@ import { View } from 'react-native';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { useTheme } from '../../contexts/ThemeContext';
 import EnhancedTabBar from '../../components/EnhancedTabBar';
-
+import BackgroundImage from '../../components/BackgroundImage';
 const AnimatedView = Animated.View;
-
 export default function TabsLayout() {
   const { colors } = useTheme();
   const tabBarTranslateY = useSharedValue(100);
   const tabBarOpacity = useSharedValue(0);
-
   useEffect(() => {
     // Animate tab bar sliding up from bottom with delay
     tabBarTranslateY.value = withDelay(
@@ -22,7 +20,6 @@ export default function TabsLayout() {
         mass: 1,
       })
     );
-
     tabBarOpacity.value = withDelay(
       300,
       withSpring(1, {
@@ -31,16 +28,14 @@ export default function TabsLayout() {
       })
     );
   }, []);
-
   const tabBarAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: tabBarTranslateY.value }],
       opacity: tabBarOpacity.value,
     };
   });
-
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <BackgroundImage>
       {/* Content with fade in and slight slide up */}
       <AnimatedView
         entering={FadeIn.duration(600).delay(100)}
@@ -55,15 +50,15 @@ export default function TabsLayout() {
         >
           <Tabs.Screen name="index" options={{ title: 'Home' }} />
           <Tabs.Screen name="services" options={{ title: 'Services' }} />
+          <Tabs.Screen name="active-services" options={{ title: 'Active Services' }} />
           <Tabs.Screen name="invoices" options={{ title: 'Invoices' }} />
           <Tabs.Screen name="support" options={{ title: 'Support' }} />
         </Tabs>
       </AnimatedView>
-
       {/* Enhanced animated tab bar with liquid animations - slides up from bottom */}
       <Animated.View style={tabBarAnimatedStyle}>
         <EnhancedTabBar />
       </Animated.View>
-    </View>
+    </BackgroundImage>
   );
 }

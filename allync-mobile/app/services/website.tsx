@@ -20,24 +20,19 @@ import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
 import { PageTransition } from '../../components/PageTransition';
-
 type TabType = 'dashboard' | 'details' | 'gallery';
 type ProjectStatus = 'planning' | 'design' | 'development' | 'testing' | 'completed';
-
 export default function WebsiteDevelopment() {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { language } = useLanguage();
-
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [project, setProject] = useState<any>(null);
-
   useEffect(() => {
     loadData();
   }, []);
-
   const loadData = async () => {
     try {
       setLoading(true);
@@ -64,13 +59,11 @@ export default function WebsiteDevelopment() {
       setLoading(false);
     }
   };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
   };
-
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
       case 'planning':
@@ -87,7 +80,6 @@ export default function WebsiteDevelopment() {
         return Colors.gray[500];
     }
   };
-
   const getStatusLabel = (status: ProjectStatus) => {
     const labels = {
       planning: { en: 'Planning', tr: 'Planlama' },
@@ -98,13 +90,11 @@ export default function WebsiteDevelopment() {
     };
     return language === 'en' ? labels[status].en : labels[status].tr;
   };
-
   const tabs: { key: TabType; labelEn: string; labelTr: string; icon: any }[] = [
     { key: 'dashboard', labelEn: 'Dashboard', labelTr: 'Panel', icon: 'grid' },
     { key: 'details', labelEn: 'Details', labelTr: 'Detaylar', icon: 'document-text' },
     { key: 'gallery', labelEn: 'Gallery', labelTr: 'Galeri', icon: 'images' },
   ];
-
   if (loading) {
     return (
       <PageTransition>
@@ -119,7 +109,6 @@ export default function WebsiteDevelopment() {
       </PageTransition>
     );
   }
-
   return (
     <PageTransition>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -140,7 +129,6 @@ export default function WebsiteDevelopment() {
             </View>
           </View>
         </LinearGradient>
-
         {/* Tabs */}
         <ScrollView
           horizontal
@@ -160,14 +148,10 @@ export default function WebsiteDevelopment() {
                   {
                     backgroundColor: isActive
                       ? Colors.purple[500]
-                      : theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.5)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                      : 'rgba(43, 44, 44, 0.5)',
                     borderColor: isActive
                       ? 'transparent'
-                      : theme === 'dark'
-                      ? 'rgba(248, 249, 250, 0.1)'
-                      : 'rgba(43, 44, 44, 0.1)',
+                      : 'rgba(248, 249, 250, 0.1)',
                   },
                 ]}
               >
@@ -188,7 +172,6 @@ export default function WebsiteDevelopment() {
             );
           })}
         </ScrollView>
-
         {/* Content */}
         <ScrollView
           style={styles.content}
@@ -206,12 +189,8 @@ export default function WebsiteDevelopment() {
                 style={[
                   styles.statusCard,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.6)'
-                      : 'rgba(248, 249, 250, 0.6)',
-                    borderColor: theme === 'dark'
-                      ? 'rgba(248, 249, 250, 0.1)'
-                      : 'rgba(43, 44, 44, 0.1)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                    borderColor: 'rgba(248, 249, 250, 0.1)',
                   },
                 ]}
               >
@@ -228,7 +207,6 @@ export default function WebsiteDevelopment() {
                     </Text>
                   </View>
                 </View>
-
                 <View style={styles.progressContainer}>
                   <View style={styles.progressBar}>
                     <LinearGradient
@@ -243,7 +221,6 @@ export default function WebsiteDevelopment() {
                   </Text>
                 </View>
               </Animated.View>
-
               {/* Timeline */}
               <Animated.View entering={FadeInDown.duration(400).delay(200)}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -254,12 +231,8 @@ export default function WebsiteDevelopment() {
                     style={[
                       styles.timelineCard,
                       {
-                        backgroundColor: theme === 'dark'
-                          ? 'rgba(43, 44, 44, 0.5)'
-                          : 'rgba(248, 249, 250, 0.5)',
-                        borderColor: theme === 'dark'
-                          ? 'rgba(248, 249, 250, 0.1)'
-                          : 'rgba(43, 44, 44, 0.1)',
+                        backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                        borderColor: 'rgba(248, 249, 250, 0.1)',
                       },
                     ]}
                   >
@@ -271,17 +244,12 @@ export default function WebsiteDevelopment() {
                       {new Date(project.startDate).toLocaleDateString()}
                     </Text>
                   </View>
-
                   <View
                     style={[
                       styles.timelineCard,
                       {
-                        backgroundColor: theme === 'dark'
-                          ? 'rgba(43, 44, 44, 0.5)'
-                          : 'rgba(248, 249, 250, 0.5)',
-                        borderColor: theme === 'dark'
-                          ? 'rgba(248, 249, 250, 0.1)'
-                          : 'rgba(43, 44, 44, 0.1)',
+                        backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                        borderColor: 'rgba(248, 249, 250, 0.1)',
                       },
                     ]}
                   >
@@ -295,7 +263,6 @@ export default function WebsiteDevelopment() {
                   </View>
                 </View>
               </Animated.View>
-
               {/* Features Checklist */}
               <Animated.View entering={FadeInDown.duration(400).delay(300)}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -308,12 +275,8 @@ export default function WebsiteDevelopment() {
                       style={[
                         styles.featureItem,
                         {
-                          backgroundColor: theme === 'dark'
-                            ? 'rgba(43, 44, 44, 0.5)'
-                            : 'rgba(248, 249, 250, 0.5)',
-                          borderColor: theme === 'dark'
-                            ? 'rgba(248, 249, 250, 0.1)'
-                            : 'rgba(43, 44, 44, 0.1)',
+                          backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                          borderColor: 'rgba(248, 249, 250, 0.1)',
                         },
                       ]}
                     >
@@ -340,7 +303,6 @@ export default function WebsiteDevelopment() {
                   ))}
                 </View>
               </Animated.View>
-
               {/* Quick Actions */}
               {project.url && (
                 <Animated.View entering={FadeInDown.duration(400).delay(400)}>
@@ -371,16 +333,13 @@ export default function WebsiteDevelopment() {
               )}
             </>
           )}
-
           {activeTab === 'details' && (
             <Animated.View entering={FadeIn.duration(400)}>
               <View
                 style={[
                   styles.emptyState,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.5)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.5)',
                   },
                 ]}
               >
@@ -396,16 +355,13 @@ export default function WebsiteDevelopment() {
               </View>
             </Animated.View>
           )}
-
           {activeTab === 'gallery' && (
             <Animated.View entering={FadeIn.duration(400)}>
               <View
                 style={[
                   styles.emptyState,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.5)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.5)',
                   },
                 ]}
               >
@@ -426,7 +382,6 @@ export default function WebsiteDevelopment() {
     </PageTransition>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

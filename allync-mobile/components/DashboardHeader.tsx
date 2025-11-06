@@ -1,15 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { BlurView as RNCBlurView } from '@react-native-community/blur';
+import { BlurView, RNCBlurView } from './BlurViewCompat';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/Colors';
 import { Typography } from '../constants/Typography';
 import { Spacing, BorderRadius, Shadows } from '../constants/Spacing';
-
 interface DashboardHeaderProps {
   userName: string;
   userInitial: string;
@@ -18,7 +16,6 @@ interface DashboardHeaderProps {
   unreadCount: number;
   bellAnimatedStyle?: any;
 }
-
 export default function DashboardHeader({
   userName,
   userInitial,
@@ -27,34 +24,30 @@ export default function DashboardHeader({
   unreadCount,
   bellAnimatedStyle,
 }: DashboardHeaderProps) {
-  const { theme, colors } = useTheme();
-
+  const { colors } = useTheme();
   return (
     <View style={styles.headerContainer}>
       {/* Glassmorphism Background */}
       <View style={StyleSheet.absoluteFillObject}>
         <LinearGradient
           colors={
-            theme === 'dark'
+            true
               ? ['rgba(10, 14, 39, 0.95)', 'rgba(10, 14, 39, 0.8)']
               : ['rgba(248, 249, 250, 0.95)', 'rgba(248, 249, 250, 0.8)']
           }
           style={StyleSheet.absoluteFillObject}
         />
-
         {Platform.OS === 'ios' ? (
           <BlurView
             intensity={95}
-            tint={theme === 'dark' ? 'dark' : 'light'}
+            tint={'dark'}
             style={StyleSheet.absoluteFillObject}
           >
             <View
               style={[
                 StyleSheet.absoluteFillObject,
                 {
-                  backgroundColor: theme === 'dark'
-                    ? 'rgba(43, 44, 44, 0.7)'
-                    : 'rgba(248, 249, 250, 0.7)',
+                  backgroundColor: 'rgba(43, 44, 44, 0.3)',
                 },
               ]}
             />
@@ -62,27 +55,24 @@ export default function DashboardHeader({
         ) : (
           <RNCBlurView
             style={StyleSheet.absoluteFillObject}
-            blurType={theme === 'dark' ? 'dark' : 'light'}
+            blurType={'dark'}
             blurAmount={5}
             reducedTransparencyFallbackColor={
-              theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+              'rgba(10, 14, 39, 0.85)'
             }
           >
             <View
               style={[
                 StyleSheet.absoluteFillObject,
                 {
-                  backgroundColor: theme === 'dark'
-                    ? 'rgba(10, 14, 39, 0.45)'
-                    : 'rgba(248, 249, 250, 0.5)',
+                  backgroundColor: 'rgba(43, 44, 44, 0.3)',
                 },
               ]}
             />
-
             {/* Top edge highlight gradient */}
             <LinearGradient
               colors={
-                theme === 'dark'
+                true
                   ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
                   : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
               }
@@ -91,11 +81,10 @@ export default function DashboardHeader({
               style={StyleSheet.absoluteFillObject}
               pointerEvents="none"
             />
-
             {/* Bottom subtle shine */}
             <LinearGradient
               colors={
-                theme === 'dark'
+                true
                   ? ['transparent', 'rgba(255, 255, 255, 0.04)']
                   : ['transparent', 'rgba(255, 255, 255, 0.25)']
               }
@@ -106,20 +95,18 @@ export default function DashboardHeader({
             />
           </RNCBlurView>
         )}
-
         {/* Border */}
         <View
           style={[
             styles.headerBorder,
             {
-              borderBottomColor: theme === 'dark'
+              borderBottomColor: true
                 ? 'rgba(255, 255, 255, 0.1)'
                 : 'rgba(0, 0, 0, 0.1)',
             },
           ]}
         />
       </View>
-
       {/* Content */}
       <Animated.View
         entering={FadeInDown.duration(600).springify()}
@@ -143,7 +130,6 @@ export default function DashboardHeader({
             </Text>
           </View>
         </View>
-
         {/* Notification Bell */}
         <TouchableOpacity
           onPress={onNotificationPress}
@@ -165,7 +151,6 @@ export default function DashboardHeader({
             </View>
           )}
         </TouchableOpacity>
-
         {/* Sign Out Button */}
         <TouchableOpacity onPress={onSignOutPress} style={styles.signOutButton}>
           <LinearGradient
@@ -179,7 +164,6 @@ export default function DashboardHeader({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   headerContainer: {
     paddingTop: Platform.OS === 'ios' ? Spacing['5xl'] : Spacing['4xl'],

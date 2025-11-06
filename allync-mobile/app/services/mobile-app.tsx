@@ -20,25 +20,20 @@ import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
 import { PageTransition } from '../../components/PageTransition';
-
 type TabType = 'dashboard' | 'details' | 'gallery';
 type ProjectStatus = 'planning' | 'design' | 'development' | 'testing' | 'completed';
 type PlatformType = 'ios' | 'android' | 'both';
-
 export default function MobileAppDevelopment() {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { language } = useLanguage();
-
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [project, setProject] = useState<any>(null);
-
   useEffect(() => {
     loadData();
   }, []);
-
   const loadData = async () => {
     try {
       setLoading(true);
@@ -66,13 +61,11 @@ export default function MobileAppDevelopment() {
       setLoading(false);
     }
   };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
   };
-
   const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
       case 'planning':
@@ -89,7 +82,6 @@ export default function MobileAppDevelopment() {
         return Colors.gray[500];
     }
   };
-
   const getStatusLabel = (status: ProjectStatus) => {
     const labels = {
       planning: { en: 'Planning', tr: 'Planlama' },
@@ -100,7 +92,6 @@ export default function MobileAppDevelopment() {
     };
     return language === 'en' ? labels[status].en : labels[status].tr;
   };
-
   const getPlatformLabel = (platform: PlatformType) => {
     const labels = {
       ios: { en: 'iOS', tr: 'iOS' },
@@ -109,13 +100,11 @@ export default function MobileAppDevelopment() {
     };
     return language === 'en' ? labels[platform].en : labels[platform].tr;
   };
-
   const tabs: { key: TabType; labelEn: string; labelTr: string; icon: any }[] = [
     { key: 'dashboard', labelEn: 'Dashboard', labelTr: 'Panel', icon: 'grid' },
     { key: 'details', labelEn: 'Details', labelTr: 'Detaylar', icon: 'document-text' },
     { key: 'gallery', labelEn: 'Gallery', labelTr: 'Galeri', icon: 'images' },
   ];
-
   if (loading) {
     return (
       <PageTransition>
@@ -130,7 +119,6 @@ export default function MobileAppDevelopment() {
       </PageTransition>
     );
   }
-
   return (
     <PageTransition>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -151,7 +139,6 @@ export default function MobileAppDevelopment() {
             </View>
           </View>
         </LinearGradient>
-
         {/* Tabs */}
         <ScrollView
           horizontal
@@ -171,14 +158,10 @@ export default function MobileAppDevelopment() {
                   {
                     backgroundColor: isActive
                       ? Colors.blue[500]
-                      : theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.5)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                      : 'rgba(43, 44, 44, 0.5)',
                     borderColor: isActive
                       ? 'transparent'
-                      : theme === 'dark'
-                      ? 'rgba(248, 249, 250, 0.1)'
-                      : 'rgba(43, 44, 44, 0.1)',
+                      : 'rgba(248, 249, 250, 0.1)',
                   },
                 ]}
               >
@@ -199,7 +182,6 @@ export default function MobileAppDevelopment() {
             );
           })}
         </ScrollView>
-
         {/* Content */}
         <ScrollView
           style={styles.content}
@@ -217,12 +199,8 @@ export default function MobileAppDevelopment() {
                 style={[
                   styles.statusCard,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.6)'
-                      : 'rgba(248, 249, 250, 0.6)',
-                    borderColor: theme === 'dark'
-                      ? 'rgba(248, 249, 250, 0.1)'
-                      : 'rgba(43, 44, 44, 0.1)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                    borderColor: 'rgba(248, 249, 250, 0.1)',
                   },
                 ]}
               >
@@ -239,7 +217,6 @@ export default function MobileAppDevelopment() {
                     </Text>
                   </View>
                 </View>
-
                 <View style={styles.progressContainer}>
                   <View style={styles.progressBar}>
                     <LinearGradient
@@ -254,7 +231,6 @@ export default function MobileAppDevelopment() {
                   </Text>
                 </View>
               </Animated.View>
-
               {/* Platform Info */}
               <Animated.View
                 entering={FadeInDown.duration(400).delay(150)}
@@ -288,7 +264,6 @@ export default function MobileAppDevelopment() {
                   )}
                 </View>
               </Animated.View>
-
               {/* Timeline */}
               <Animated.View entering={FadeInDown.duration(400).delay(200)}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -299,12 +274,8 @@ export default function MobileAppDevelopment() {
                     style={[
                       styles.timelineCard,
                       {
-                        backgroundColor: theme === 'dark'
-                          ? 'rgba(43, 44, 44, 0.5)'
-                          : 'rgba(248, 249, 250, 0.5)',
-                        borderColor: theme === 'dark'
-                          ? 'rgba(248, 249, 250, 0.1)'
-                          : 'rgba(43, 44, 44, 0.1)',
+                        backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                        borderColor: 'rgba(248, 249, 250, 0.1)',
                       },
                     ]}
                   >
@@ -316,17 +287,12 @@ export default function MobileAppDevelopment() {
                       {new Date(project.startDate).toLocaleDateString()}
                     </Text>
                   </View>
-
                   <View
                     style={[
                       styles.timelineCard,
                       {
-                        backgroundColor: theme === 'dark'
-                          ? 'rgba(43, 44, 44, 0.5)'
-                          : 'rgba(248, 249, 250, 0.5)',
-                        borderColor: theme === 'dark'
-                          ? 'rgba(248, 249, 250, 0.1)'
-                          : 'rgba(43, 44, 44, 0.1)',
+                        backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                        borderColor: 'rgba(248, 249, 250, 0.1)',
                       },
                     ]}
                   >
@@ -340,7 +306,6 @@ export default function MobileAppDevelopment() {
                   </View>
                 </View>
               </Animated.View>
-
               {/* Features Checklist */}
               <Animated.View entering={FadeInDown.duration(400).delay(300)}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -353,12 +318,8 @@ export default function MobileAppDevelopment() {
                       style={[
                         styles.featureItem,
                         {
-                          backgroundColor: theme === 'dark'
-                            ? 'rgba(43, 44, 44, 0.5)'
-                            : 'rgba(248, 249, 250, 0.5)',
-                          borderColor: theme === 'dark'
-                            ? 'rgba(248, 249, 250, 0.1)'
-                            : 'rgba(43, 44, 44, 0.1)',
+                          backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                          borderColor: 'rgba(248, 249, 250, 0.1)',
                         },
                       ]}
                     >
@@ -385,7 +346,6 @@ export default function MobileAppDevelopment() {
                   ))}
                 </View>
               </Animated.View>
-
               {/* Quick Actions */}
               <Animated.View entering={FadeInDown.duration(400).delay(400)}>
                 <View style={styles.actionsGrid}>
@@ -404,7 +364,6 @@ export default function MobileAppDevelopment() {
                       {language === 'en' ? 'Download APK' : 'APK İndir'}
                     </Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
                     activeOpacity={0.8}
                     style={[
@@ -424,16 +383,13 @@ export default function MobileAppDevelopment() {
               </Animated.View>
             </>
           )}
-
           {activeTab === 'details' && (
             <Animated.View entering={FadeIn.duration(400)}>
               <View
                 style={[
                   styles.emptyState,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.5)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.5)',
                   },
                 ]}
               >
@@ -449,16 +405,13 @@ export default function MobileAppDevelopment() {
               </View>
             </Animated.View>
           )}
-
           {activeTab === 'gallery' && (
             <Animated.View entering={FadeIn.duration(400)}>
               <View
                 style={[
                   styles.emptyState,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.5)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.5)',
                   },
                 ]}
               >
@@ -479,7 +432,6 @@ export default function MobileAppDevelopment() {
     </PageTransition>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

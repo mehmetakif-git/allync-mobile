@@ -1,231 +1,317 @@
 import React, { useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform, Text, Dimensions } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform, Text, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
+  interpolate,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { getActiveServices, getServiceIcon } from '../lib/api/companyServices';
 import { Colors } from '../constants/Colors';
-import { Typography } from '../constants/Typography';
-import { Spacing, BorderRadius } from '../constants/Spacing';
 import GlassSurface from './GlassSurface';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface TabConfig {
   name: string;
   icon: keyof typeof Ionicons.glyphMap;
   route: string;
-  instanceCount?: number;
-  status?: string;
+}
+
+interface MenuItemConfig {
+  name: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  route: string;
 }
 
 export default function EnhancedTabBar() {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [tabs, setTabs] = useState<TabConfig[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isCompanyAdmin = user?.role === 'company_admin';
 
-  useEffect(() => {
-    const fetchServicesAndBuildTabs = async () => {
-      try {
-        setIsLoading(true);
-        const baseTabs: TabConfig[] = [{ name: 'Home', icon: 'home', route: '/(tabs)/' }];
-        let serviceTabs: TabConfig[] = [];
+  // Debug logging
+  console.log('EnhancedTabBar - User:', user);
+  console.log('EnhancedTabBar - isCompanyAdmin:', isCompanyAdmin);
 
-        if (user?.company_id) {
-          try {
-            const services = await getActiveServices(user.company_id);
-            const serviceGroups = services.reduce((acc: any, cs: any) => {
-              if (cs.service_type?.status === 'inactive') return acc;
-              const typeId = cs.service_type_id;
-              if (!acc[typeId]) acc[typeId] = [];
-              acc[typeId].push(cs);
-              return acc;
-            }, {});
+  // 3 main tabs: Home, Plus, Support
+  const mainTabs: TabConfig[] = [
+    { name: 'Home', icon: 'home', route: '/(tabs)/' },
+    { name: 'Support', icon: 'chatbubbles', route: '/(tabs)/support' },
+  ];
 
-            serviceTabs = Object.entries(serviceGroups).map(([_, instances]: [string, any]) => {
-              const firstInstance = instances[0];
-              const service = firstInstance.service_type;
-              const isInMaintenance = service.status === 'maintenance' || instances.some((inst: any) => inst.status === 'maintenance');
-              return {
-                name: service.name_en,
-                icon: getServiceIcon(service.slug) as keyof typeof Ionicons.glyphMap,
-                route: `/(tabs)/services/${service.slug}`,
-                instanceCount: instances.length,
-                status: isInMaintenance ? 'maintenance' : 'active',
-              };
-            });
-          } catch {
-            serviceTabs = [{ name: 'Services', icon: 'server', route: '/(tabs)/services' }];
-          }
-        } else {
-          serviceTabs = [{ name: 'Services', icon: 'server', route: '/(tabs)/services' }];
-        }
+  // Expandable menu items: Services, Active Services, Invoices
+  const menuItems: MenuItemConfig[] = [
+    { name: 'Services', icon: 'grid', route: '/(tabs)/services' },
+    { name: 'Active', icon: 'pulse', route: '/(tabs)/active-services' },
+    { name: 'Invoices', icon: 'receipt', route: '/(tabs)/invoices' },
+  ];
 
-        const bottomTabs: TabConfig[] = [
-          ...(isCompanyAdmin ? [{ name: 'Invoices', icon: 'receipt' as keyof typeof Ionicons.glyphMap, route: '/(tabs)/invoices' }] : []),
-          { name: 'Support', icon: 'chatbubbles' as keyof typeof Ionicons.glyphMap, route: '/(tabs)/support' },
-        ];
+  console.log('EnhancedTabBar - menuItems:', menuItems);
 
-        setTabs([...baseTabs, ...serviceTabs, ...bottomTabs]);
-      } catch {
-        setTabs([
-          { name: 'Home', icon: 'home', route: '/(tabs)/' },
-          { name: 'Services', icon: 'server', route: '/(tabs)/services' },
-          { name: 'Support', icon: 'chatbubbles', route: '/(tabs)/support' },
-        ]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchServicesAndBuildTabs();
-  }, [user?.company_id, isCompanyAdmin]);
-
-  const getActiveIndex = () => {
-    console.log('🔍 [TabBar] Checking pathname:', pathname, 'Available routes:', tabs.map(t => t.route));
-
-    for (let i = 0; i < tabs.length; i++) {
-      const tabRoute = tabs[i].route;
-
-      // Exact match
-      if (pathname === tabRoute) {
-        console.log('✅ [TabBar] Exact match! Tab:', tabs[i].name, 'Index:', i);
-        return i;
-      }
-
-      // Check if pathname matches without (tabs) prefix
-      // Pathname: /services, Route: /(tabs)/services
-      const routeWithoutTabs = tabRoute.replace('/(tabs)', '');
+  const getActiveTab = () => {
+    // Check if current pathname matches any menu item route
+    for (const item of menuItems) {
+      const itemRoute = item.route;
+      if (pathname === itemRoute) return 'menu'; // Active tab is in menu
+      const routeWithoutTabs = itemRoute.replace('/(tabs)', '');
       if (pathname === routeWithoutTabs || pathname.startsWith(routeWithoutTabs + '/')) {
-        console.log('✅ [TabBar] Route match! Tab:', tabs[i].name, 'Index:', i);
-        return i;
-      }
-
-      // Check if pathname starts with route
-      if (pathname.startsWith(tabRoute + '/') || pathname.startsWith(tabRoute)) {
-        console.log('✅ [TabBar] Prefix match! Tab:', tabs[i].name, 'Index:', i);
-        return i;
+        return 'menu'; // Active tab is in menu
       }
     }
 
-    console.log('⚠️ [TabBar] No match found, defaulting to Home');
-    return 0;
+    // Check main tabs
+    for (const tab of mainTabs) {
+      const tabRoute = tab.route;
+      if (pathname === tabRoute) return tab.route;
+      const routeWithoutTabs = tabRoute.replace('/(tabs)', '');
+      if (pathname === routeWithoutTabs || pathname.startsWith(routeWithoutTabs + '/')) {
+        return tab.route;
+      }
+    }
+    return '/(tabs)/';
   };
 
-  const activeIndex = getActiveIndex();
+  const activeTab = getActiveTab();
+  const isPlusActive = activeTab === 'menu';
 
-  console.log('🎯 [TabBar] Rendering with activeIndex:', activeIndex, 'tabs count:', tabs.length);
+  const handleMenuItemPress = (route: string) => {
+    setIsMenuOpen(false);
+    router.push(route as any);
+  };
 
-  if (tabs.length === 0) return null;
+  const handlePlusPress = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Auto-close menu when navigating to different tabs
+  useEffect(() => {
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+    }
+  }, [pathname]);
 
   return (
-    <View style={styles.container}>
-      <GlassSurface
-        style={styles.glassContainer}
-        borderRadius={30}
-        borderWidth={1}
-        opacity={0.93}
-        brightness={50}
-        theme={theme}
-      >
-        <View style={styles.innerContainer}>
-          {/* Tabs */}
-          <View style={styles.tabsRow}>
-            {tabs.map((tab, index) => (
-              <TabButton
-                key={`${tab.route}-${index}`}
-                tab={tab}
-                isActive={activeIndex === index}
-                onPress={() => router.push(tab.route as any)}
-                theme={theme}
+    <>
+      {/* Backdrop overlay */}
+      {isMenuOpen && (
+        <Pressable
+          style={styles.backdrop}
+          onPress={() => setIsMenuOpen(false)}
+        >
+          <Animated.View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />
+        </Pressable>
+      )}
+
+      {/* Expandable Menu */}
+      <ExpandableMenu
+        isOpen={isMenuOpen}
+        items={menuItems}
+        onItemPress={handleMenuItemPress}
+        colors={colors}
+        pathname={pathname}
+      />
+
+      {/* Main Tab Bar */}
+      <View style={styles.container}>
+        <GlassSurface
+          style={styles.glassContainer}
+          borderRadius={30}
+          borderWidth={1}
+          opacity={0.95}
+          brightness={50}
+        >
+          <View style={styles.innerContainer}>
+            <View style={styles.tabsRow}>
+              {/* Home Tab */}
+              <MainTabButton
+                tab={mainTabs[0]}
+                isActive={activeTab === mainTabs[0].route}
+                onPress={() => router.push(mainTabs[0].route as any)}
                 colors={colors}
-                tabsCount={tabs.length}
               />
-            ))}
+
+              {/* Plus Button */}
+              <PlusButton
+                isOpen={isMenuOpen}
+                isActive={isPlusActive}
+                onPress={handlePlusPress}
+                colors={colors}
+              />
+
+              {/* Support Tab */}
+              <MainTabButton
+                tab={mainTabs[1]}
+                isActive={activeTab === mainTabs[1].route}
+                onPress={() => router.push(mainTabs[1].route as any)}
+                colors={colors}
+              />
+            </View>
           </View>
-        </View>
-      </GlassSurface>
-    </View>
+        </GlassSurface>
+      </View>
+    </>
   );
 }
 
-function TabButton({ tab, isActive, onPress, theme, colors, tabsCount }: any) {
-  const iconScale = useSharedValue(isActive ? 1.2 : 1);
-  const bgOpacity = useSharedValue(isActive ? 1 : 0);
-  const bgScale = useSharedValue(isActive ? 1 : 0.9);
+function ExpandableMenu({ isOpen, items, onItemPress, colors, pathname }: any) {
+  const scale = useSharedValue(0);
+  const opacity = useSharedValue(0);
 
   useEffect(() => {
-    // Çok hızlı ve smooth animasyon
-    iconScale.value = withSpring(isActive ? 1.15 : 1, {
-      damping: 12,
-      stiffness: 200,
-      mass: 0.5,
-    });
-    bgOpacity.value = withTiming(isActive ? 1 : 0, { duration: 200 });
-    bgScale.value = withSpring(isActive ? 1 : 0.92, {
-      damping: 12,
-      stiffness: 200,
-      mass: 0.5,
-    });
-  }, [isActive]);
+    if (isOpen) {
+      scale.value = withSpring(1, {
+        damping: 30,
+        stiffness: 180,
+      });
+      opacity.value = withTiming(1, { duration: 200 });
+    } else {
+      scale.value = withSpring(0, {
+        damping: 30,
+        stiffness: 180,
+      });
+      opacity.value = withTiming(0, { duration: 150 });
+    }
+  }, [isOpen]);
 
-  const bgStyle = useAnimatedStyle(() => ({
-    opacity: bgOpacity.value,
-    transform: [{ scale: bgScale.value }],
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
   }));
+
+  // Check if a menu item is active
+  const isMenuItemActive = (route: string) => {
+    if (pathname === route) return true;
+    const routeWithoutTabs = route.replace('/(tabs)', '');
+    if (pathname === routeWithoutTabs || pathname.startsWith(routeWithoutTabs + '/')) {
+      return true;
+    }
+    return false;
+  };
+
+  if (!isOpen && opacity.value === 0) return null;
+
+  return (
+    <Animated.View style={[styles.expandableMenu, animatedStyle]}>
+      <GlassSurface
+        style={styles.menuContainer}
+        borderRadius={60}
+        borderWidth={1}
+        opacity={0.98}
+        brightness={55}
+      >
+        <View style={styles.menuContent}>
+          {items.map((item: MenuItemConfig) => {
+            const isActive = isMenuItemActive(item.route);
+            return (
+              <TouchableOpacity
+                key={item.route}
+                style={styles.menuItem}
+                onPress={() => onItemPress(item.route)}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.menuIconContainer,
+                  isActive && { backgroundColor: 'rgba(59, 130, 246, 0.4)' }
+                ]}>
+                  <Ionicons
+                    name={item.icon}
+                    size={28}
+                    color={isActive ? Colors.blue[300] : Colors.blue[400]}
+                  />
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </GlassSurface>
+    </Animated.View>
+  );
+}
+
+function PlusButton({ isOpen, isActive, onPress, colors }: any) {
+  const rotation = useSharedValue(0);
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    rotation.value = withSpring(isOpen ? 45 : 0, {
+      damping: 15,
+      stiffness: 200,
+    });
+    scale.value = withSpring(isOpen || isActive ? 1.1 : 1, {
+      damping: 15,
+      stiffness: 200,
+    });
+  }, [isOpen, isActive]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${rotation.value}deg` },
+      { scale: scale.value },
+    ],
+  }));
+
+  const iconColor = isActive ? Colors.blue[400] : colors.text;
+
+  return (
+    <TouchableOpacity
+      style={styles.plusButtonContainer}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Animated.View style={animatedStyle}>
+        <Ionicons name="add-outline" size={42} color={iconColor} style={{ fontWeight: '900' }} />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+function MainTabButton({ tab, isActive, onPress, colors }: any) {
+  const iconScale = useSharedValue(isActive ? 1.1 : 1);
+  const textOpacity = useSharedValue(isActive ? 1 : 0.7);
+
+  useEffect(() => {
+    iconScale.value = withSpring(isActive ? 1.1 : 1, {
+      damping: 15,
+      stiffness: 200,
+      mass: 0.5,
+    });
+    textOpacity.value = withTiming(isActive ? 1 : 0.7, { duration: 200 });
+  }, [isActive]);
 
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }],
   }));
 
-  const iconColor = isActive ? (theme === 'dark' ? '#E5E7EB' : '#1F2937') : colors.textSecondary;
-  const labelColor = isActive ? (theme === 'dark' ? '#E5E7EB' : '#1F2937') : colors.textSecondary;
+  const textStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+  }));
+
+  const iconColor = isActive ? Colors.blue[400] : colors.textSecondary;
+  const labelColor = isActive ? colors.text : colors.textSecondary;
 
   return (
-    <TouchableOpacity style={styles.tab} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.tabWrapper}>
-        {/* Animated Background */}
-        <Animated.View
-          style={[
-            styles.tabBackground,
-            {
-              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-            },
-            bgStyle,
-          ]}
-        />
+    <TouchableOpacity style={styles.mainTab} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.tabContent}>
+        <Animated.View style={[styles.iconContainer, iconStyle]}>
+          <Ionicons name={tab.icon} size={26} color={iconColor} />
+        </Animated.View>
 
-        {/* Content */}
-        <View style={styles.tabContent}>
-          <Animated.View style={[styles.iconContainer, iconStyle]}>
-            <Ionicons name={tab.icon} size={22} color={iconColor} />
-            {tab.status === 'maintenance' && (
-              <View style={styles.badge}>
-                <Ionicons name="warning" size={10} color={Colors.orange[500]} />
-              </View>
-            )}
-            {tab.instanceCount && tab.instanceCount > 1 && !tab.status && (
-              <View style={styles.countBadge}>
-                <Text style={styles.countText}>{tab.instanceCount}</Text>
-              </View>
-            )}
-          </Animated.View>
-          <Text style={[styles.label, { color: labelColor, fontWeight: isActive ? '700' : '500' }]} numberOfLines={1}>
-            {tab.name}
-          </Text>
-        </View>
+        <Animated.Text
+          style={[
+            styles.label,
+            { color: labelColor, fontWeight: isActive ? '700' : '500' },
+            textStyle,
+          ]}
+          numberOfLines={1}
+        >
+          {tab.name}
+        </Animated.Text>
       </View>
     </TouchableOpacity>
   );
@@ -238,6 +324,14 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     height: Platform.OS === 'ios' ? 85 : 70,
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 998,
   },
   glassContainer: {
     flex: 1,
@@ -253,74 +347,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     flex: 1,
-    gap: 6,
   },
-  tab: {
+  mainTab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabWrapper: {
-    position: 'relative',
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 2,
-  },
-  tabBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 20,
-  },
   tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
-    zIndex: 1,
+    gap: 4,
+    paddingVertical: 4,
   },
   iconContainer: {
-    position: 'relative',
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: `${Colors.orange[500]}30`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.orange[500],
-  },
-  countBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: Colors.blue[500],
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  countText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
   label: {
-    fontSize: 11,
+    fontSize: 12,
     textAlign: 'center',
+  },
+  plusButtonContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  expandableMenu: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 115 : 95,
+    alignSelf: 'center',
+    zIndex: 999,
+  },
+  menuContainer: {
+    overflow: 'hidden',
+  },
+  menuContent: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 20,
+  },
+  menuItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

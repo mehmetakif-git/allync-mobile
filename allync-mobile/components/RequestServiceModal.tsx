@@ -24,8 +24,7 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { BlurView as RNCBlurView } from '@react-native-community/blur';
+import { BlurView, RNCBlurView } from './BlurViewCompat';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -34,33 +33,27 @@ import { Typography } from '../constants/Typography';
 import { Spacing, BorderRadius } from '../constants/Spacing';
 import type { Service } from '../lib/api/services';
 import GlassSurface from './GlassSurface';
-
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 interface RequestServiceModalProps {
   visible: boolean;
   service: Service | null;
   onClose: () => void;
   onSubmit: (packageType: 'basic' | 'pro' | 'premium', notes: string) => Promise<void>;
 }
-
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
 export default function RequestServiceModal({
   visible,
   service,
   onClose,
   onSubmit,
 }: RequestServiceModalProps) {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { language } = useLanguage();
   const [selectedPackage, setSelectedPackage] = useState<'basic' | 'pro' | 'premium'>('pro');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
   const successScale = useSharedValue(0);
-
   useEffect(() => {
     if (showSuccess) {
       successScale.value = withSequence(
@@ -71,20 +64,16 @@ export default function RequestServiceModal({
       successScale.value = 0;
     }
   }, [showSuccess]);
-
   const successAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: successScale.value }],
   }));
-
   const handleSubmit = async () => {
     if (!service) return;
-
     setIsSubmitting(true);
     try {
       await onSubmit(selectedPackage, notes);
       setIsSubmitting(false);
       setShowSuccess(true);
-
       setTimeout(() => {
         setShowSuccess(false);
         setNotes('');
@@ -96,9 +85,7 @@ export default function RequestServiceModal({
       setIsSubmitting(false);
     }
   };
-
   if (!service || !visible) return null;
-
   // Helper function to safely parse pricing data
   const parsePricing = (pricingData: any) => {
     if (!pricingData) return null;
@@ -114,23 +101,18 @@ export default function RequestServiceModal({
     }
     return null;
   };
-
   const basicPricing = parsePricing(service.pricing_basic);
   const standardPricing = parsePricing(service.pricing_standard);
   const premiumPricing = parsePricing(service.pricing_premium);
-
   const basicFeatures = Array.isArray(basicPricing?.features_en)
     ? basicPricing.features_en
     : ['Standard features', 'Email support', 'Monthly reports', 'Basic analytics'];
-
   const standardFeatures = Array.isArray(standardPricing?.features_en)
     ? standardPricing.features_en
     : ['All Basic features', 'Priority support', 'Weekly reports', 'Advanced analytics', 'API access'];
-
   const premiumFeatures = Array.isArray(premiumPricing?.features_en)
     ? premiumPricing.features_en
     : ['All Standard features', '24/7 dedicated support', 'Daily reports', 'Custom integrations', 'SLA guarantee', 'Dedicated account manager'];
-
   const packages = [
     {
       id: 'basic' as const,
@@ -158,10 +140,8 @@ export default function RequestServiceModal({
       features: premiumFeatures,
     },
   ];
-
   const serviceName = language === 'en' ? service.name_en : service.name_tr;
   const selectedPkg = packages.find(p => p.id === selectedPackage);
-
   // Success Screen
   if (showSuccess) {
     return (
@@ -173,7 +153,6 @@ export default function RequestServiceModal({
         onRequestClose={onClose}
       >
         <StatusBar barStyle="light-content" />
-
         {/* Glass backdrop overlay */}
         <GlassSurface
           style={StyleSheet.absoluteFillObject}
@@ -183,13 +162,12 @@ export default function RequestServiceModal({
           brightness={10}
           theme="dark"
         />
-
         <Animated.View style={[styles.successContainer, successAnimatedStyle]}>
           <View
             style={[
               styles.successCard,
               {
-                backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.95)' : 'rgba(248, 249, 250, 0.95)',
+                backgroundColor: 'rgba(43, 44, 44, 0.3)',
                 borderColor: Colors.green[500] + '50',
               },
             ]}
@@ -202,7 +180,6 @@ export default function RequestServiceModal({
                 <Ionicons name="checkmark-circle" size={64} color="#FFFFFF" />
               </LinearGradient>
             </View>
-
             <Text style={[styles.successTitle, { color: colors.text }]}>
               {language === 'en' ? 'Request Submitted!' : 'Talep Gönderildi!'}
             </Text>
@@ -216,7 +193,6 @@ export default function RequestServiceModal({
       </Modal>
     );
   }
-
   return (
     <Modal
       visible={visible}
@@ -226,7 +202,6 @@ export default function RequestServiceModal({
       onRequestClose={onClose}
     >
       <StatusBar barStyle="light-content" />
-
       {/* Glass backdrop overlay */}
       <TouchableOpacity
         activeOpacity={1}
@@ -242,7 +217,6 @@ export default function RequestServiceModal({
           theme="dark"
         />
       </TouchableOpacity>
-
       <Animated.View
         entering={SlideInDown.duration(350).damping(18).stiffness(90)}
         exiting={SlideOutDown.duration(250)}
@@ -253,27 +227,26 @@ export default function RequestServiceModal({
           {Platform.OS === 'ios' ? (
             <BlurView
               intensity={95}
-              tint={theme === 'dark' ? 'dark' : 'light'}
+              tint={'dark'}
               style={styles.glassBlur}
             >
-              <View style={[styles.glassTint, { backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.7)' : 'rgba(248, 249, 250, 0.7)' }]} />
+              <View style={[styles.glassTint, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]} />
             </BlurView>
           ) : (
             // Android: Real blur with RNC BlurView
             <RNCBlurView
               style={styles.glassBlur}
-              blurType={theme === 'dark' ? 'dark' : 'light'}
+              blurType={'dark'}
               blurAmount={5}
-              reducedTransparencyFallbackColor={theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'}
+              reducedTransparencyFallbackColor={'rgba(10, 14, 39, 0.85)'}
             >
-              <View style={[styles.glassTint, { backgroundColor: theme === 'dark' ? 'rgba(10, 14, 39, 0.45)' : 'rgba(248, 249, 250, 0.5)' }]} />
+              <View style={[styles.glassTint, { backgroundColor: 'rgba(10, 14, 39, 0.45)' }]} />
             </RNCBlurView>
           )}
-
             {/* Content */}
             <View style={styles.modalContent}>
               {/* Header */}
-              <View style={[styles.header, { borderBottomColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
+              <View style={[styles.header, { borderBottomColor: true ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
                 <View style={styles.headerLeft}>
                   <Text style={[styles.headerTitle, { color: colors.text }]}>
                     {language === 'en' ? 'Request Service' : 'Servis Talep Et'}
@@ -284,12 +257,11 @@ export default function RequestServiceModal({
                 </View>
                 <TouchableOpacity
                   onPress={onClose}
-                  style={[styles.closeButton, { backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' }]}
+                  style={[styles.closeButton, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]}
                 >
                   <Ionicons name="close" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
-
               <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -300,7 +272,6 @@ export default function RequestServiceModal({
                   <Text style={[styles.sectionTitle, { color: colors.text }]}>
                     {language === 'en' ? 'Select Package' : 'Paket Seçin'}
                   </Text>
-
                   <View style={styles.packagesGrid}>
                     {packages.map((pkg, index) => {
                       const isSelected = selectedPackage === pkg.id;
@@ -314,11 +285,11 @@ export default function RequestServiceModal({
                             styles.packageCard,
                             {
                               backgroundColor: isSelected
-                                ? (theme === 'dark' ? Colors.blue[500] + '25' : Colors.blue[500] + '20')
-                                : (theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'),
+                                ? (true ? Colors.blue[500] + '25' : Colors.blue[500] + '20')
+                                : (true ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'),
                               borderColor: isSelected
                                 ? Colors.blue[500]
-                                : (theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'),
+                                : (true ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'),
                               borderWidth: isSelected ? 2 : 1,
                             },
                           ]}
@@ -338,24 +309,20 @@ export default function RequestServiceModal({
                               </LinearGradient>
                             </View>
                           )}
-
                           <LinearGradient
                             colors={pkg.gradientColors}
                             style={styles.packageIconGradient}
                           >
                             <Ionicons name={pkg.icon} size={24} color="#FFFFFF" />
                           </LinearGradient>
-
                           <Text style={[styles.packageName, { color: colors.text }]}>
                             {pkg.name}
                           </Text>
-
                           <View style={styles.priceContainer}>
                             <Text style={[styles.priceLabel, { color: Colors.blue[500] }]}>
                               {language === 'en' ? 'Contact for pricing' : 'Fiyat için iletişim'}
                             </Text>
                           </View>
-
                           <View style={styles.featuresList}>
                             {pkg.features.map((feature, idx) => (
                               <View key={idx} style={styles.featureItem}>
@@ -366,7 +333,6 @@ export default function RequestServiceModal({
                               </View>
                             ))}
                           </View>
-
                           {isSelected && (
                             <View style={[styles.selectedBadge, { backgroundColor: Colors.blue[500] }]}>
                               <Ionicons name="checkmark" size={16} color="#FFFFFF" />
@@ -380,7 +346,6 @@ export default function RequestServiceModal({
                     })}
                   </View>
                 </View>
-
                 {/* Notes Section */}
                 <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -389,7 +354,6 @@ export default function RequestServiceModal({
                       ({language === 'en' ? 'Optional' : 'Opsiyonel'})
                     </Text>
                   </Text>
-
                   <TextInput
                     value={notes}
                     onChangeText={setNotes}
@@ -405,19 +369,18 @@ export default function RequestServiceModal({
                       styles.notesInput,
                       {
                         color: colors.text,
-                        backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
-                        borderColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
+                        backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                        borderColor: true ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
                       },
                     ]}
                   />
                 </View>
-
                 {/* Summary Section */}
                 <View
                   style={[
                     styles.summaryCard,
                     {
-                      backgroundColor: theme === 'dark' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
                       borderColor: Colors.blue[500] + '30',
                     },
                   ]}
@@ -425,7 +388,6 @@ export default function RequestServiceModal({
                   <Text style={[styles.summaryTitle, { color: colors.text }]}>
                     {language === 'en' ? 'Request Summary' : 'Talep Özeti'}
                   </Text>
-
                   <View style={styles.summaryRow}>
                     <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
                       {language === 'en' ? 'Service:' : 'Servis:'}
@@ -434,7 +396,6 @@ export default function RequestServiceModal({
                       {serviceName}
                     </Text>
                   </View>
-
                   <View style={styles.summaryRow}>
                     <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
                       {language === 'en' ? 'Package:' : 'Paket:'}
@@ -443,7 +404,6 @@ export default function RequestServiceModal({
                       {selectedPkg?.name}
                     </Text>
                   </View>
-
                   <View style={styles.summaryRow}>
                     <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
                       {language === 'en' ? 'Monthly Cost:' : 'Aylık Maliyet:'}
@@ -452,7 +412,6 @@ export default function RequestServiceModal({
                       ${selectedPkg?.price || 0}
                     </Text>
                   </View>
-
                   <View style={styles.summaryRow}>
                     <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>
                       {language === 'en' ? 'Delivery Time:' : 'Teslimat Süresi:'}
@@ -471,23 +430,21 @@ export default function RequestServiceModal({
                   </View>
                 </View>
               </ScrollView>
-
               {/* Action Buttons */}
-              <View style={[styles.footer, { borderTopColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
+              <View style={[styles.footer, { borderTopColor: true ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
                 <TouchableOpacity
                   onPress={onClose}
                   activeOpacity={0.7}
                   style={[
                     styles.button,
                     styles.cancelButton,
-                    { backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' },
+                    { backgroundColor: 'rgba(43, 44, 44, 0.3)' },
                   ]}
                 >
                   <Text style={[styles.cancelButtonText, { color: colors.text }]}>
                     {language === 'en' ? 'Cancel' : 'İptal'}
                   </Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   onPress={handleSubmit}
                   disabled={isSubmitting}
@@ -519,7 +476,6 @@ export default function RequestServiceModal({
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,

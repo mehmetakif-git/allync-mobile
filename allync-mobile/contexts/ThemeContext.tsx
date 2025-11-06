@@ -1,11 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-type Theme = 'light' | 'dark';
+import React, { createContext, useContext, ReactNode } from 'react';
 
 interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
   colors: {
     background: string;
     text: string;
@@ -21,18 +16,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const lightTheme = {
-  background: '#FFFFFF',
-  text: '#1a1b1b',
-  textSecondary: '#6C757D',
-  textTertiary: '#ADB5BD',
-  primary: '#0D6EFD',
-  border: '#DEE2E6',
-  cardBackground: '#F8F9FA',
-  success: '#28a745',
-  error: '#dc3545',
-};
-
+// App is permanently locked to dark mode
 const darkTheme = {
   background: '#000000',
   text: '#F8F9FA',
@@ -46,31 +30,8 @@ const darkTheme = {
 };
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
-
-  useEffect(() => {
-    // Always start with dark mode, ignore any saved theme
-    setTheme('dark');
-    // Optionally clear any saved theme preference
-    AsyncStorage.setItem('theme', 'dark').catch((error) => {
-      console.error('Failed to set initial theme:', error);
-    });
-  }, []);
-
-  const toggleTheme = async () => {
-    try {
-      const newTheme = theme === 'light' ? 'dark' : 'light';
-      setTheme(newTheme);
-      await AsyncStorage.setItem('theme', newTheme);
-    } catch (error) {
-      console.error('Failed to save theme:', error);
-    }
-  };
-
-  const colors = theme === 'light' ? lightTheme : darkTheme;
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, colors }}>
+    <ThemeContext.Provider value={{ colors: darkTheme }}>
       {children}
     </ThemeContext.Provider>
   );

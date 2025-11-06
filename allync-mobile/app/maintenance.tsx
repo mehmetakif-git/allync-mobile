@@ -25,7 +25,6 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { Colors } from '../constants/Colors';
 import { Typography } from '../constants/Typography';
 import { Spacing, BorderRadius } from '../constants/Spacing';
-
 // Mock API function - replace with actual API
 const getActiveMaintenanceWindow = async () => {
   // This should fetch from your backend
@@ -38,17 +37,14 @@ const getActiveMaintenanceWindow = async () => {
     affected_services: ['WhatsApp Automation', 'Calendar Integration'],
   };
 };
-
 export default function MaintenancePage() {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { language } = useLanguage();
   const [maintenanceWindow, setMaintenanceWindow] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-
   const rotation = useSharedValue(0);
-
   useEffect(() => {
     rotation.value = withRepeat(
       withSequence(
@@ -60,41 +56,31 @@ export default function MaintenancePage() {
       false
     );
   }, []);
-
   const animatedWrenchStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
-
   useEffect(() => {
     loadMaintenanceWindow();
   }, []);
-
   useEffect(() => {
     if (!maintenanceWindow) return;
-
     const updateTimer = () => {
       const now = new Date().getTime();
       const end = new Date(maintenanceWindow.end_time).getTime();
       const diff = end - now;
-
       if (diff <= 0) {
         setTimeRemaining(language === 'en' ? 'Maintenance ending soon...' : 'Bakım yakında bitiyor...');
         return;
       }
-
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
       setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
     };
-
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
-
     return () => clearInterval(interval);
   }, [maintenanceWindow, language]);
-
   const loadMaintenanceWindow = async () => {
     try {
       setIsLoading(true);
@@ -106,13 +92,11 @@ export default function MaintenancePage() {
       setIsLoading(false);
     }
   };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await loadMaintenanceWindow();
     setRefreshing(false);
   };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString(language === 'en' ? 'en-US' : 'tr-TR', {
       weekday: 'long',
@@ -123,13 +107,12 @@ export default function MaintenancePage() {
       minute: '2-digit',
     });
   };
-
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <LinearGradient
           colors={
-            theme === 'dark'
+            true
               ? ['#1a1a1a', '#2b2c2c', '#1a1a1a']
               : ['#f8f9fa', '#e9ecef', '#f8f9fa']
           }
@@ -144,18 +127,16 @@ export default function MaintenancePage() {
       </View>
     );
   }
-
   return (
     <View style={styles.container}>
       <LinearGradient
         colors={
-          theme === 'dark'
+          true
             ? ['#1a1a1a', '#2b2c2c', '#1a1a1a']
             : ['#f8f9fa', '#e9ecef', '#f8f9fa']
         }
         style={StyleSheet.absoluteFillObject}
       />
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -174,8 +155,8 @@ export default function MaintenancePage() {
           style={[
             styles.mainCard,
             {
-              backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.95)' : 'rgba(248, 249, 250, 0.95)',
-              borderColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.15)' : 'rgba(43, 44, 44, 0.15)',
+              backgroundColor: 'rgba(43, 44, 44, 0.3)',
+              borderColor: true ? 'rgba(248, 249, 250, 0.15)' : 'rgba(43, 44, 44, 0.15)',
             },
           ]}
         >
@@ -201,7 +182,6 @@ export default function MaintenancePage() {
                   <Ionicons name="construct" size={48} color="#FFFFFF" />
                 </LinearGradient>
               </Animated.View>
-
               <Text style={[styles.title, { color: colors.text }]}>
                 🚧 {language === 'en' ? 'System Maintenance' : 'Sistem Bakımı'}
               </Text>
@@ -210,7 +190,6 @@ export default function MaintenancePage() {
               </Text>
             </LinearGradient>
           </Animated.View>
-
           {/* Content */}
           <View style={styles.content}>
             {/* Status Message */}
@@ -239,7 +218,6 @@ export default function MaintenancePage() {
                   </Text>
                 </View>
               </View>
-
               {maintenanceWindow && (
                 <View style={styles.statusMessage}>
                   <View style={[styles.messageDivider, { backgroundColor: `${Colors.orange[500]}30` }]} />
@@ -252,7 +230,6 @@ export default function MaintenancePage() {
                 </View>
               )}
             </Animated.View>
-
             {/* Countdown Timer */}
             {maintenanceWindow && (
               <Animated.View
@@ -276,7 +253,6 @@ export default function MaintenancePage() {
                 </View>
               </Animated.View>
             )}
-
             {/* Schedule Details */}
             {maintenanceWindow && (
               <Animated.View
@@ -287,8 +263,8 @@ export default function MaintenancePage() {
                   style={[
                     styles.scheduleCard,
                     {
-                      backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.5)' : 'rgba(248, 249, 250, 0.5)',
-                      borderColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                      borderColor: 'rgba(248, 249, 250, 0.1)',
                     },
                   ]}
                 >
@@ -299,13 +275,12 @@ export default function MaintenancePage() {
                     {formatDate(maintenanceWindow.start_time)}
                   </Text>
                 </View>
-
                 <View
                   style={[
                     styles.scheduleCard,
                     {
-                      backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.5)' : 'rgba(248, 249, 250, 0.5)',
-                      borderColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                      borderColor: 'rgba(248, 249, 250, 0.1)',
                     },
                   ]}
                 >
@@ -318,7 +293,6 @@ export default function MaintenancePage() {
                 </View>
               </Animated.View>
             )}
-
             {/* Affected Services */}
             {maintenanceWindow?.affected_services && maintenanceWindow.affected_services.length > 0 && (
               <Animated.View
@@ -353,22 +327,20 @@ export default function MaintenancePage() {
                 </View>
               </Animated.View>
             )}
-
             {/* What to Expect */}
             <Animated.View
               entering={FadeInDown.duration(400).delay(600)}
               style={[
                 styles.expectCard,
                 {
-                  backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.5)' : 'rgba(248, 249, 250, 0.5)',
-                  borderColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                  backgroundColor: 'rgba(43, 44, 44, 0.5)',
+                  borderColor: 'rgba(248, 249, 250, 0.1)',
                 },
               ]}
             >
               <Text style={[styles.expectTitle, { color: colors.text }]}>
                 {language === 'en' ? 'What to Expect / Ne Beklemeli?' : 'Ne Beklemeli? / What to Expect'}
               </Text>
-
               <View style={styles.expectItem}>
                 <View style={[styles.expectDot, { backgroundColor: `${Colors.green[500]}20` }]}>
                   <View style={[styles.expectDotInner, { backgroundColor: Colors.green[400] }]} />
@@ -380,7 +352,6 @@ export default function MaintenancePage() {
                   sisteme erişim geçici olarak kapalıdır
                 </Text>
               </View>
-
               <View style={styles.expectItem}>
                 <View style={[styles.expectDot, { backgroundColor: `${Colors.green[500]}20` }]}>
                   <View style={[styles.expectDotInner, { backgroundColor: Colors.green[400] }]} />
@@ -392,7 +363,6 @@ export default function MaintenancePage() {
                   ve korunmaktadır
                 </Text>
               </View>
-
               <View style={styles.expectItem}>
                 <View style={[styles.expectDot, { backgroundColor: `${Colors.green[500]}20` }]}>
                   <View style={[styles.expectDotInner, { backgroundColor: Colors.green[400] }]} />
@@ -405,7 +375,6 @@ export default function MaintenancePage() {
                 </Text>
               </View>
             </Animated.View>
-
             {/* Refresh Button */}
             <Animated.View entering={FadeInDown.duration(400).delay(700)}>
               <TouchableOpacity onPress={onRefresh} activeOpacity={0.8} style={styles.refreshButton}>
@@ -422,7 +391,6 @@ export default function MaintenancePage() {
                 </LinearGradient>
               </TouchableOpacity>
             </Animated.View>
-
             {/* Support Contact */}
             <View style={[styles.supportContainer, { borderTopColor: colors.border }]}>
               <Text style={[styles.supportLabel, { color: colors.textSecondary }]}>
@@ -437,14 +405,13 @@ export default function MaintenancePage() {
               </TouchableOpacity>
             </View>
           </View>
-
           {/* Footer */}
           <View
             style={[
               styles.footer,
               {
-                backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.3)' : 'rgba(248, 249, 250, 0.3)',
-                borderTopColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                borderTopColor: 'rgba(248, 249, 250, 0.1)',
               },
             ]}
           >
@@ -462,7 +429,6 @@ export default function MaintenancePage() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

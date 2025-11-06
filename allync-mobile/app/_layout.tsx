@@ -6,7 +6,6 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import '../global.css';
-
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,7 +16,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

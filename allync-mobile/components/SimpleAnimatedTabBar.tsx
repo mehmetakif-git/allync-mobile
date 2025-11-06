@@ -9,42 +9,36 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-
 // Tab configuration
 export interface TabConfig {
   name: string;
   icon: keyof typeof Ionicons.glyphMap;
   route: string;
 }
-
 interface SimpleAnimatedTabBarProps {
   tabs: TabConfig[];
   activeIndex: number;
   onTabPress: (index: number) => void;
   theme: 'dark' | 'light';
 }
-
 export function SimpleAnimatedTabBar({
   tabs,
   activeIndex,
   onTabPress,
-  theme,
 }: SimpleAnimatedTabBarProps) {
   return (
     <View style={styles.container}>
       <BlurView
-        intensity={theme === 'dark' ? 95 : 100}
-        tint={theme === 'dark' ? 'dark' : 'light'}
+        intensity={true ? 95 : 100}
+        tint={'dark'}
         style={styles.blurContainer}
       >
         <View
           style={[
             styles.innerContainer,
             {
-              backgroundColor: theme === 'dark'
-                ? 'rgba(43, 44, 44, 0.75)'
-                : 'rgba(248, 249, 250, 0.75)',
-              borderColor: theme === 'dark'
+              backgroundColor: 'rgba(43, 44, 44, 0.3)',
+              borderColor: true
                 ? 'rgba(248, 249, 250, 0.12)'
                 : 'rgba(43, 44, 44, 0.12)',
             },
@@ -57,7 +51,6 @@ export function SimpleAnimatedTabBar({
               index={index}
               activeIndex={activeIndex}
               onPress={() => onTabPress(index)}
-              theme={theme}
             />
           ))}
         </View>
@@ -65,7 +58,6 @@ export function SimpleAnimatedTabBar({
     </View>
   );
 }
-
 interface TabButtonProps {
   tab: TabConfig;
   index: number;
@@ -73,12 +65,10 @@ interface TabButtonProps {
   onPress: () => void;
   theme: 'dark' | 'light';
 }
-
-function TabButton({ tab, index, activeIndex, onPress, theme }: TabButtonProps) {
+function TabButton({ tab, index, activeIndex, onPress }: TabButtonProps) {
   const isActive = activeIndex === index;
   const scale = useSharedValue(isActive ? 1.1 : 1);
   const translateY = useSharedValue(isActive ? -2 : 0);
-
   useEffect(() => {
     scale.value = withSpring(isActive ? 1.1 : 1, {
       damping: 15,
@@ -89,18 +79,15 @@ function TabButton({ tab, index, activeIndex, onPress, theme }: TabButtonProps) 
       stiffness: 150,
     });
   }, [isActive]);
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: scale.value },
       { translateY: translateY.value },
     ],
   }));
-
   const iconColor = isActive
-    ? (theme === 'dark' ? '#3b82f6' : '#0D6EFD')
-    : (theme === 'dark' ? 'rgba(248, 249, 250, 0.5)' : 'rgba(43, 44, 44, 0.5)');
-
+    ? (true ? '#3b82f6' : '#0D6EFD')
+    : (true ? 'rgba(248, 249, 250, 0.5)' : 'rgba(43, 44, 44, 0.5)');
   return (
     <TouchableOpacity
       style={styles.tabButton}
@@ -113,7 +100,6 @@ function TabButton({ tab, index, activeIndex, onPress, theme }: TabButtonProps) 
     </TouchableOpacity>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',

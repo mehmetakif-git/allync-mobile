@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import LottieView from 'lottie-react-native';
-
 interface AnimatedToggleProps {
   isActive: boolean;
   onPress: () => void;
@@ -11,7 +10,6 @@ interface AnimatedToggleProps {
   lottieSource?: any;
   size?: number;
 }
-
 export const AnimatedToggle = ({
   isActive,
   onPress,
@@ -22,7 +20,6 @@ export const AnimatedToggle = ({
   size = 40,
 }: AnimatedToggleProps) => {
   const animationRef = useRef<LottieView>(null);
-
   useEffect(() => {
     if (animationRef.current) {
       if (isActive) {
@@ -32,7 +29,6 @@ export const AnimatedToggle = ({
       }
     }
   }, [isActive]);
-
   return (
     <TouchableOpacity
       onPress={onPress}

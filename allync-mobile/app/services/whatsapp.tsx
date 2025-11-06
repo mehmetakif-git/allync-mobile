@@ -20,14 +20,11 @@ import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
 import { PageTransition } from '../../components/PageTransition';
-
 type TabType = 'dashboard' | 'analytics' | 'settings';
-
 export default function WhatsAppService() {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { language } = useLanguage();
-
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -37,11 +34,9 @@ export default function WhatsAppService() {
     responseTime: '0',
     satisfaction: 0,
   });
-
   useEffect(() => {
     loadData();
   }, []);
-
   const loadData = async () => {
     try {
       setLoading(true);
@@ -59,19 +54,16 @@ export default function WhatsAppService() {
       setLoading(false);
     }
   };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
   };
-
   const tabs: { key: TabType; labelEn: string; labelTr: string; icon: any }[] = [
     { key: 'dashboard', labelEn: 'Dashboard', labelTr: 'Panel', icon: 'grid' },
     { key: 'analytics', labelEn: 'Analytics', labelTr: 'Analitik', icon: 'bar-chart' },
     { key: 'settings', labelEn: 'Settings', labelTr: 'Ayarlar', icon: 'settings' },
   ];
-
   if (loading) {
     return (
       <PageTransition>
@@ -86,7 +78,6 @@ export default function WhatsAppService() {
       </PageTransition>
     );
   }
-
   return (
     <PageTransition>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -109,7 +100,6 @@ export default function WhatsAppService() {
             </View>
           </View>
         </LinearGradient>
-
         {/* Tabs */}
         <ScrollView
           horizontal
@@ -129,14 +119,10 @@ export default function WhatsAppService() {
                   {
                     backgroundColor: isActive
                       ? Colors.green[500]
-                      : theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.5)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                      : 'rgba(43, 44, 44, 0.5)',
                     borderColor: isActive
                       ? 'transparent'
-                      : theme === 'dark'
-                      ? 'rgba(248, 249, 250, 0.1)'
-                      : 'rgba(43, 44, 44, 0.1)',
+                      : 'rgba(248, 249, 250, 0.1)',
                   },
                 ]}
               >
@@ -157,7 +143,6 @@ export default function WhatsAppService() {
             );
           })}
         </ScrollView>
-
         {/* Content */}
         <ScrollView
           style={styles.content}
@@ -176,12 +161,8 @@ export default function WhatsAppService() {
                   style={[
                     styles.statCard,
                     {
-                      backgroundColor: theme === 'dark'
-                        ? 'rgba(43, 44, 44, 0.6)'
-                        : 'rgba(248, 249, 250, 0.6)',
-                      borderColor: theme === 'dark'
-                        ? 'rgba(248, 249, 250, 0.1)'
-                        : 'rgba(43, 44, 44, 0.1)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                      borderColor: 'rgba(248, 249, 250, 0.1)',
                     },
                   ]}
                 >
@@ -198,18 +179,13 @@ export default function WhatsAppService() {
                     {language === 'en' ? 'Active Chats' : 'Aktif Sohbetler'}
                   </Text>
                 </Animated.View>
-
                 <Animated.View
                   entering={FadeInDown.duration(400).delay(200)}
                   style={[
                     styles.statCard,
                     {
-                      backgroundColor: theme === 'dark'
-                        ? 'rgba(43, 44, 44, 0.6)'
-                        : 'rgba(248, 249, 250, 0.6)',
-                      borderColor: theme === 'dark'
-                        ? 'rgba(248, 249, 250, 0.1)'
-                        : 'rgba(43, 44, 44, 0.1)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                      borderColor: 'rgba(248, 249, 250, 0.1)',
                     },
                   ]}
                 >
@@ -226,18 +202,13 @@ export default function WhatsAppService() {
                     {language === 'en' ? 'Total Messages' : 'Toplam Mesaj'}
                   </Text>
                 </Animated.View>
-
                 <Animated.View
                   entering={FadeInDown.duration(400).delay(300)}
                   style={[
                     styles.statCard,
                     {
-                      backgroundColor: theme === 'dark'
-                        ? 'rgba(43, 44, 44, 0.6)'
-                        : 'rgba(248, 249, 250, 0.6)',
-                      borderColor: theme === 'dark'
-                        ? 'rgba(248, 249, 250, 0.1)'
-                        : 'rgba(43, 44, 44, 0.1)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                      borderColor: 'rgba(248, 249, 250, 0.1)',
                     },
                   ]}
                 >
@@ -254,18 +225,13 @@ export default function WhatsAppService() {
                     {language === 'en' ? 'Avg Response' : 'Ort. Yanıt'}
                   </Text>
                 </Animated.View>
-
                 <Animated.View
                   entering={FadeInDown.duration(400).delay(400)}
                   style={[
                     styles.statCard,
                     {
-                      backgroundColor: theme === 'dark'
-                        ? 'rgba(43, 44, 44, 0.6)'
-                        : 'rgba(248, 249, 250, 0.6)',
-                      borderColor: theme === 'dark'
-                        ? 'rgba(248, 249, 250, 0.1)'
-                        : 'rgba(43, 44, 44, 0.1)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
+                      borderColor: 'rgba(248, 249, 250, 0.1)',
                     },
                   ]}
                 >
@@ -283,7 +249,6 @@ export default function WhatsAppService() {
                   </Text>
                 </Animated.View>
               </View>
-
               {/* Quick Actions */}
               <Animated.View entering={FadeInDown.duration(400).delay(500)}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -305,7 +270,6 @@ export default function WhatsAppService() {
                       {language === 'en' ? 'Send Message' : 'Mesaj Gönder'}
                     </Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
                     activeOpacity={0.7}
                     style={[
@@ -325,10 +289,9 @@ export default function WhatsAppService() {
               </Animated.View>
             </>
           )}
-
           {activeTab === 'analytics' && (
             <Animated.View entering={FadeIn.duration(400)}>
-              <View style={[styles.emptyState, { backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.5)' : 'rgba(248, 249, 250, 0.5)' }]}>
+              <View style={[styles.emptyState, { backgroundColor: 'rgba(43, 44, 44, 0.5)' }]}>
                 <Ionicons name="bar-chart" size={64} color={colors.textSecondary} />
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>
                   {language === 'en' ? 'Analytics Dashboard' : 'Analitik Paneli'}
@@ -341,10 +304,9 @@ export default function WhatsAppService() {
               </View>
             </Animated.View>
           )}
-
           {activeTab === 'settings' && (
             <Animated.View entering={FadeIn.duration(400)}>
-              <View style={[styles.emptyState, { backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.5)' : 'rgba(248, 249, 250, 0.5)' }]}>
+              <View style={[styles.emptyState, { backgroundColor: 'rgba(43, 44, 44, 0.5)' }]}>
                 <Ionicons name="settings" size={64} color={colors.textSecondary} />
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>
                   {language === 'en' ? 'Service Settings' : 'Servis Ayarları'}
@@ -362,7 +324,6 @@ export default function WhatsAppService() {
     </PageTransition>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

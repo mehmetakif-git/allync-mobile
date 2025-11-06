@@ -1,8 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, RefreshControl } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { BlurView as RNCBlurView } from '@react-native-community/blur';
+import { BlurView, RNCBlurView } from '../../components/BlurViewCompat';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -13,6 +12,7 @@ import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
 import { PageTransition } from '../../components/PageTransition';
 import RequestServiceModal from '../../components/RequestServiceModal';
+import ServicesSkeleton from '../../components/skeletons/ServicesSkeleton';
 import {
   getActiveServices,
   getCompanyServices,
@@ -23,13 +23,10 @@ import {
   type ServiceRequest,
 } from '../../lib/api/services';
 import { getUserCompanyId } from '../../lib/api/dashboard';
-
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
 type Category = 'all' | 'ai' | 'digital';
-
 export default function Services() {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { language } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
@@ -41,40 +38,33 @@ export default function Services() {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-
   useEffect(() => {
     if (user?.id) {
       fetchCompanyId();
     }
   }, [user?.id]);
-
   useEffect(() => {
     if (companyId) {
       fetchData();
     }
   }, [companyId]);
-
   const fetchCompanyId = async () => {
     if (!user?.id) return;
     const id = await getUserCompanyId(user.id);
     setCompanyId(id);
   };
-
   const fetchData = async () => {
     try {
       setLoading(true);
-
       // Fetch services
       const servicesData = await getActiveServices();
       setServices(servicesData);
-
       if (companyId) {
         // Fetch company services and requests in parallel
         const [companyServicesData, requestsData] = await Promise.all([
           getCompanyServices(companyId),
           getCompanyServiceRequests(companyId),
         ]);
-
         setCompanyServices(companyServicesData);
         setServiceRequests(requestsData);
       }
@@ -84,21 +74,17 @@ export default function Services() {
       setLoading(false);
     }
   };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
   };
-
   const handleRequestService = (service: Service) => {
     setSelectedService(service);
     setModalVisible(true);
   };
-
   const handleSubmitRequest = async (packageType: 'basic' | 'standard' | 'premium', notes: string) => {
     if (!selectedService || !companyId || !user?.id) return;
-
     await createServiceRequest({
       company_id: companyId,
       service_type_id: selectedService.id,
@@ -106,40 +92,32 @@ export default function Services() {
       requested_by: user.id,
       notes: notes || undefined,
     });
-
     // Refresh data to show new request
     await fetchData();
   };
-
   // Filter services by category
   const filteredServices = services.filter(service => {
     if (service.status === 'inactive') return false;
-
     const companyServiceStatus = companyServices.find(cs => cs.service_type_id === service.id);
     if (companyServiceStatus?.status === 'inactive') return false;
-
     if (selectedCategory === 'all') return true;
     return service.category === selectedCategory;
   });
-
   // Check if service is active
   const isServiceActive = (serviceId: string) => {
     return companyServices.some(
       cs => cs.service_type_id === serviceId && cs.status === 'active'
     );
   };
-
   // Get service status
   const getServiceStatus = (serviceId: string) => {
     const companyService = companyServices.find(cs => cs.service_type_id === serviceId);
     if (companyService && companyService.status === 'active') {
       return { status: 'approved', package: companyService.package };
     }
-
     const request = serviceRequests.find(req => req.service_type_id === serviceId);
     return request || null;
   };
-
   // Get service icon name
   const getServiceIcon = (slug: string): keyof typeof Ionicons.glyphMap => {
     const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -156,10 +134,8 @@ export default function Services() {
       'website-development': 'globe',
       'mobile-app-development': 'phone-portrait',
     };
-
     return iconMap[slug] || 'cube';
   };
-
   // Get gradient colors for service category
   const getGradientColors = (category: string, colorScheme?: string): [string, string] => {
     if (colorScheme) {
@@ -180,38 +156,29 @@ export default function Services() {
         ];
       }
     }
-
     // Default gradients by category
     if (category === 'ai') {
       return [Colors.blue[500], Colors.cyan[500]];
     }
     return [Colors.purple[500], Colors.purple[700]];
   };
-
   if (loading) {
     return (
       <PageTransition>
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme === 'dark' ? Colors.blue[500] : Colors.deepBlue} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              {language === 'en' ? 'Loading services...' : 'Servisler yükleniyor...'}
-            </Text>
-          </View>
+        <View style={styles.container}>
+          <ServicesSkeleton />
         </View>
       </PageTransition>
     );
   }
-
   const categoryButtons: { key: Category; labelEn: string; labelTr: string }[] = [
     { key: 'all', labelEn: 'All Services', labelTr: 'Tüm Servisler' },
     { key: 'ai', labelEn: 'AI Services', labelTr: 'AI Servisleri' },
     { key: 'digital', labelEn: 'Digital', labelTr: 'Dijital' },
   ];
-
   return (
     <PageTransition>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.container}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
@@ -229,7 +196,6 @@ export default function Services() {
               {language === 'en' ? 'Explore and manage your services' : 'Servislerinizi keşfedin ve yönetin'}
             </Text>
           </View>
-
           {/* Category Filters */}
           <ScrollView
             horizontal
@@ -242,7 +208,6 @@ export default function Services() {
               const count = cat.key === 'all'
                 ? filteredServices.length
                 : services.filter(s => s.category === cat.key && s.status !== 'inactive').length;
-
               return (
                 <TouchableOpacity
                   key={cat.key}
@@ -252,11 +217,11 @@ export default function Services() {
                     styles.filterButton,
                     {
                       backgroundColor: isSelected
-                        ? (theme === 'dark' ? Colors.blue[500] : Colors.deepBlue)
-                        : (theme === 'dark' ? 'rgba(43, 44, 44, 0.5)' : 'rgba(248, 249, 250, 0.5)'),
+                        ? (Colors.blue[500])
+                        : ('rgba(43, 44, 44, 0.5)'),
                       borderColor: isSelected
                         ? 'transparent'
-                        : (theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)'),
+                        : ('rgba(248, 249, 250, 0.1)'),
                     },
                   ]}
                 >
@@ -272,7 +237,6 @@ export default function Services() {
               );
             })}
           </ScrollView>
-
           {/* Services Grid */}
           <View style={styles.servicesGrid}>
             {filteredServices.map((service, index) => {
@@ -281,12 +245,10 @@ export default function Services() {
               const isInMaintenance = service.status === 'maintenance';
               const iconName = getServiceIcon(service.slug);
               const [gradientStart, gradientEnd] = getGradientColors(service.category, service.color);
-
               const serviceName = language === 'en' ? service.name_en : service.name_tr;
               const serviceDesc = language === 'en'
                 ? (service.short_description_en || service.description_en)
                 : (service.short_description_tr || service.description_tr);
-
               return (
                 <AnimatedTouchable
                   key={service.id}
@@ -300,16 +262,13 @@ export default function Services() {
                       colors={[`${gradientStart}20`, `${gradientEnd}05`]}
                       style={StyleSheet.absoluteFillObject}
                     />
-
                     {/* Glass overlay */}
                     {Platform.OS === 'ios' ? (
                       <BlurView
-                        intensity={theme === 'dark' ? 40 : 50}
-                        tint={theme === 'dark' ? 'dark' : 'light'}
+                        intensity={40}
+                        tint={'dark'}
                         style={[styles.serviceCardGlass, {
-                          backgroundColor: theme === 'dark'
-                            ? 'rgba(43, 44, 44, 0.3)'
-                            : 'rgba(248, 249, 250, 0.4)',
+                          backgroundColor: 'rgba(43, 44, 44, 0.3)',
                         }]}
                       >
                         {/* Icon */}
@@ -319,17 +278,14 @@ export default function Services() {
                         >
                           <Ionicons name={iconName} size={28} color="#FFFFFF" />
                         </LinearGradient>
-
                         {/* Service Name */}
                         <Text style={[styles.serviceName, { color: colors.text }]} numberOfLines={2}>
                           {serviceName}
                         </Text>
-
                         {/* Description */}
                         <Text style={[styles.serviceDescription, { color: colors.textSecondary }]} numberOfLines={2}>
                           {serviceDesc}
                         </Text>
-
                         {/* Status Badge */}
                         {isActive && (
                           <View style={[styles.statusBadge, { backgroundColor: `${Colors.green[500]}20`, borderColor: `${Colors.green[500]}30` }]}>
@@ -339,7 +295,6 @@ export default function Services() {
                             </Text>
                           </View>
                         )}
-
                         {status && status.status === 'pending' && (
                           <View style={[styles.statusBadge, { backgroundColor: `${Colors.yellow[500]}20`, borderColor: `${Colors.yellow[500]}30` }]}>
                             <Ionicons name="time" size={14} color={Colors.yellow[500]} />
@@ -348,7 +303,6 @@ export default function Services() {
                             </Text>
                           </View>
                         )}
-
                         {status && status.status === 'rejected' && (
                           <View style={[styles.statusBadge, { backgroundColor: `${Colors.red[500]}20`, borderColor: `${Colors.red[500]}30` }]}>
                             <Ionicons name="close-circle" size={14} color={Colors.red[500]} />
@@ -357,7 +311,6 @@ export default function Services() {
                             </Text>
                           </View>
                         )}
-
                         {isInMaintenance && (
                           <View style={[styles.statusBadge, { backgroundColor: `${Colors.orange[500]}20`, borderColor: `${Colors.orange[500]}30` }]}>
                             <Ionicons name="construct" size={14} color={Colors.orange[500]} />
@@ -366,7 +319,6 @@ export default function Services() {
                             </Text>
                           </View>
                         )}
-
                         {/* Action Button */}
                         <TouchableOpacity
                           style={[
@@ -411,27 +363,24 @@ export default function Services() {
                       <>
                         <RNCBlurView
                           style={StyleSheet.absoluteFillObject}
-                          blurType={theme === 'dark' ? 'dark' : 'light'}
+                          blurType={'dark'}
                           blurAmount={5}
                           reducedTransparencyFallbackColor={
-                            theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+                            'rgba(10, 14, 39, 0.85)'
                           }
                         >
                           <View
                             style={[
                               StyleSheet.absoluteFillObject,
                               {
-                                backgroundColor: theme === 'dark'
-                                  ? 'rgba(10, 14, 39, 0.45)'
-                                  : 'rgba(248, 249, 250, 0.5)',
+                                backgroundColor: 'rgba(43, 44, 44, 0.3)',
                               },
                             ]}
                           />
-
                           {/* Top edge highlight gradient */}
                           <LinearGradient
                             colors={
-                              theme === 'dark'
+                              true
                                 ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
                                 : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
                             }
@@ -440,11 +389,10 @@ export default function Services() {
                             style={StyleSheet.absoluteFillObject}
                             pointerEvents="none"
                           />
-
                           {/* Bottom subtle shine */}
                           <LinearGradient
                             colors={
-                              theme === 'dark'
+                              true
                                 ? ['transparent', 'rgba(255, 255, 255, 0.04)']
                                 : ['transparent', 'rgba(255, 255, 255, 0.25)']
                             }
@@ -454,7 +402,6 @@ export default function Services() {
                             pointerEvents="none"
                           />
                         </RNCBlurView>
-
                         {/* Card Content */}
                         <View style={styles.serviceCardGlass}>
                           {/* Icon */}
@@ -464,17 +411,14 @@ export default function Services() {
                           >
                             <Ionicons name={iconName} size={28} color="#FFFFFF" />
                           </LinearGradient>
-
                           {/* Service Name */}
                           <Text style={[styles.serviceName, { color: colors.text }]} numberOfLines={2}>
                             {serviceName}
                           </Text>
-
                           {/* Description */}
                           <Text style={[styles.serviceDescription, { color: colors.textSecondary }]} numberOfLines={2}>
                             {serviceDesc}
                           </Text>
-
                           {/* Status Badge */}
                           {isActive && (
                             <View style={[styles.statusBadge, { backgroundColor: `${Colors.green[500]}20`, borderColor: `${Colors.green[500]}30` }]}>
@@ -484,7 +428,6 @@ export default function Services() {
                               </Text>
                             </View>
                           )}
-
                           {status && status.status === 'pending' && (
                             <View style={[styles.statusBadge, { backgroundColor: `${Colors.yellow[500]}20`, borderColor: `${Colors.yellow[500]}30` }]}>
                               <Ionicons name="time" size={14} color={Colors.yellow[500]} />
@@ -493,7 +436,6 @@ export default function Services() {
                               </Text>
                             </View>
                           )}
-
                           {status && status.status === 'rejected' && (
                             <View style={[styles.statusBadge, { backgroundColor: `${Colors.red[500]}20`, borderColor: `${Colors.red[500]}30` }]}>
                               <Ionicons name="close-circle" size={14} color={Colors.red[500]} />
@@ -502,7 +444,6 @@ export default function Services() {
                               </Text>
                             </View>
                           )}
-
                           {isInMaintenance && (
                             <View style={[styles.statusBadge, { backgroundColor: `${Colors.orange[500]}20`, borderColor: `${Colors.orange[500]}30` }]}>
                               <Ionicons name="construct" size={14} color={Colors.orange[500]} />
@@ -511,7 +452,6 @@ export default function Services() {
                               </Text>
                             </View>
                           )}
-
                           {/* Action Button */}
                           <TouchableOpacity
                             style={[
@@ -560,7 +500,6 @@ export default function Services() {
             })}
           </View>
         </ScrollView>
-
         {/* Request Service Modal */}
         <RequestServiceModal
           visible={modalVisible}
@@ -575,7 +514,6 @@ export default function Services() {
     </PageTransition>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

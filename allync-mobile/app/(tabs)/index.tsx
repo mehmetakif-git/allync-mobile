@@ -1,8 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { BlurView as RNCBlurView } from '@react-native-community/blur';
+import { BlurView, RNCBlurView } from '../../components/BlurViewCompat';
 import Animated, { FadeInDown, FadeIn, useAnimatedStyle, withSpring, withRepeat, withSequence, withTiming, useSharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -16,13 +15,12 @@ import { getRecentActivityLogs, type ActivityLog } from '../../lib/api/activityL
 import { PageTransition } from '../../components/PageTransition';
 import NotificationsPanel from '../../components/NotificationsPanel';
 import DashboardHeader from '../../components/DashboardHeader';
-
+import DashboardSkeleton from '../../components/skeletons/DashboardSkeleton';
 const AnimatedView = Animated.View;
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
 export default function Home() {
   const { user, signOut } = useAuth();
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -32,36 +30,29 @@ export default function Home() {
   const [unreadCount, setUnreadCount] = useState(2); // Mock data
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
-
   const bellScale = useSharedValue(1);
-
   const bellAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: bellScale.value }],
   }));
-
   // Fetch company ID on mount
   useEffect(() => {
     if (user?.id) {
       fetchCompanyId();
     }
   }, [user?.id]);
-
   // Fetch stats when company ID is available
   useEffect(() => {
     if (companyId) {
       fetchStats();
     }
   }, [companyId]);
-
   const fetchCompanyId = async () => {
     if (!user?.id) return;
     const id = await getUserCompanyId(user.id);
     setCompanyId(id);
   };
-
   const fetchStats = async () => {
     if (!companyId) return;
-
     try {
       setLoading(true);
       const [statsData, activityData] = await Promise.all([
@@ -78,13 +69,11 @@ export default function Home() {
       setLoading(false);
     }
   };
-
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchStats();
     setRefreshing(false);
   };
-
   const handleSignOut = () => {
     // Web doesn't support Alert.alert, so use window.confirm
     if (Platform.OS === 'web') {
@@ -113,7 +102,6 @@ export default function Home() {
       );
     }
   };
-
   // Generate stat cards from real data
   const statCards = stats ? [
     {
@@ -153,7 +141,6 @@ export default function Home() {
       bgGradient: ['rgba(34, 197, 94, 0.2)', 'rgba(34, 197, 94, 0.05)']
     },
   ] : [];
-
   // Theme-aware styles
   const dynamicStyles = {
     greeting: {
@@ -190,22 +177,19 @@ export default function Home() {
       color: Colors.titanium,
     },
   };
-
   // Show loading state while fetching data
   if (loading && !stats) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme === 'dark' ? Colors.blue[500] : Colors.deepBlue} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading dashboard...</Text>
+      <PageTransition>
+        <View style={styles.container}>
+          <DashboardSkeleton />
         </View>
-      </View>
+      </PageTransition>
     );
   }
-
   return (
     <PageTransition>
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.container}>
         {/* Header Component */}
         <DashboardHeader
           userName={user?.email?.split('@')[0] || 'User'}
@@ -215,7 +199,6 @@ export default function Home() {
           unreadCount={unreadCount}
           bellAnimatedStyle={bellAnimatedStyle}
         />
-
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
@@ -224,7 +207,6 @@ export default function Home() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.blue[500]} />
         }
       >
-
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           {statCards.map((stat, index) => (
@@ -240,16 +222,13 @@ export default function Home() {
                   colors={stat.bgGradient}
                   style={StyleSheet.absoluteFillObject}
                 />
-
                 {/* Glass overlay */}
                 {Platform.OS === 'ios' ? (
                   <BlurView
-                    intensity={theme === 'dark' ? 40 : 50}
-                    tint={theme === 'dark' ? 'dark' : 'light'}
+                    intensity={40}
+                    tint={'dark'}
                     style={[styles.statCardGlass, {
-                      backgroundColor: theme === 'dark'
-                        ? 'rgba(43, 44, 44, 0.3)'
-                        : 'rgba(248, 249, 250, 0.4)',
+                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
                     }]}
                   >
                     <View style={styles.statHeader}>
@@ -268,27 +247,24 @@ export default function Home() {
                   <>
                     <RNCBlurView
                       style={StyleSheet.absoluteFillObject}
-                      blurType={theme === 'dark' ? 'dark' : 'light'}
+                      blurType={'dark'}
                       blurAmount={5}
                       reducedTransparencyFallbackColor={
-                        theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+                        'rgba(10, 14, 39, 0.85)'
                       }
                     >
                       <View
                         style={[
                           StyleSheet.absoluteFillObject,
                           {
-                            backgroundColor: theme === 'dark'
-                              ? 'rgba(10, 14, 39, 0.45)'
-                              : 'rgba(248, 249, 250, 0.5)',
+                            backgroundColor: 'rgba(43, 44, 44, 0.3)',
                           },
                         ]}
                       />
-
                       {/* Top edge highlight gradient */}
                       <LinearGradient
                         colors={
-                          theme === 'dark'
+                          true
                             ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
                             : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
                         }
@@ -297,11 +273,10 @@ export default function Home() {
                         style={StyleSheet.absoluteFillObject}
                         pointerEvents="none"
                       />
-
                       {/* Bottom subtle shine */}
                       <LinearGradient
                         colors={
-                          theme === 'dark'
+                          true
                             ? ['transparent', 'rgba(255, 255, 255, 0.04)']
                             : ['transparent', 'rgba(255, 255, 255, 0.25)']
                         }
@@ -311,7 +286,6 @@ export default function Home() {
                         pointerEvents="none"
                       />
                     </RNCBlurView>
-
                     <View style={styles.statCardGlass}>
                       <View style={styles.statHeader}>
                         <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
@@ -331,7 +305,6 @@ export default function Home() {
             </AnimatedTouchable>
           ))}
         </View>
-
         {/* Quick Actions */}
         <AnimatedView
           entering={FadeInDown.duration(600).delay(320).springify()}
@@ -351,7 +324,6 @@ export default function Home() {
               color={Colors.blue[500]}
               gradient={['rgba(59, 130, 246, 0.2)', 'rgba(59, 130, 246, 0.05)']}
               onPress={() => router.push('/(tabs)/support')}
-              theme={theme}
             />
             <QuickAction
               icon="card-outline"
@@ -360,7 +332,6 @@ export default function Home() {
               color={Colors.cyan[500]}
               gradient={['rgba(6, 182, 212, 0.2)', 'rgba(6, 182, 212, 0.05)']}
               onPress={() => router.push('/(tabs)/invoices')}
-              theme={theme}
             />
             <QuickAction
               icon="server-outline"
@@ -369,11 +340,9 @@ export default function Home() {
               color={Colors.purple[500]}
               gradient={['rgba(168, 85, 247, 0.2)', 'rgba(168, 85, 247, 0.05)']}
               onPress={() => router.push('/(tabs)/services')}
-              theme={theme}
             />
           </View>
         </AnimatedView>
-
         {/* Recent Activity */}
         <AnimatedView
           entering={FadeInDown.duration(600).delay(400).springify()}
@@ -393,16 +362,13 @@ export default function Home() {
               colors={['rgba(59, 130, 246, 0.15)', 'rgba(6, 182, 212, 0.08)']}
               style={StyleSheet.absoluteFillObject}
             />
-
             {/* Glass overlay */}
             {Platform.OS === 'ios' ? (
               <BlurView
-                intensity={theme === 'dark' ? 40 : 50}
-                tint={theme === 'dark' ? 'dark' : 'light'}
+                intensity={40}
+                tint={'dark'}
                 style={[styles.activityCardGlass, {
-                  backgroundColor: theme === 'dark'
-                    ? 'rgba(43, 44, 44, 0.3)'
-                    : 'rgba(248, 249, 250, 0.4)',
+                  backgroundColor: 'rgba(43, 44, 44, 0.3)',
                 }]}
               >
                 {recentActivity.length === 0 ? (
@@ -435,27 +401,24 @@ export default function Home() {
               <>
                 <RNCBlurView
                   style={StyleSheet.absoluteFillObject}
-                  blurType={theme === 'dark' ? 'dark' : 'light'}
+                  blurType={'dark'}
                   blurAmount={5}
                   reducedTransparencyFallbackColor={
-                    theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+                    'rgba(10, 14, 39, 0.85)'
                   }
                 >
                   <View
                     style={[
                       StyleSheet.absoluteFillObject,
                       {
-                        backgroundColor: theme === 'dark'
-                          ? 'rgba(10, 14, 39, 0.45)'
-                          : 'rgba(248, 249, 250, 0.5)',
+                        backgroundColor: 'rgba(43, 44, 44, 0.3)',
                       },
                     ]}
                   />
-
                   {/* Top edge highlight gradient */}
                   <LinearGradient
                     colors={
-                      theme === 'dark'
+                      true
                         ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
                         : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
                     }
@@ -464,11 +427,10 @@ export default function Home() {
                     style={StyleSheet.absoluteFillObject}
                     pointerEvents="none"
                   />
-
                   {/* Bottom subtle shine */}
                   <LinearGradient
                     colors={
-                      theme === 'dark'
+                      true
                         ? ['transparent', 'rgba(255, 255, 255, 0.04)']
                         : ['transparent', 'rgba(255, 255, 255, 0.25)']
                     }
@@ -478,7 +440,6 @@ export default function Home() {
                     pointerEvents="none"
                   />
                 </RNCBlurView>
-
                 {recentActivity.length === 0 ? (
                   <View style={styles.activityCardContent}>
                     <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
@@ -509,7 +470,6 @@ export default function Home() {
           </View>
         </AnimatedView>
       </ScrollView>
-
       {/* Notifications Panel */}
       <NotificationsPanel
         visible={showNotifications}
@@ -521,7 +481,6 @@ export default function Home() {
     </PageTransition>
   );
 }
-
 function QuickAction({
   icon,
   title,
@@ -529,7 +488,6 @@ function QuickAction({
   color,
   gradient,
   onPress,
-  theme,
 }: {
   icon: string;
   title: string;
@@ -539,9 +497,8 @@ function QuickAction({
   onPress: () => void;
   theme: 'light' | 'dark';
 }) {
-  const textColor = theme === 'dark' ? Colors.text.primary : Colors.coal;
-  const subtitleColor = theme === 'dark' ? Colors.text.tertiary : 'rgba(43, 44, 44, 0.5)';
-
+  const textColor = Colors.text.primary;
+  const subtitleColor = Colors.text.tertiary;
   return (
     <TouchableOpacity style={styles.actionButton} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.actionButtonWrapper}>
@@ -550,16 +507,13 @@ function QuickAction({
           colors={gradient}
           style={StyleSheet.absoluteFillObject}
         />
-
         {/* Glass overlay */}
         {Platform.OS === 'ios' ? (
           <BlurView
-            intensity={theme === 'dark' ? 40 : 50}
-            tint={theme === 'dark' ? 'dark' : 'light'}
+            intensity={40}
+            tint={'dark'}
             style={[styles.actionButtonGlass, {
-              backgroundColor: theme === 'dark'
-                ? 'rgba(43, 44, 44, 0.3)'
-                : 'rgba(248, 249, 250, 0.4)',
+              backgroundColor: 'rgba(43, 44, 44, 0.3)',
             }]}
           >
             <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
@@ -572,27 +526,24 @@ function QuickAction({
           <>
             <RNCBlurView
               style={StyleSheet.absoluteFillObject}
-              blurType={theme === 'dark' ? 'dark' : 'light'}
+              blurType={'dark'}
               blurAmount={5}
               reducedTransparencyFallbackColor={
-                theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+                'rgba(10, 14, 39, 0.85)'
               }
             >
               <View
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(10, 14, 39, 0.45)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.3)',
                   },
                 ]}
               />
-
               {/* Top edge highlight gradient */}
               <LinearGradient
                 colors={
-                  theme === 'dark'
+                  true
                     ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
                     : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
                 }
@@ -601,11 +552,10 @@ function QuickAction({
                 style={StyleSheet.absoluteFillObject}
                 pointerEvents="none"
               />
-
               {/* Bottom subtle shine */}
               <LinearGradient
                 colors={
-                  theme === 'dark'
+                  true
                     ? ['transparent', 'rgba(255, 255, 255, 0.04)']
                     : ['transparent', 'rgba(255, 255, 255, 0.25)']
                 }
@@ -615,7 +565,6 @@ function QuickAction({
                 pointerEvents="none"
               />
             </RNCBlurView>
-
             <View style={styles.actionButtonGlass}>
               <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
                 <Ionicons name={icon as any} size={24} color={color} />
@@ -629,7 +578,6 @@ function QuickAction({
     </TouchableOpacity>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

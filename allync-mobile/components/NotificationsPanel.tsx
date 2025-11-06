@@ -22,15 +22,13 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { BlurView as RNCBlurView } from '@react-native-community/blur';
+import { BlurView, RNCBlurView } from './BlurViewCompat';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../constants/Colors';
 import { Typography } from '../constants/Typography';
 import { Spacing, BorderRadius } from '../constants/Spacing';
-
 // Mock API functions - replace with actual API
 const getUserNotifications = async (userId: string, options?: { limit?: number }) => {
   return [
@@ -54,63 +52,51 @@ const getUserNotifications = async (userId: string, options?: { limit?: number }
     },
   ];
 };
-
 const getUnreadCount = async (userId: string) => {
   return 2;
 };
-
 const markAsRead = async (userNotificationId: string) => {
   console.log('Marking notification as read:', userNotificationId);
 };
-
 const markAllAsRead = async (userId: string) => {
   console.log('Marking all notifications as read for user:', userId);
 };
-
 const clearReadNotifications = async (userId: string) => {
   console.log('Clearing read notifications for user:', userId);
 };
-
 interface NotificationsPanelProps {
   visible: boolean;
   onClose: () => void;
   onNotificationRead?: () => void;
   onMarkAllRead?: () => void;
 }
-
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-
 export default function NotificationsPanel({
   visible,
   onClose,
   onNotificationRead,
   onMarkAllRead,
 }: NotificationsPanelProps) {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
     if (visible) {
       fetchNotifications();
     }
   }, [visible, user?.id]);
-
   const fetchNotifications = async () => {
     if (!user?.id) return;
-
     try {
       setIsLoading(true);
       setError(null);
-
       const [notifs, count] = await Promise.all([
         getUserNotifications(user.id, { limit: 20 }),
         getUnreadCount(user.id),
       ]);
-
       setNotifications(notifs);
       setUnreadCount(count);
     } catch (err: any) {
@@ -120,11 +106,9 @@ export default function NotificationsPanel({
       setIsLoading(false);
     }
   };
-
   const handleMarkAsRead = async (userNotificationId: string) => {
     try {
       await markAsRead(userNotificationId);
-
       setNotifications(
         notifications.map((n) =>
           n.user_notification_id === userNotificationId
@@ -138,13 +122,10 @@ export default function NotificationsPanel({
       console.error('Error marking as read:', err);
     }
   };
-
   const handleMarkAllAsRead = async () => {
     if (!user?.id) return;
-
     try {
       await markAllAsRead(user.id);
-
       setNotifications(
         notifications.map((n) => ({
           ...n,
@@ -158,10 +139,8 @@ export default function NotificationsPanel({
       console.error('Error marking all as read:', err);
     }
   };
-
   const handleClearAll = async () => {
     if (!user?.id) return;
-
     try {
       await clearReadNotifications(user.id);
       setNotifications(notifications.filter((n) => !n.is_read));
@@ -169,7 +148,6 @@ export default function NotificationsPanel({
       console.error('Error clearing notifications:', err);
     }
   };
-
   const getNotificationStyle = (type: string) => {
     switch (type) {
       case 'success':
@@ -210,7 +188,6 @@ export default function NotificationsPanel({
         };
     }
   };
-
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -218,18 +195,15 @@ export default function NotificationsPanel({
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
     });
   };
-
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <View style={styles.overlay}>
@@ -244,13 +218,12 @@ export default function NotificationsPanel({
             style={StyleSheet.absoluteFillObject}
           >
             <BlurView
-              intensity={theme === 'dark' ? 95 : 100}
-              tint={theme === 'dark' ? 'dark' : 'light'}
+              intensity={true ? 95 : 100}
+              tint={'dark'}
               style={StyleSheet.absoluteFillObject}
             />
           </TouchableOpacity>
         </Animated.View>
-
         <Animated.View
           entering={SlideInRight.duration(400)}
           exiting={SlideOutRight.duration(500)}
@@ -260,16 +233,14 @@ export default function NotificationsPanel({
           {Platform.OS === 'ios' ? (
             <BlurView
               intensity={95}
-              tint={theme === 'dark' ? 'dark' : 'light'}
+              tint={'dark'}
               style={StyleSheet.absoluteFillObject}
             >
               <View
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(43, 44, 44, 0.7)'
-                      : 'rgba(248, 249, 250, 0.7)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.3)',
                   },
                 ]}
               />
@@ -278,27 +249,24 @@ export default function NotificationsPanel({
             // Android: Real blur with RNC BlurView
             <RNCBlurView
               style={StyleSheet.absoluteFillObject}
-              blurType={theme === 'dark' ? 'dark' : 'light'}
+              blurType={'dark'}
               blurAmount={5}
               reducedTransparencyFallbackColor={
-                theme === 'dark' ? 'rgba(10, 14, 39, 0.85)' : 'rgba(248, 249, 250, 0.9)'
+                'rgba(10, 14, 39, 0.85)'
               }
             >
               <View
                 style={[
                   StyleSheet.absoluteFillObject,
                   {
-                    backgroundColor: theme === 'dark'
-                      ? 'rgba(10, 14, 39, 0.45)'
-                      : 'rgba(248, 249, 250, 0.5)',
+                    backgroundColor: 'rgba(43, 44, 44, 0.3)',
                   },
                 ]}
               />
-
               {/* Top edge highlight gradient - creates glass effect */}
               <LinearGradient
                 colors={
-                  theme === 'dark'
+                  true
                     ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
                     : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
                 }
@@ -307,11 +275,10 @@ export default function NotificationsPanel({
                 style={StyleSheet.absoluteFillObject}
                 pointerEvents="none"
               />
-
               {/* Bottom subtle shine */}
               <LinearGradient
                 colors={
-                  theme === 'dark'
+                  true
                     ? ['transparent', 'rgba(255, 255, 255, 0.04)']
                     : ['transparent', 'rgba(255, 255, 255, 0.25)']
                 }
@@ -322,24 +289,22 @@ export default function NotificationsPanel({
               />
             </RNCBlurView>
           )}
-
           {/* Border with gradient effect */}
           <View
             style={[
               StyleSheet.absoluteFillObject,
               {
                 borderWidth: 1,
-                borderColor: theme === 'dark'
+                borderColor: true
                   ? 'rgba(255, 255, 255, 0.25)'
                   : 'rgba(255, 255, 255, 0.5)',
               },
             ]}
             pointerEvents="none"
           />
-
           <TouchableOpacity activeOpacity={1} style={styles.panelContent}>
             {/* Header */}
-            <View style={[styles.header, { borderBottomColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)' }]}>
+            <View style={[styles.header, { borderBottomColor: 'rgba(248, 249, 250, 0.1)' }]}>
               <View style={styles.headerLeft}>
                 <Ionicons name="notifications" size={28} color={Colors.blue[500]} />
                 <View>
@@ -356,7 +321,7 @@ export default function NotificationsPanel({
                 style={[
                   styles.closeButton,
                   {
-                    backgroundColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.1)' : 'rgba(43, 44, 44, 0.1)',
+                    backgroundColor: 'rgba(248, 249, 250, 0.1)',
                   }
                 ]}
                 activeOpacity={0.7}
@@ -364,12 +329,11 @@ export default function NotificationsPanel({
                 <Ionicons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
-
             {/* Actions */}
             {notifications.length > 0 && (
               <View style={[styles.actions, {
-                borderBottomColor: theme === 'dark' ? 'rgba(248, 249, 250, 0.05)' : 'rgba(43, 44, 44, 0.05)',
-                backgroundColor: theme === 'dark' ? 'rgba(59, 130, 246, 0.05)' : 'rgba(59, 130, 246, 0.03)',
+                borderBottomColor: true ? 'rgba(248, 249, 250, 0.05)' : 'rgba(43, 44, 44, 0.05)',
+                backgroundColor: 'rgba(43, 44, 44, 0.3)',
               }]}>
                 {unreadCount > 0 && (
                   <TouchableOpacity
@@ -399,7 +363,6 @@ export default function NotificationsPanel({
                 </TouchableOpacity>
               </View>
             )}
-
             {/* Content */}
             <ScrollView
               style={styles.scrollView}
@@ -424,7 +387,7 @@ export default function NotificationsPanel({
                     style={[
                       styles.emptyIcon,
                       {
-                        backgroundColor: theme === 'dark' ? 'rgba(43, 44, 44, 0.5)' : 'rgba(248, 249, 250, 0.5)',
+                        backgroundColor: 'rgba(43, 44, 44, 0.5)',
                       },
                     ]}
                   >
@@ -439,7 +402,6 @@ export default function NotificationsPanel({
                 <View style={styles.notificationsList}>
                   {notifications.map((notification, index) => {
                     const { icon, color, bg } = getNotificationStyle(notification.type);
-
                     return (
                       <AnimatedTouchable
                         key={notification.user_notification_id}
@@ -455,10 +417,10 @@ export default function NotificationsPanel({
                           {
                             backgroundColor: notification.is_read
                               ? 'transparent'
-                              : theme === 'dark'
+                              : true
                               ? `${Colors.blue[500]}10`
                               : `${Colors.blue[500]}05`,
-                            borderColor: theme === 'dark'
+                            borderColor: true
                               ? 'rgba(248, 249, 250, 0.05)'
                               : 'rgba(43, 44, 44, 0.05)',
                           },
@@ -467,7 +429,6 @@ export default function NotificationsPanel({
                         <View style={[styles.notificationIcon, { backgroundColor: bg }]}>
                           <Ionicons name={icon as any} size={24} color={color} />
                         </View>
-
                         <View style={styles.notificationContent}>
                           <View style={styles.notificationHeader}>
                             <Text
@@ -480,14 +441,12 @@ export default function NotificationsPanel({
                               <View style={[styles.unreadDot, { backgroundColor: Colors.blue[500] }]} />
                             )}
                           </View>
-
                           <Text
                             style={[styles.notificationMessage, { color: colors.textSecondary }]}
                             numberOfLines={2}
                           >
                             {notification.message}
                           </Text>
-
                           <View style={styles.notificationFooter}>
                             <Ionicons name="time" size={12} color={colors.textSecondary} />
                             <Text style={[styles.notificationTime, { color: colors.textSecondary }]}>
@@ -501,7 +460,6 @@ export default function NotificationsPanel({
                 </View>
               )}
             </ScrollView>
-
             {/* Footer */}
             <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: `${Colors.blue[500]}05` }]}>
               <Text style={[styles.footerText, { color: colors.textSecondary }]}>
@@ -514,7 +472,6 @@ export default function NotificationsPanel({
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

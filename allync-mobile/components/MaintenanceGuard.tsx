@@ -7,11 +7,9 @@ import { getActiveMaintenanceWindow } from '../lib/api/maintenanceWindows';
 import { Colors } from '../constants/Colors';
 import { Typography } from '../constants/Typography';
 import { Spacing } from '../constants/Spacing';
-
 interface MaintenanceGuardProps {
   children: React.ReactNode;
 }
-
 export default function MaintenanceGuard({ children }: MaintenanceGuardProps) {
   const { user } = useAuth();
   const { colors } = useTheme();
@@ -19,16 +17,12 @@ export default function MaintenanceGuard({ children }: MaintenanceGuardProps) {
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
   const [isMaintenanceActive, setIsMaintenanceActive] = useState(false);
-
   useEffect(() => {
     checkMaintenanceStatus();
-
     // Check every 30 seconds for maintenance status changes
     const interval = setInterval(checkMaintenanceStatus, 30000);
-
     return () => clearInterval(interval);
   }, [pathname]);
-
   const checkMaintenanceStatus = async () => {
     try {
       // Don't check if already on maintenance page
@@ -36,9 +30,7 @@ export default function MaintenanceGuard({ children }: MaintenanceGuardProps) {
         setIsChecking(false);
         return;
       }
-
       const activeWindow = await getActiveMaintenanceWindow();
-
       if (activeWindow) {
         console.log('⚠️ [Mobile - MaintenanceGuard] Maintenance mode is active:', activeWindow);
         setIsMaintenanceActive(true);
@@ -53,7 +45,6 @@ export default function MaintenanceGuard({ children }: MaintenanceGuardProps) {
       setIsChecking(false);
     }
   };
-
   // Show loading while checking
   if (isChecking) {
     return (
@@ -65,25 +56,21 @@ export default function MaintenanceGuard({ children }: MaintenanceGuardProps) {
       </View>
     );
   }
-
   // If maintenance is active and user is NOT super admin → redirect to maintenance page
   if (isMaintenanceActive && user?.role !== 'super_admin') {
     console.log('🚧 [Mobile - MaintenanceGuard] Redirecting to maintenance page');
     router.replace('/maintenance' as any);
     return null;
   }
-
   // If maintenance is NOT active but user is on maintenance page → redirect to home
   if (!isMaintenanceActive && pathname === '/maintenance') {
     console.log('✅ [Mobile - MaintenanceGuard] Maintenance ended, redirecting to home');
     router.replace('/(tabs)/' as any);
     return null;
   }
-
   // All checks passed, render children
   return <>{children}</>;
 }
-
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,

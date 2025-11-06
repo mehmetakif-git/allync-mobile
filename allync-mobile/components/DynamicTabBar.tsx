@@ -16,7 +16,6 @@ import { getActiveServices, getServiceIcon, type CompanyServiceWithDetails } fro
 import { Colors } from '../constants/Colors';
 import { Typography } from '../constants/Typography';
 import { Spacing, BorderRadius } from '../constants/Spacing';
-
 interface TabConfig {
   name: string;
   icon: keyof typeof Ionicons.glyphMap;
@@ -27,43 +26,35 @@ interface TabConfig {
   instanceCount?: number;
   status?: string;
 }
-
 export default function DynamicTabBar() {
-  const { theme, colors } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [tabs, setTabs] = useState<TabConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const isCompanyAdmin = user?.role === 'company_admin';
-
   // Fetch company services and build tabs
   useEffect(() => {
     const fetchServicesAndBuildTabs = async () => {
       try {
         setIsLoading(true);
-
         // Base tabs (always visible)
         const baseTabs: TabConfig[] = [
           { name: 'Home', icon: 'home', route: '/(tabs)/' },
         ];
-
         let serviceTabs: TabConfig[] = [];
-
         // If user has company_id, fetch services
         if (user?.company_id) {
           try {
             const services = await getActiveServices(user.company_id);
             console.log('📱 [DynamicTabBar] Fetched services:', services.length);
-
             // Group services by service_type_id
             const serviceGroups = services.reduce((acc: any, cs: any) => {
               // Skip if service type is inactive
               if (cs.service_type?.status === 'inactive') {
                 return acc;
               }
-
               const typeId = cs.service_type_id;
               if (!acc[typeId]) {
                 acc[typeId] = [];
@@ -71,17 +62,14 @@ export default function DynamicTabBar() {
               acc[typeId].push(cs);
               return acc;
             }, {});
-
             // Build service tabs (one per service type)
             serviceTabs = Object.entries(serviceGroups).map(
               ([typeId, instances]: [string, any]) => {
                 const firstInstance = instances[0];
                 const service = firstInstance.service_type;
-
                 const isGloballyInMaintenance = service.status === 'maintenance';
                 const hasInstanceInMaintenance = instances.some((inst: any) => inst.status === 'maintenance');
                 const isInMaintenance = isGloballyInMaintenance || hasInstanceInMaintenance;
-
                 return {
                   name: service.name_en,
                   icon: getServiceIcon(service.slug) as keyof typeof Ionicons.glyphMap,
@@ -103,17 +91,14 @@ export default function DynamicTabBar() {
           // No company_id, show default services tab
           serviceTabs = [{ name: 'Services', icon: 'server', route: '/(tabs)/services' }];
         }
-
         // Bottom tabs (company admin only for some)
         const bottomTabs: TabConfig[] = [
           ...(isCompanyAdmin ? [{ name: 'Invoices', icon: 'receipt' as keyof typeof Ionicons.glyphMap, route: '/(tabs)/invoices' }] : []),
           { name: 'Support', icon: 'chatbubbles' as keyof typeof Ionicons.glyphMap, route: '/(tabs)/support' },
         ];
-
         // Combine all tabs
         const allTabs = [...baseTabs, ...serviceTabs, ...bottomTabs];
         console.log('📱 [DynamicTabBar] Built tabs:', allTabs.length, allTabs);
-
         setTabs(allTabs);
       } catch (error) {
         console.error('❌ [DynamicTabBar] Critical error:', error);
@@ -127,10 +112,8 @@ export default function DynamicTabBar() {
         setIsLoading(false);
       }
     };
-
     fetchServicesAndBuildTabs();
   }, [user?.company_id, isCompanyAdmin]);
-
   // Determine active index based on current route
   const getActiveIndex = () => {
     for (let i = 0; i < tabs.length; i++) {
@@ -141,42 +124,36 @@ export default function DynamicTabBar() {
     }
     return 0; // Default to Home
   };
-
   const activeIndex = getActiveIndex();
-
   const handleTabPress = (index: number) => {
     const tab = tabs[index];
     router.push(tab.route as any);
   };
-
   // Show loading state with placeholder tabs
   if (isLoading) {
     console.log('📱 [DynamicTabBar] Still loading tabs...');
   }
-
   // Always show tab bar, even if empty (with fallback)
   if (tabs.length === 0) {
     console.log('⚠️ [DynamicTabBar] No tabs found, this should not happen');
     return null;
   }
-
   // If more than 5 tabs, use scrollable tab bar
   if (tabs.length > 5) {
     return (
       <View style={styles.container}>
         <BlurView
-          intensity={theme === 'dark' ? 95 : 100}
-          tint={theme === 'dark' ? 'dark' : 'light'}
+          intensity={true ? 95 : 100}
+          tint={'dark'}
           style={styles.blurContainer}
         >
           <View
             style={[
               styles.scrollInnerContainer,
               {
-                backgroundColor:
-                  theme === 'dark' ? 'rgba(43, 44, 44, 0.75)' : 'rgba(248, 249, 250, 0.75)',
+                backgroundColor: 'rgba(43, 44, 44, 0.3)',
                 borderColor:
-                  theme === 'dark'
+                  true
                     ? 'rgba(248, 249, 250, 0.12)'
                     : 'rgba(43, 44, 44, 0.12)',
               },
@@ -194,7 +171,6 @@ export default function DynamicTabBar() {
                   index={index}
                   activeIndex={activeIndex}
                   onPress={() => handleTabPress(index)}
-                  theme={theme}
                   isScrollable
                 />
               ))}
@@ -204,23 +180,21 @@ export default function DynamicTabBar() {
       </View>
     );
   }
-
   // Regular fixed tab bar (4-5 tabs)
   return (
     <View style={styles.container}>
       <BlurView
-        intensity={theme === 'dark' ? 95 : 100}
-        tint={theme === 'dark' ? 'dark' : 'light'}
+        intensity={true ? 95 : 100}
+        tint={'dark'}
         style={styles.blurContainer}
       >
         <View
           style={[
             styles.innerContainer,
             {
-              backgroundColor:
-                theme === 'dark' ? 'rgba(43, 44, 44, 0.75)' : 'rgba(248, 249, 250, 0.75)',
+              backgroundColor: 'rgba(43, 44, 44, 0.3)',
               borderColor:
-                theme === 'dark'
+                true
                   ? 'rgba(248, 249, 250, 0.12)'
                   : 'rgba(43, 44, 44, 0.12)',
             },
@@ -233,7 +207,6 @@ export default function DynamicTabBar() {
               index={index}
               activeIndex={activeIndex}
               onPress={() => handleTabPress(index)}
-              theme={theme}
             />
           ))}
         </View>
@@ -241,7 +214,6 @@ export default function DynamicTabBar() {
     </View>
   );
 }
-
 interface TabButtonProps {
   tab: TabConfig;
   index: number;
@@ -250,12 +222,10 @@ interface TabButtonProps {
   theme: 'dark' | 'light';
   isScrollable?: boolean;
 }
-
-function TabButton({ tab, index, activeIndex, onPress, theme, isScrollable }: TabButtonProps) {
+function TabButton({ tab, index, activeIndex, onPress, isScrollable }: TabButtonProps) {
   const isActive = activeIndex === index;
   const scale = useSharedValue(isActive ? 1.1 : 1);
   const translateY = useSharedValue(isActive ? -2 : 0);
-
   useEffect(() => {
     scale.value = withSpring(isActive ? 1.1 : 1, {
       damping: 15,
@@ -266,22 +236,18 @@ function TabButton({ tab, index, activeIndex, onPress, theme, isScrollable }: Ta
       stiffness: 150,
     });
   }, [isActive]);
-
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }, { translateY: translateY.value }],
   }));
-
   const iconColor = isActive
-    ? theme === 'dark'
+    ? true
       ? Colors.blue[400]
       : Colors.blue[600]
-    : theme === 'dark'
+    : true
     ? 'rgba(248, 249, 250, 0.5)'
     : 'rgba(43, 44, 44, 0.5)';
-
   // Status indicator for maintenance
   const isInMaintenance = tab.status === 'maintenance';
-
   return (
     <TouchableOpacity
       style={[styles.tabButton, isScrollable && styles.scrollableTabButton]}
@@ -307,10 +273,10 @@ function TabButton({ tab, index, activeIndex, onPress, theme, isScrollable }: Ta
             styles.tabLabel,
             {
               color: isActive
-                ? theme === 'dark'
+                ? true
                   ? Colors.blue[400]
                   : Colors.blue[600]
-                : theme === 'dark'
+                : true
                 ? 'rgba(248, 249, 250, 0.5)'
                 : 'rgba(43, 44, 44, 0.5)',
             },
@@ -323,7 +289,6 @@ function TabButton({ tab, index, activeIndex, onPress, theme, isScrollable }: Ta
     </TouchableOpacity>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
