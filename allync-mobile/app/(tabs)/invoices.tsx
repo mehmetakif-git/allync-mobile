@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 import { PageTransition } from '../../components/PageTransition';
 import GlassSurface from '../../components/GlassSurface';
+import InvoicesSkeleton from '../../components/skeletons/InvoicesSkeleton';
 import {
   getInvoicesByCompany,
   formatCurrency,
@@ -87,13 +88,7 @@ export default function Invoices() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={{ color: colors.textSecondary }}>Loading invoices...</Text>
-        </View>
-      </View>
-    );
+    return <InvoicesSkeleton />;
   }
 
   return (

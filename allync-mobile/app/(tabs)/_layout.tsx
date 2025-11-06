@@ -56,7 +56,7 @@ export default function TabsLayout() {
         </Tabs>
       </AnimatedView>
       {/* Enhanced animated tab bar with liquid animations - slides up from bottom */}
-      <Animated.View style={tabBarAnimatedStyle}>
+      <Animated.View style={tabBarAnimatedStyle} pointerEvents="box-none">
         <EnhancedTabBar />
       </Animated.View>
     </BackgroundImage>

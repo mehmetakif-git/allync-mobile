@@ -9,18 +9,21 @@ export default function DashboardSkeleton() {
 
   return (
     <View style={styles.container}>
-      {/* Header Skeleton */}
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 60 : 20 }]}>
+      {/* Header Skeleton with Glassmorphism */}
+      <GlassSurface style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 60 : 20 }]}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
-            <Skeleton width={120} height={20} borderRadius={4} style={{ marginBottom: 8 }} />
-            <Skeleton width={180} height={28} borderRadius={6} />
+            <Skeleton width={100} height={18} borderRadius={4} style={{ marginBottom: 8 }} />
+            <Skeleton width={160} height={32} borderRadius={6} />
           </View>
           <View style={styles.headerRight}>
-            <SkeletonCircle size={40} />
+            <View style={styles.headerButtons}>
+              <SkeletonCircle size={44} />
+              <SkeletonCircle size={44} />
+            </View>
           </View>
         </View>
-      </View>
+      </GlassSurface>
 
       <ScrollView
         style={styles.scrollView}
@@ -96,6 +99,11 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     marginLeft: 16,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
   },
   scrollView: {
     flex: 1,

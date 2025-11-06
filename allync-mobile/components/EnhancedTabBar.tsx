@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  withDelay,
   interpolate,
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -32,6 +33,7 @@ export default function EnhancedTabBar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const isCompanyAdmin = user?.role === 'company_admin';
 
@@ -55,45 +57,99 @@ export default function EnhancedTabBar() {
   console.log('EnhancedTabBar - menuItems:', menuItems);
 
   const getActiveTab = () => {
+    console.log('Current pathname:', pathname);
+
     // Check if current pathname matches any menu item route
     for (const item of menuItems) {
       const itemRoute = item.route;
-      if (pathname === itemRoute) return 'menu'; // Active tab is in menu
       const routeWithoutTabs = itemRoute.replace('/(tabs)', '');
-      if (pathname === routeWithoutTabs || pathname.startsWith(routeWithoutTabs + '/')) {
-        return 'menu'; // Active tab is in menu
+
+      // Exact match
+      if (pathname === itemRoute || pathname === routeWithoutTabs) {
+        console.log('Active tab is menu item:', item.name);
+        return itemRoute;
+      }
+
+      // Starts with match (for nested routes)
+      if (pathname.startsWith(routeWithoutTabs + '/')) {
+        console.log('Active tab is menu item (nested):', item.name);
+        return itemRoute;
       }
     }
 
     // Check main tabs
     for (const tab of mainTabs) {
       const tabRoute = tab.route;
-      if (pathname === tabRoute) return tab.route;
       const routeWithoutTabs = tabRoute.replace('/(tabs)', '');
-      if (pathname === routeWithoutTabs || pathname.startsWith(routeWithoutTabs + '/')) {
-        return tab.route;
+
+      // Exact match for home route
+      if (tabRoute === '/(tabs)/' && (pathname === '/(tabs)/' || pathname === '/' || pathname === '/(tabs)')) {
+        console.log('Active tab is:', tab.name);
+        return tabRoute;
+      }
+
+      // Exact match
+      if (pathname === tabRoute || pathname === routeWithoutTabs) {
+        console.log('Active tab is:', tab.name);
+        return tabRoute;
+      }
+
+      // Starts with match (for nested routes)
+      if (pathname.startsWith(routeWithoutTabs + '/') && routeWithoutTabs !== '') {
+        console.log('Active tab is (nested):', tab.name);
+        return tabRoute;
       }
     }
+
+    console.log('No match, defaulting to home');
     return '/(tabs)/';
   };
 
   const activeTab = getActiveTab();
-  const isPlusActive = activeTab === 'menu';
+
+  // Check if any menu item is active
+  const isPlusActive = menuItems.some((item) => {
+    const itemRoute = item.route;
+    const routeWithoutTabs = itemRoute.replace('/(tabs)', '');
+    return pathname === itemRoute || pathname === routeWithoutTabs || pathname.startsWith(routeWithoutTabs + '/');
+  });
+
+  console.log('isPlusActive:', isPlusActive);
 
   const handleMenuItemPress = (route: string) => {
+    if (isAnimating) return;
+    setIsAnimating(true);
     setIsMenuOpen(false);
     router.push(route as any);
+    // Reset animation lock after close animation completes (3 items * 80ms + animation duration)
+    setTimeout(() => setIsAnimating(false), 400);
   };
 
   const handlePlusPress = () => {
+    if (isAnimating) {
+      console.log('Animation in progress, ignoring click');
+      return;
+    }
+    console.log('Plus button pressed! Current isMenuOpen:', isMenuOpen);
+    setIsAnimating(true);
     setIsMenuOpen(!isMenuOpen);
+    console.log('Setting isMenuOpen to:', !isMenuOpen);
+
+    // Reset animation lock after animation completes
+    // Opening: 3 items * 100ms delay + 300ms animation = 600ms
+    // Closing: 3 items * 80ms delay + 300ms animation = 540ms
+    setTimeout(() => setIsAnimating(false), isMenuOpen ? 540 : 600);
   };
 
   // Auto-close menu when navigating to different tabs
+  const prevPathnameRef = React.useRef(pathname);
+
   useEffect(() => {
-    if (isMenuOpen) {
+    if (prevPathnameRef.current !== pathname && isMenuOpen) {
+      console.log('Pathname changed, closing menu');
       setIsMenuOpen(false);
     }
+    prevPathnameRef.current = pathname;
   }, [pathname]);
 
   return (
@@ -117,8 +173,18 @@ export default function EnhancedTabBar() {
         pathname={pathname}
       />
 
+      {/* Plus Button - Floating above tab bar */}
+      <View style={styles.floatingPlusContainer} pointerEvents="box-none">
+        <PlusButton
+          isOpen={isMenuOpen}
+          isActive={isPlusActive}
+          onPress={handlePlusPress}
+          colors={colors}
+        />
+      </View>
+
       {/* Main Tab Bar */}
-      <View style={styles.container}>
+      <View style={styles.container} pointerEvents="box-none">
         <GlassSurface
           style={styles.glassContainer}
           borderRadius={30}
@@ -136,13 +202,8 @@ export default function EnhancedTabBar() {
                 colors={colors}
               />
 
-              {/* Plus Button */}
-              <PlusButton
-                isOpen={isMenuOpen}
-                isActive={isPlusActive}
-                onPress={handlePlusPress}
-                colors={colors}
-              />
+              {/* Empty space for floating plus button */}
+              <View style={styles.plusSpacer} />
 
               {/* Support Tab */}
               <MainTabButton
@@ -160,30 +221,6 @@ export default function EnhancedTabBar() {
 }
 
 function ExpandableMenu({ isOpen, items, onItemPress, colors, pathname }: any) {
-  const scale = useSharedValue(0);
-  const opacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (isOpen) {
-      scale.value = withSpring(1, {
-        damping: 30,
-        stiffness: 180,
-      });
-      opacity.value = withTiming(1, { duration: 200 });
-    } else {
-      scale.value = withSpring(0, {
-        damping: 30,
-        stiffness: 180,
-      });
-      opacity.value = withTiming(0, { duration: 150 });
-    }
-  }, [isOpen]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-
   // Check if a menu item is active
   const isMenuItemActive = (route: string) => {
     if (pathname === route) return true;
@@ -194,42 +231,150 @@ function ExpandableMenu({ isOpen, items, onItemPress, colors, pathname }: any) {
     return false;
   };
 
-  if (!isOpen && opacity.value === 0) return null;
+  // Semicircular arc positions (135°, 90°, 45°)
+  const getArcPosition = (index: number) => {
+    const positions = [
+      { left: 65, bottom: 85, angle: 135, initialX: -40, initialRotate: -45 }, // Left
+      { left: '50%', bottom: 110, angle: 90, initialX: 0, initialRotate: 0, centered: true }, // Center Top
+      { right: 65, bottom: 85, angle: 45, initialX: 40, initialRotate: 45 }, // Right
+    ];
+    return positions[index];
+  };
 
   return (
-    <Animated.View style={[styles.expandableMenu, animatedStyle]}>
-      <GlassSurface
-        style={styles.menuContainer}
-        borderRadius={60}
-        borderWidth={1}
-        opacity={0.98}
-        brightness={55}
-      >
-        <View style={styles.menuContent}>
-          {items.map((item: MenuItemConfig) => {
-            const isActive = isMenuItemActive(item.route);
-            return (
-              <TouchableOpacity
-                key={item.route}
-                style={styles.menuItem}
-                onPress={() => onItemPress(item.route)}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.menuIconContainer,
-                  isActive && { backgroundColor: 'rgba(59, 130, 246, 0.4)' }
-                ]}>
-                  <Ionicons
-                    name={item.icon}
-                    size={28}
-                    color={isActive ? Colors.blue[300] : Colors.blue[400]}
-                  />
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </GlassSurface>
+    <View style={styles.expandableMenu} pointerEvents={isOpen ? 'auto' : 'none'}>
+      {items.map((item: MenuItemConfig, index: number) => (
+        <MenuIcon
+          key={item.route}
+          item={item}
+          index={index}
+          isOpen={isOpen}
+          isActive={isMenuItemActive(item.route)}
+          onPress={() => onItemPress(item.route)}
+          position={getArcPosition(index)}
+        />
+      ))}
+    </View>
+  );
+}
+
+function MenuIcon({ item, index, isOpen, isActive, onPress, position }: any) {
+  const translateY = useSharedValue(80);
+  const translateX = useSharedValue(position.initialX);
+  const rotate = useSharedValue(position.initialRotate);
+  const opacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Cascading delay: 0s, 0.1s, 0.2s
+      const delay = index * 100;
+
+      // Rolling cascade animation with spring/bounce effect
+      translateY.value = withDelay(
+        delay,
+        withSpring(0, {
+          damping: 12,
+          stiffness: 150,
+          mass: 0.8,
+        })
+      );
+
+      translateX.value = withDelay(
+        delay,
+        withSpring(position.centered ? 0 : 0, {
+          damping: 12,
+          stiffness: 150,
+          mass: 0.8,
+        })
+      );
+
+      rotate.value = withDelay(
+        delay,
+        withSpring(0, {
+          damping: 12,
+          stiffness: 150,
+          mass: 0.8,
+        })
+      );
+
+      opacity.value = withDelay(delay, withTiming(1, { duration: 300 }));
+    } else {
+      // Reverse cascade animation when closing (2 -> 1 -> 0)
+      const reverseDelay = (2 - index) * 80;
+
+      translateY.value = withDelay(
+        reverseDelay,
+        withSpring(80, {
+          damping: 15,
+          stiffness: 180,
+          mass: 0.6,
+        })
+      );
+
+      translateX.value = withDelay(
+        reverseDelay,
+        withSpring(position.initialX, {
+          damping: 15,
+          stiffness: 180,
+          mass: 0.6,
+        })
+      );
+
+      rotate.value = withDelay(
+        reverseDelay,
+        withSpring(position.initialRotate, {
+          damping: 15,
+          stiffness: 180,
+          mass: 0.6,
+        })
+      );
+
+      opacity.value = withDelay(reverseDelay, withTiming(0, { duration: 200 }));
+    }
+  }, [isOpen]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: translateY.value },
+      { translateX: translateX.value },
+      { rotate: `${rotate.value}deg` },
+    ],
+    opacity: opacity.value,
+  }));
+
+  const positionStyle: any = {
+    position: 'absolute',
+    bottom: position.bottom,
+  };
+
+  if (position.centered) {
+    positionStyle.left = position.left;
+    positionStyle.marginLeft = -30; // Half of icon width (60/2)
+  } else if (position.left !== undefined) {
+    positionStyle.left = position.left;
+  } else if (position.right !== undefined) {
+    positionStyle.right = position.right;
+  }
+
+  return (
+    <Animated.View style={[positionStyle, animatedStyle]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        <GlassSurface
+          style={styles.menuIconContainer}
+          borderRadius={30}
+          borderWidth={1}
+          opacity={0.95}
+          brightness={50}
+        >
+          <View style={styles.menuIconWrapper}>
+            <Ionicons
+              name={item.icon}
+              size={28}
+              color={isActive ? Colors.blue[400] : 'rgba(255, 255, 255, 0.5)'}
+            />
+          </View>
+        </GlassSurface>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
@@ -238,16 +383,24 @@ function PlusButton({ isOpen, isActive, onPress, colors }: any) {
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
 
+  console.log('PlusButton render - isOpen:', isOpen, 'isActive:', isActive);
+
   useEffect(() => {
+    console.log('PlusButton animation effect - isOpen:', isOpen, 'isActive:', isActive);
     rotation.value = withSpring(isOpen ? 45 : 0, {
       damping: 15,
       stiffness: 200,
     });
-    scale.value = withSpring(isOpen || isActive ? 1.1 : 1, {
+    scale.value = withSpring(isOpen || isActive ? 1.15 : 1, {
       damping: 15,
       stiffness: 200,
     });
   }, [isOpen, isActive]);
+
+  const handlePress = () => {
+    console.log('PlusButton TouchableOpacity pressed!');
+    onPress();
+  };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -261,12 +414,20 @@ function PlusButton({ isOpen, isActive, onPress, colors }: any) {
   return (
     <TouchableOpacity
       style={styles.plusButtonContainer}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.8}
     >
-      <Animated.View style={animatedStyle}>
-        <Ionicons name="add-outline" size={42} color={iconColor} style={{ fontWeight: '900' }} />
-      </Animated.View>
+      <GlassSurface
+        style={styles.plusCircle}
+        borderRadius={34}
+        borderWidth={1}
+        opacity={0.95}
+        brightness={50}
+      >
+        <Animated.View style={[animatedStyle, { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }]}>
+          <Ionicons name="add-circle" size={72} color={iconColor} />
+        </Animated.View>
+      </GlassSurface>
     </TouchableOpacity>
   );
 }
@@ -284,6 +445,11 @@ function MainTabButton({ tab, isActive, onPress, colors }: any) {
     textOpacity.value = withTiming(isActive ? 1 : 0.7, { duration: 200 });
   }, [isActive]);
 
+  const handlePress = () => {
+    console.log('MainTabButton pressed:', tab.name, 'Route:', tab.route);
+    onPress();
+  };
+
   const iconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }],
   }));
@@ -296,7 +462,7 @@ function MainTabButton({ tab, isActive, onPress, colors }: any) {
   const labelColor = isActive ? colors.text : colors.textSecondary;
 
   return (
-    <TouchableOpacity style={styles.mainTab} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.mainTab} onPress={handlePress} activeOpacity={0.7}>
       <View style={styles.tabContent}>
         <Animated.View style={[styles.iconContainer, iconStyle]}>
           <Ionicons name={tab.icon} size={26} color={iconColor} />
@@ -321,8 +487,8 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 20 : 15,
-    left: 20,
-    right: 20,
+    left: 70,
+    right: 70,
     height: Platform.OS === 'ios' ? 85 : 70,
   },
   backdrop: {
@@ -369,35 +535,45 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
-  plusButtonContainer: {
+  floatingPlusContainer: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 35 : 28,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  plusSpacer: {
     flex: 1,
+  },
+  plusButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  plusCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   expandableMenu: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 115 : 95,
-    alignSelf: 'center',
+    bottom: 0,
+    left: 0,
+    right: 0,
     zIndex: 999,
-  },
-  menuContainer: {
-    overflow: 'hidden',
-  },
-  menuContent: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 20,
-  },
-  menuItem: {
+    height: 200,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   menuIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  menuIconWrapper: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
