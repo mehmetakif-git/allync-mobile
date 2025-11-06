@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Skeleton, SkeletonCircle } from '../Skeleton';
 import { useTheme } from '../../contexts/ThemeContext';
-import GlassSurface from '../GlassSurface';
+import { Spacing, BorderRadius } from '../../constants/Spacing';
 
 export default function ServicesSkeleton() {
   const { colors } = useTheme();
@@ -15,8 +15,8 @@ export default function ServicesSkeleton() {
     >
       {/* Header Skeleton */}
       <View style={styles.header}>
-        <Skeleton width={180} height={28} borderRadius={6} style={{ marginBottom: 8 }} />
-        <Skeleton width="80%" height={16} borderRadius={4} />
+        <Skeleton width={220} height={32} borderRadius={8} style={{ marginBottom: 8 }} />
+        <Skeleton width="90%" height={18} borderRadius={6} />
       </View>
 
       {/* Category Filters Skeleton */}
@@ -27,38 +27,35 @@ export default function ServicesSkeleton() {
         contentContainerStyle={styles.filtersContent}
       >
         {[1, 2, 3].map((item) => (
-          <Skeleton key={item} width={140} height={40} borderRadius={20} style={{ marginRight: 12 }} />
+          <Skeleton key={item} width={140} height={40} borderRadius={12} style={{ marginRight: 12 }} />
         ))}
       </ScrollView>
 
-      {/* Services Grid Skeleton */}
-      <View style={styles.servicesGrid}>
-        {[1, 2, 3, 4, 5, 6].map((item) => (
-          <View key={item} style={styles.serviceCardWrapper}>
-            <GlassSurface style={styles.serviceCard}>
-              {/* Icon */}
-              <View style={styles.serviceIconContainer}>
-                <SkeletonCircle size={56} />
-              </View>
+      {/* Services List Skeleton (Full Width Cards) */}
+      <View style={styles.servicesList}>
+        {[1, 2, 3, 4].map((item) => (
+          <View key={item} style={styles.serviceCard}>
+            {/* Icon */}
+            <View style={styles.serviceHeader}>
+              <Skeleton width={60} height={60} borderRadius={12} />
+            </View>
 
-              {/* Service Name */}
-              <Skeleton width="80%" height={18} borderRadius={4} style={{ marginTop: 16, marginBottom: 8 }} />
+            {/* Service Name */}
+            <Skeleton width="80%" height={22} borderRadius={6} style={{ marginTop: 12, marginBottom: 8 }} />
 
-              {/* Description */}
-              <Skeleton width="100%" height={14} borderRadius={4} style={{ marginBottom: 4 }} />
-              <Skeleton width="90%" height={14} borderRadius={4} style={{ marginBottom: 12 }} />
+            {/* Description */}
+            <Skeleton width="100%" height={16} borderRadius={4} style={{ marginBottom: 4 }} />
+            <Skeleton width="95%" height={16} borderRadius={4} style={{ marginBottom: 12 }} />
 
-              {/* Status Badge */}
-              <View style={styles.statusBadgeContainer}>
-                <Skeleton width={80} height={24} borderRadius={12} />
-              </View>
+            {/* Status Badge */}
+            <View style={styles.statusBadgeContainer}>
+              <Skeleton width={120} height={26} borderRadius={13} />
+            </View>
 
-              {/* Bottom Info */}
-              <View style={styles.serviceFooter}>
-                <Skeleton width={60} height={14} borderRadius={4} />
-                <Skeleton width={70} height={14} borderRadius={4} />
-              </View>
-            </GlassSurface>
+            {/* Action Button */}
+            <View style={styles.actionButtonContainer}>
+              <Skeleton width="100%" height={44} borderRadius={12} />
+            </View>
           </View>
         ))}
       </View>
@@ -71,44 +68,37 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 120,
+    paddingTop: Spacing['5xl'],
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   filtersContainer: {
-    marginBottom: 24,
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
+    marginBottom: Spacing.xl,
   },
   filtersContent: {
-    paddingRight: 20,
+    gap: Spacing.sm,
+    paddingRight: Spacing.lg,
   },
-  servicesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -6,
-  },
-  serviceCardWrapper: {
-    width: '50%',
-    padding: 6,
+  servicesList: {
+    gap: Spacing.lg,
   },
   serviceCard: {
-    padding: 16,
-    borderRadius: 20,
-    minHeight: 220,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  serviceIconContainer: {
+  serviceHeader: {
     alignItems: 'flex-start',
   },
   statusBadgeContainer: {
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
-  serviceFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  actionButtonContainer: {
+    marginTop: 'auto',
   },
 });
