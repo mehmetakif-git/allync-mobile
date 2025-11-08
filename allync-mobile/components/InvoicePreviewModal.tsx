@@ -47,8 +47,9 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
           exiting={FadeOut.duration(200)}
           style={styles.modalContent}
         >
-          <GlassSurface style={styles.modalGlass}>
-            <View style={styles.innerContainer}>
+          <View style={styles.modalGlassWrapper}>
+            <GlassSurface style={styles.modalGlass}>
+              <View style={styles.innerContainer}>
               {/* Header with Close Button */}
               <View style={styles.header}>
               <View>
@@ -272,8 +273,9 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
                 </Text>
               </View>
               </ScrollView>
-            </View>
-          </GlassSurface>
+              </View>
+            </GlassSurface>
+          </View>
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -291,6 +293,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     overflow: 'hidden',
+  },
+  modalGlassWrapper: {
+    flex: 1,
   },
   modalGlass: {
     flex: 1,
