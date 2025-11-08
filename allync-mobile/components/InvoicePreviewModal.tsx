@@ -67,8 +67,8 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
                     {invoice.status.toUpperCase()}
                   </Text>
                 </View>
-                <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                  <Ionicons name="close" size={28} color={colors.text} />
+                <TouchableOpacity onPress={onClose} style={styles.closeButton} activeOpacity={0.7}>
+                  <Ionicons name="close-circle" size={36} color="#ef4444" />
                 </TouchableOpacity>
               </View>
               </View>
@@ -350,6 +350,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+    borderRadius: 20,
   },
   infoSection: {
     gap: 16,
