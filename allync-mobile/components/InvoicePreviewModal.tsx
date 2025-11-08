@@ -52,8 +52,8 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
             style={{ flex: 1 }}
           >
             <GlassSurface style={styles.modalGlass}>
-            {/* Header with Close Button */}
-            <View style={styles.header}>
+              {/* Header with Close Button */}
+              <View style={styles.header}>
               <View>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>INVOICE</Text>
                 <Text style={[styles.invoiceNumber, { color: colors.text }]}>{invoice.invoice_number}</Text>
@@ -73,9 +73,13 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
                   <Ionicons name="close" size={28} color={colors.text} />
                 </TouchableOpacity>
               </View>
-            </View>
+              </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+              >
               {/* Invoice Details & Bill To */}
               <View style={styles.infoSection}>
                 {/* Invoice Details Card */}
@@ -270,7 +274,7 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
                   © 2025 Allync AI. All rights reserved.
                 </Text>
               </View>
-            </ScrollView>
+              </ScrollView>
             </GlassSurface>
           </TouchableOpacity>
         </Animated.View>
@@ -293,10 +297,14 @@ const styles = StyleSheet.create({
   },
   modalGlass: {
     flex: 1,
-    padding: 20,
+    paddingTop: 20,
+    paddingHorizontal: 20,
   },
   scrollView: {
-    marginBottom: 20,
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
