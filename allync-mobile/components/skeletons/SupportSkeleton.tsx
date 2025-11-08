@@ -3,12 +3,13 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { Skeleton, SkeletonCircle } from '../Skeleton';
 import { useTheme } from '../../contexts/ThemeContext';
 import GlassSurface from '../GlassSurface';
+import MeshGlowBackground from '../MeshGlowBackground';
 
 export default function SupportSkeleton() {
   const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <MeshGlowBackground>
       {/* Header Skeleton */}
       <View style={styles.header}>
         <Skeleton width={160} height={26} borderRadius={6} />
@@ -36,7 +37,7 @@ export default function SupportSkeleton() {
       </View>
 
       {/* Tickets List Skeleton */}
-      <ScrollView style={styles.ticketsList} contentContainerStyle={styles.ticketsListContent}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.ticketsListContent}>
         {[1, 2, 3, 4, 5].map((item) => (
           <GlassSurface key={item} style={styles.ticketCard}>
             {/* Ticket Header */}
@@ -73,7 +74,7 @@ export default function SupportSkeleton() {
           </GlassSurface>
         ))}
       </ScrollView>
-    </View>
+    </MeshGlowBackground>
   );
 }
 
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   filterScrollContent: {
     paddingRight: 20,
   },
-  ticketsList: {
+  scrollView: {
     flex: 1,
     paddingHorizontal: 20,
   },

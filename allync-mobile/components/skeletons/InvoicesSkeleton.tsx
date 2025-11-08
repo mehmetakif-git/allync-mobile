@@ -3,16 +3,18 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { Skeleton, SkeletonCircle } from '../Skeleton';
 import { useTheme } from '../../contexts/ThemeContext';
 import GlassSurface from '../GlassSurface';
+import MeshGlowBackground from '../MeshGlowBackground';
 
 export default function InvoicesSkeleton() {
   const { colors } = useTheme();
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
+    <MeshGlowBackground>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
       {/* Header Skeleton */}
       <View style={styles.header}>
         <Skeleton width={160} height={28} borderRadius={6} style={{ marginBottom: 8 }} />
@@ -72,11 +74,15 @@ export default function InvoicesSkeleton() {
         </GlassSurface>
       ))}
     </ScrollView>
+    </MeshGlowBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   scrollContent: {

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, Modal, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView, RNCBlurView } from '../../components/BlurViewCompat';
+import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
@@ -11,6 +11,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import SupportSkeleton from '../../components/skeletons/SupportSkeleton';
 import SupportTicketModal from '../../components/SupportTicketModal';
+import MeshGlowBackground from '../../components/MeshGlowBackground';
 import {
   getTicketsByCompany,
   getTicketMessages,
@@ -173,7 +174,7 @@ export default function Support() {
     );
   }
   return (
-    <View style={styles.container}>
+    <MeshGlowBackground>
         {/* Tickets List */}
         <View style={styles.ticketsSection}>
           {/* Header */}
@@ -193,7 +194,7 @@ export default function Support() {
           </View>
           {/* Search and Filter */}
           <View style={styles.searchSection}>
-            <View style={[styles.searchContainer, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+            <BlurView intensity={20} tint="dark" style={styles.searchContainerBlur}>
               <Ionicons name="search" size={20} color={colors.textTertiary} />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
@@ -202,7 +203,7 @@ export default function Support() {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
-            </View>
+            </BlurView>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -213,15 +214,20 @@ export default function Support() {
                 <TouchableOpacity
                   key={status}
                   onPress={() => setFilterStatus(status)}
-                  style={[
-                    styles.filterChip,
-                    filterStatus === status && styles.filterChipActive,
-                    { backgroundColor: filterStatus === status ? Colors.blue[600] : ('rgba(43, 44, 44, 0.5)') }
-                  ]}
+                  style={styles.filterChipWrapper}
                 >
-                  <Text style={[styles.filterChipText, { color: filterStatus === status ? Colors.titanium : colors.textSecondary }]}>
-                    {status === 'all' ? 'All' : getStatusDisplayName(status)}
-                  </Text>
+                  <BlurView
+                    intensity={20}
+                    tint="dark"
+                    style={[
+                      styles.filterChipBlur,
+                      filterStatus === status && styles.filterChipActive
+                    ]}
+                  >
+                    <Text style={[styles.filterChipText, { color: filterStatus === status ? Colors.titanium : colors.textSecondary }]}>
+                      {status === 'all' ? 'All' : getStatusDisplayName(status)}
+                    </Text>
+                  </BlurView>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -246,53 +252,11 @@ export default function Support() {
                   ]}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.ticketCardWrapper}>
-                    {/* Gradient Background */}
-                    <LinearGradient
-                      colors={[`${getStatusColor(ticket.status)}15`, `${getStatusColor(ticket.status)}05`]}
-                      style={StyleSheet.absoluteFillObject}
-                    />
-                    {/* Glass overlay */}
-                    {Platform.OS === 'ios' ? (
-                      <BlurView
-                        intensity={40}
-                        tint={'dark'}
-                        style={[styles.ticketCardGlass, {
-                          backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                        }]}
-                      >
-                        <TicketCardContent ticket={ticket} colors={colors} />
-                      </BlurView>
-                    ) : (
-                      <>
-                        <RNCBlurView
-                          style={StyleSheet.absoluteFillObject}
-                          blurType={'dark'}
-                          blurAmount={5}
-                          reducedTransparencyFallbackColor={
-                            'rgba(10, 14, 39, 0.85)'
-                          }
-                        >
-                          <View style={[StyleSheet.absoluteFillObject, {
-                            backgroundColor: 'rgba(10, 14, 39, 0.45)',
-                          }]} />
-                          <LinearGradient
-                            colors={true
-                              ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
-                              : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
-                            }
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.5 }}
-                            style={StyleSheet.absoluteFillObject}
-                            pointerEvents="none"
-                          />
-                        </RNCBlurView>
-                        <View style={styles.ticketCardGlass}>
-                          <TicketCardContent ticket={ticket} colors={colors} />
-                        </View>
-                      </>
-                    )}
-                  </View>
+                  <BlurView intensity={20} tint="dark" style={styles.ticketCardBlur}>
+                    <View style={styles.ticketCardGlass}>
+                      <TicketCardContent ticket={ticket} colors={colors} />
+                    </View>
+                  </BlurView>
                 </AnimatedTouchable>
               ))
             )}
@@ -398,7 +362,7 @@ export default function Support() {
             </ScrollView>
           </View>
         </Modal>
-      </View>
+      </MeshGlowBackground>
   );
 }
 // Ticket Card Content Component
@@ -465,13 +429,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
   },
-  searchContainer: {
+  searchContainerBlur: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    overflow: 'hidden',
     marginBottom: Spacing.md,
   },
   searchInput: {
@@ -485,12 +452,21 @@ const styles = StyleSheet.create({
   filterScrollContent: {
     gap: Spacing.sm,
   },
-  filterChip: {
+  filterChipWrapper: {
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  filterChipBlur: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   filterChipActive: {
+    backgroundColor: Colors.blue[600],
     ...Shadows.sm,
   },
   filterChipText: {
@@ -525,8 +501,12 @@ const styles = StyleSheet.create({
   ticketCardSelected: {
     transform: [{ scale: 0.98 }],
   },
-  ticketCardWrapper: {
-    borderRadius: BorderRadius.lg,
+  ticketCardBlur: {
+    padding: Spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
     overflow: 'hidden',
     ...Shadows.md,
   },

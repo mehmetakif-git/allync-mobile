@@ -3,16 +3,18 @@ import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Skeleton, SkeletonCircle } from '../Skeleton';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
+import MeshGlowBackground from '../MeshGlowBackground';
 
 export default function ServicesSkeleton() {
   const { colors } = useTheme();
 
   return (
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <MeshGlowBackground>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
       {/* Header Skeleton */}
       <View style={styles.header}>
         <Skeleton width={220} height={32} borderRadius={8} style={{ marginBottom: 8 }} />
@@ -60,10 +62,14 @@ export default function ServicesSkeleton() {
         ))}
       </View>
     </ScrollView>
+    </MeshGlowBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView, RNCBlurView } from '../../components/BlurViewCompat';
+import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown, FadeIn, useAnimatedStyle, withSpring, withRepeat, withSequence, withTiming, useSharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,6 +15,7 @@ import { getDashboardStats, getUserCompanyId, formatCurrency, getActiveServices,
 import NotificationsPanel from '../../components/NotificationsPanel';
 import DashboardHeader from '../../components/DashboardHeader';
 import DashboardSkeleton from '../../components/skeletons/DashboardSkeleton';
+import MeshGlowBackground from '../../components/MeshGlowBackground';
 const AnimatedView = Animated.View;
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 export default function Home() {
@@ -183,7 +184,7 @@ export default function Home() {
     );
   }
   return (
-    <View style={styles.container}>
+    <MeshGlowBackground>
         {/* Header Component */}
         <DashboardHeader
           userName={user?.email?.split('@')[0] || 'User'}
@@ -210,92 +211,21 @@ export default function Home() {
               style={styles.statCard}
               activeOpacity={0.8}
             >
-              <View style={styles.statCardWrapper}>
-                {/* Colored gradient background */}
-                <LinearGradient
-                  colors={stat.bgGradient}
-                  style={StyleSheet.absoluteFillObject}
-                />
-                {/* Glass overlay */}
-                {Platform.OS === 'ios' ? (
-                  <BlurView
-                    intensity={40}
-                    tint={'dark'}
-                    style={[styles.statCardGlass, {
-                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                    }]}
-                  >
-                    <View style={styles.statHeader}>
-                      <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
-                        <Ionicons name={stat.icon as any} size={22} color={stat.color} />
-                      </View>
-                      <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
-                        <View style={[styles.statDot, { backgroundColor: stat.color }]} />
-                      </View>
+              <BlurView intensity={20} tint="dark" style={styles.statCardBlur}>
+                <View style={styles.statCardGlass}>
+                  <View style={styles.statHeader}>
+                    <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
+                      <Ionicons name={stat.icon as any} size={22} color={stat.color} />
                     </View>
-                    <Text style={[styles.statValue, dynamicStyles.statValue]}>{stat.value}</Text>
-                    <Text style={[styles.statTitle, dynamicStyles.statTitle]}>{stat.title}</Text>
-                    <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
-                  </BlurView>
-                ) : (
-                  <>
-                    <RNCBlurView
-                      style={StyleSheet.absoluteFillObject}
-                      blurType={'dark'}
-                      blurAmount={5}
-                      reducedTransparencyFallbackColor={
-                        'rgba(10, 14, 39, 0.85)'
-                      }
-                    >
-                      <View
-                        style={[
-                          StyleSheet.absoluteFillObject,
-                          {
-                            backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                          },
-                        ]}
-                      />
-                      {/* Top edge highlight gradient */}
-                      <LinearGradient
-                        colors={
-                          true
-                            ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
-                            : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
-                        }
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 0.5 }}
-                        style={StyleSheet.absoluteFillObject}
-                        pointerEvents="none"
-                      />
-                      {/* Bottom subtle shine */}
-                      <LinearGradient
-                        colors={
-                          true
-                            ? ['transparent', 'rgba(255, 255, 255, 0.04)']
-                            : ['transparent', 'rgba(255, 255, 255, 0.25)']
-                        }
-                        start={{ x: 0, y: 0.6 }}
-                        end={{ x: 0, y: 1 }}
-                        style={StyleSheet.absoluteFillObject}
-                        pointerEvents="none"
-                      />
-                    </RNCBlurView>
-                    <View style={styles.statCardGlass}>
-                      <View style={styles.statHeader}>
-                        <View style={[styles.statIconContainer, { backgroundColor: `${stat.color}30` }]}>
-                          <Ionicons name={stat.icon as any} size={22} color={stat.color} />
-                        </View>
-                        <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
-                          <View style={[styles.statDot, { backgroundColor: stat.color }]} />
-                        </View>
-                      </View>
-                      <Text style={[styles.statValue, dynamicStyles.statValue]}>{stat.value}</Text>
-                      <Text style={[styles.statTitle, dynamicStyles.statTitle]}>{stat.title}</Text>
-                      <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
+                    <View style={[styles.statBadge, { backgroundColor: `${stat.color}20` }]}>
+                      <View style={[styles.statDot, { backgroundColor: stat.color }]} />
                     </View>
-                  </>
-                )}
-              </View>
+                  </View>
+                  <Text style={[styles.statValue, dynamicStyles.statValue]}>{stat.value}</Text>
+                  <Text style={[styles.statTitle, dynamicStyles.statTitle]}>{stat.title}</Text>
+                  <Text style={[styles.statChange, { color: stat.color }]}>{stat.change}</Text>
+                </View>
+              </BlurView>
             </AnimatedTouchable>
           ))}
         </View>
@@ -353,39 +283,13 @@ export default function Home() {
           <View style={styles.servicesGrid}>
             {activeServices.length === 0 ? (
               <View style={styles.emptyServicesCard}>
-                <View style={styles.emptyServicesWrapper}>
-                  <LinearGradient
-                    colors={['rgba(59, 130, 246, 0.15)', 'rgba(6, 182, 212, 0.08)']}
-                    style={StyleSheet.absoluteFillObject}
-                  />
-                  {Platform.OS === 'ios' ? (
-                    <BlurView
-                      intensity={40}
-                      tint={'dark'}
-                      style={[styles.emptyServicesContent, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]}
-                    >
-                      <Ionicons name="server-outline" size={48} color={colors.textTertiary} />
-                      <Text style={[styles.emptyServicesText, { color: colors.text }]}>No active services</Text>
-                      <Text style={[styles.emptyServicesSubtext, { color: colors.textSecondary }]}>Contact support to get started</Text>
-                    </BlurView>
-                  ) : (
-                    <>
-                      <RNCBlurView
-                        style={StyleSheet.absoluteFillObject}
-                        blurType={'dark'}
-                        blurAmount={5}
-                        reducedTransparencyFallbackColor={'rgba(10, 14, 39, 0.85)'}
-                      >
-                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]} />
-                      </RNCBlurView>
-                      <View style={styles.emptyServicesContent}>
-                        <Ionicons name="server-outline" size={48} color={colors.textTertiary} />
-                        <Text style={[styles.emptyServicesText, { color: colors.text }]}>No active services</Text>
-                        <Text style={[styles.emptyServicesSubtext, { color: colors.textSecondary }]}>Contact support to get started</Text>
-                      </View>
-                    </>
-                  )}
-                </View>
+                <BlurView intensity={20} tint="dark" style={styles.emptyServicesBlur}>
+                  <View style={styles.emptyServicesContent}>
+                    <Ionicons name="server-outline" size={48} color={colors.textTertiary} />
+                    <Text style={[styles.emptyServicesText, { color: colors.text }]}>No active services</Text>
+                    <Text style={[styles.emptyServicesSubtext, { color: colors.textSecondary }]}>Contact support to get started</Text>
+                  </View>
+                </BlurView>
               </View>
             ) : (
               activeServices.slice(0, 4).map((service, index) => (
@@ -419,7 +323,7 @@ export default function Home() {
         onNotificationRead={() => setUnreadCount((prev) => Math.max(0, prev - 1))}
         onMarkAllRead={() => setUnreadCount(0)}
       />
-    </View>
+    </MeshGlowBackground>
   );
 }
 function ServiceCard({
@@ -461,48 +365,19 @@ function ServiceCard({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <View style={styles.serviceCardWrapper}>
-        <LinearGradient colors={gradient} style={StyleSheet.absoluteFillObject} />
-        {Platform.OS === 'ios' ? (
-          <BlurView
-            intensity={40}
-            tint={'dark'}
-            style={[styles.serviceCardGlass, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]}
-          >
-            <View style={[styles.serviceIconContainer, { backgroundColor: `${serviceColor}30` }]}>
-              <Ionicons name={getServiceIcon(service.service_type.slug) as any} size={24} color={serviceColor} />
-            </View>
-            <Text style={[styles.serviceTitle, { color: colors.text }]} numberOfLines={1}>
-              {service.instance_name || service.service_type.name_en}
-            </Text>
-            <Text style={[styles.servicePackage, { color: serviceColor }]}>
-              {service.package}
-            </Text>
-          </BlurView>
-        ) : (
-          <>
-            <RNCBlurView
-              style={StyleSheet.absoluteFillObject}
-              blurType={'dark'}
-              blurAmount={5}
-              reducedTransparencyFallbackColor={'rgba(10, 14, 39, 0.85)'}
-            >
-              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]} />
-            </RNCBlurView>
-            <View style={styles.serviceCardGlass}>
-              <View style={[styles.serviceIconContainer, { backgroundColor: `${serviceColor}30` }]}>
-                <Ionicons name={getServiceIcon(service.service_type.slug) as any} size={24} color={serviceColor} />
-              </View>
-              <Text style={[styles.serviceTitle, { color: colors.text }]} numberOfLines={1}>
-                {service.instance_name || service.service_type.name_en}
-              </Text>
-              <Text style={[styles.servicePackage, { color: serviceColor }]}>
-                {service.package}
-              </Text>
-            </View>
-          </>
-        )}
-      </View>
+      <BlurView intensity={20} tint="dark" style={styles.serviceCardBlur}>
+        <View style={styles.serviceCardGlass}>
+          <View style={[styles.serviceIconContainer, { backgroundColor: `${serviceColor}30` }]}>
+            <Ionicons name={getServiceIcon(service.service_type.slug) as any} size={24} color={serviceColor} />
+          </View>
+          <Text style={[styles.serviceTitle, { color: colors.text }]} numberOfLines={1}>
+            {service.instance_name || service.service_type.name_en}
+          </Text>
+          <Text style={[styles.servicePackage, { color: serviceColor }]}>
+            {service.package}
+          </Text>
+        </View>
+      </BlurView>
     </AnimatedTouchable>
   );
 }
@@ -527,80 +402,15 @@ function QuickAction({
   const subtitleColor = Colors.text.tertiary;
   return (
     <TouchableOpacity style={styles.actionButton} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.actionButtonWrapper}>
-        {/* Colored gradient background */}
-        <LinearGradient
-          colors={gradient}
-          style={StyleSheet.absoluteFillObject}
-        />
-        {/* Glass overlay */}
-        {Platform.OS === 'ios' ? (
-          <BlurView
-            intensity={40}
-            tint={'dark'}
-            style={[styles.actionButtonGlass, {
-              backgroundColor: 'rgba(43, 44, 44, 0.3)',
-            }]}
-          >
-            <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
-              <Ionicons name={icon as any} size={24} color={color} />
-            </View>
-            <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
-            <Text style={[styles.actionSubtitle, { color: subtitleColor }]}>{subtitle}</Text>
-          </BlurView>
-        ) : (
-          <>
-            <RNCBlurView
-              style={StyleSheet.absoluteFillObject}
-              blurType={'dark'}
-              blurAmount={5}
-              reducedTransparencyFallbackColor={
-                'rgba(10, 14, 39, 0.85)'
-              }
-            >
-              <View
-                style={[
-                  StyleSheet.absoluteFillObject,
-                  {
-                    backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                  },
-                ]}
-              />
-              {/* Top edge highlight gradient */}
-              <LinearGradient
-                colors={
-                  true
-                    ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
-                    : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 0.5 }}
-                style={StyleSheet.absoluteFillObject}
-                pointerEvents="none"
-              />
-              {/* Bottom subtle shine */}
-              <LinearGradient
-                colors={
-                  true
-                    ? ['transparent', 'rgba(255, 255, 255, 0.04)']
-                    : ['transparent', 'rgba(255, 255, 255, 0.25)']
-                }
-                start={{ x: 0, y: 0.6 }}
-                end={{ x: 0, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-                pointerEvents="none"
-              />
-            </RNCBlurView>
-            <View style={styles.actionButtonGlass}>
-              <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
-                <Ionicons name={icon as any} size={24} color={color} />
-              </View>
-              <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
-              <Text style={[styles.actionSubtitle, { color: subtitleColor }]}>{subtitle}</Text>
-            </View>
-          </>
-        )}
-      </View>
+      <BlurView intensity={20} tint="dark" style={styles.actionButtonBlur}>
+        <View style={styles.actionButtonGlass}>
+          <View style={[styles.actionIconContainer, { backgroundColor: `${color}30` }]}>
+            <Ionicons name={icon as any} size={24} color={color} />
+          </View>
+          <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
+          <Text style={[styles.actionSubtitle, { color: subtitleColor }]}>{subtitle}</Text>
+        </View>
+      </BlurView>
     </TouchableOpacity>
   );
 }
@@ -635,11 +445,12 @@ const styles = StyleSheet.create({
   statCard: {
     width: '48%',
   },
-  statCardWrapper: {
-    borderRadius: BorderRadius.xl,
+  statCardBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   statCardGlass: {
     padding: Spacing.lg,
@@ -725,11 +536,12 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
-  actionButtonWrapper: {
-    borderRadius: BorderRadius.xl,
+  actionButtonBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   actionButtonGlass: {
     padding: Spacing.lg,
@@ -771,11 +583,12 @@ const styles = StyleSheet.create({
   serviceCard: {
     width: '48%',
   },
-  serviceCardWrapper: {
-    borderRadius: BorderRadius.xl,
+  serviceCardBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   serviceCardGlass: {
     padding: Spacing.lg,
@@ -805,11 +618,12 @@ const styles = StyleSheet.create({
   emptyServicesCard: {
     width: '100%',
   },
-  emptyServicesWrapper: {
-    borderRadius: BorderRadius.xl,
+  emptyServicesBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   emptyServicesContent: {
     padding: Spacing['3xl'],

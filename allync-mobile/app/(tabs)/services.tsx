@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, RefreshControl } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView, RNCBlurView } from '../../components/BlurViewCompat';
+import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -15,6 +15,7 @@ import { Spacing, BorderRadius } from '../../constants/Spacing';
 import RequestServiceModal from '../../components/RequestServiceModal';
 import ServicesSkeleton from '../../components/skeletons/ServicesSkeleton';
 import MobileAppServiceView from '../../components/services/MobileAppServiceView';
+import MeshGlowBackground from '../../components/MeshGlowBackground';
 import {
   getActiveServices,
   getCompanyServices,
@@ -215,7 +216,7 @@ export default function Services() {
     { key: 'digital', labelEn: 'Digital', labelTr: 'Dijital' },
   ];
   return (
-    <View style={styles.container}>
+    <MeshGlowBackground>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
@@ -308,21 +309,8 @@ export default function Services() {
                     }
                   }}
                 >
-                  <View style={styles.serviceCard}>
-                    {/* Colored gradient background */}
-                    <LinearGradient
-                      colors={[`${gradientStart}20`, `${gradientEnd}05`]}
-                      style={StyleSheet.absoluteFillObject}
-                    />
-                    {/* Glass overlay */}
-                    {Platform.OS === 'ios' ? (
-                      <BlurView
-                        intensity={40}
-                        tint={'dark'}
-                        style={[styles.serviceCardGlass, {
-                          backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                        }]}
-                      >
+                  <BlurView intensity={20} tint="dark" style={styles.serviceCardBlur}>
+                    <View style={styles.serviceCardGlass}>
                         {/* Icon */}
                         <LinearGradient
                           colors={[gradientStart, gradientEnd]}
@@ -372,181 +360,55 @@ export default function Services() {
                           </View>
                         )}
                         {/* Action Button */}
-                        <TouchableOpacity
-                          style={[
-                            styles.actionButton,
-                            {
-                              backgroundColor: isActive
-                                ? `${Colors.blue[500]}20`
-                                : isInMaintenance
-                                ? `${Colors.gray[500]}20`
-                                : `${Colors.green[500]}20`,
-                            },
-                          ]}
-                          disabled={isInMaintenance}
-                          activeOpacity={0.7}
-                          onPress={() => {
-                            if (!isActive && !isInMaintenance) {
-                              handleRequestService(service);
-                            }
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.actionButtonText,
-                              {
-                                color: isActive
-                                  ? Colors.blue[500]
-                                  : isInMaintenance
-                                  ? Colors.gray[500]
-                                  : Colors.green[500],
-                              },
-                            ]}
-                          >
-                            {isActive
-                              ? (language === 'en' ? 'View Dashboard' : 'Paneli Gör')
-                              : isInMaintenance
-                              ? (language === 'en' ? 'Under Maintenance' : 'Bakımda')
-                              : (language === 'en' ? 'Request Service' : 'Servis Talep Et')}
-                          </Text>
-                        </TouchableOpacity>
-                      </BlurView>
-                    ) : (
-                      <>
-                        <RNCBlurView
-                          style={StyleSheet.absoluteFillObject}
-                          blurType={'dark'}
-                          blurAmount={5}
-                          reducedTransparencyFallbackColor={
-                            'rgba(10, 14, 39, 0.85)'
-                          }
-                        >
-                          <View
-                            style={[
-                              StyleSheet.absoluteFillObject,
-                              {
-                                backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                              },
-                            ]}
-                          />
-                          {/* Top edge highlight gradient */}
-                          <LinearGradient
-                            colors={
-                              true
-                                ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
-                                : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
-                            }
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 0, y: 0.5 }}
-                            style={StyleSheet.absoluteFillObject}
-                            pointerEvents="none"
-                          />
-                          {/* Bottom subtle shine */}
-                          <LinearGradient
-                            colors={
-                              true
-                                ? ['transparent', 'rgba(255, 255, 255, 0.04)']
-                                : ['transparent', 'rgba(255, 255, 255, 0.25)']
-                            }
-                            start={{ x: 0, y: 0.6 }}
-                            end={{ x: 0, y: 1 }}
-                            style={StyleSheet.absoluteFillObject}
-                            pointerEvents="none"
-                          />
-                        </RNCBlurView>
-                        {/* Card Content */}
-                        <View style={styles.serviceCardGlass}>
-                          {/* Icon */}
-                          <LinearGradient
-                            colors={[gradientStart, gradientEnd]}
-                            style={styles.serviceIcon}
-                          >
-                            <Ionicons name={iconName} size={28} color="#FFFFFF" />
-                          </LinearGradient>
-                          {/* Service Name */}
-                          <Text style={[styles.serviceName, { color: colors.text }]} numberOfLines={2}>
-                            {serviceName}
-                          </Text>
-                          {/* Description */}
-                          <Text style={[styles.serviceDescription, { color: colors.textSecondary }]} numberOfLines={2}>
-                            {serviceDesc}
-                          </Text>
-                          {/* Status Badge */}
-                          {isActive && (
-                            <View style={[styles.statusBadge, { backgroundColor: `${Colors.green[500]}20`, borderColor: `${Colors.green[500]}30` }]}>
-                              <Ionicons name="checkmark-circle" size={14} color={Colors.green[500]} />
-                              <Text style={[styles.statusText, { color: Colors.green[500] }]}>
-                                {language === 'en' ? 'Active' : 'Aktif'} - {status?.package?.toUpperCase()}
-                              </Text>
-                            </View>
-                          )}
-                          {status && status.status === 'pending' && (
-                            <View style={[styles.statusBadge, { backgroundColor: `${Colors.yellow[500]}20`, borderColor: `${Colors.yellow[500]}30` }]}>
-                              <Ionicons name="time" size={14} color={Colors.yellow[500]} />
-                              <Text style={[styles.statusText, { color: Colors.yellow[500] }]}>
-                                {language === 'en' ? 'Pending' : 'Beklemede'}
-                              </Text>
-                            </View>
-                          )}
-                          {status && status.status === 'rejected' && (
-                            <View style={[styles.statusBadge, { backgroundColor: `${Colors.red[500]}20`, borderColor: `${Colors.red[500]}30` }]}>
-                              <Ionicons name="close-circle" size={14} color={Colors.red[500]} />
-                              <Text style={[styles.statusText, { color: Colors.red[500] }]}>
-                                {language === 'en' ? 'Rejected' : 'Reddedildi'}
-                              </Text>
-                            </View>
-                          )}
-                          {isInMaintenance && (
-                            <View style={[styles.statusBadge, { backgroundColor: `${Colors.orange[500]}20`, borderColor: `${Colors.orange[500]}30` }]}>
-                              <Ionicons name="construct" size={14} color={Colors.orange[500]} />
-                              <Text style={[styles.statusText, { color: Colors.orange[500] }]}>
-                                {language === 'en' ? 'Maintenance' : 'Bakımda'}
-                              </Text>
-                            </View>
-                          )}
-                          {/* Action Button */}
+                        {!isActive && !isInMaintenance && (
                           <TouchableOpacity
                             style={[
                               styles.actionButton,
                               {
-                                backgroundColor: isActive
-                                  ? `${Colors.blue[500]}20`
-                                  : isInMaintenance
-                                  ? `${Colors.gray[500]}20`
-                                  : `${Colors.green[500]}20`,
+                                backgroundColor: Colors.green[500],
                               },
                             ]}
-                            disabled={isInMaintenance}
                             activeOpacity={0.7}
-                            onPress={() => {
-                              if (!isActive && !isInMaintenance) {
-                                handleRequestService(service);
-                              }
-                            }}
+                            onPress={() => handleRequestService(service)}
                           >
-                            <Text
-                              style={[
-                                styles.actionButtonText,
-                                {
-                                  color: isActive
-                                    ? Colors.blue[500]
-                                    : isInMaintenance
-                                    ? Colors.gray[500]
-                                    : Colors.green[500],
-                                },
-                              ]}
-                            >
-                              {isActive
-                                ? (language === 'en' ? 'View Dashboard' : 'Paneli Gör')
-                                : isInMaintenance
-                                ? (language === 'en' ? 'Under Maintenance' : 'Bakımda')
-                                : (language === 'en' ? 'Request Service' : 'Servis Talep Et')}
+                            <Text style={[styles.actionButtonText, { color: '#FFFFFF' }]}>
+                              {language === 'en' ? 'Request Service' : 'Servis Talep Et'}
                             </Text>
                           </TouchableOpacity>
-                        </View>
-                      </>
-                    )}
-                  </View>
+                        )}
+                        {isActive && (
+                          <TouchableOpacity
+                            style={[
+                              styles.actionButton,
+                              {
+                                backgroundColor: Colors.blue[500],
+                              },
+                            ]}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.actionButtonText, { color: '#FFFFFF' }]}>
+                              {language === 'en' ? 'View Dashboard' : 'Paneli Gör'}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                        {isInMaintenance && (
+                          <TouchableOpacity
+                            style={[
+                              styles.actionButton,
+                              {
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                              },
+                            ]}
+                            disabled
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.actionButtonText, { color: colors.textSecondary }]}>
+                              {language === 'en' ? 'Under Maintenance' : 'Bakımda'}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                    </View>
+                  </BlurView>
                 </AnimatedTouchable>
               );
             })}
@@ -562,7 +424,7 @@ export default function Services() {
           }}
           onSubmit={handleSubmitRequest}
         />
-      </View>
+      </MeshGlowBackground>
   );
 }
 const styles = StyleSheet.create({
@@ -617,14 +479,12 @@ const styles = StyleSheet.create({
   servicesGrid: {
     gap: Spacing.lg,
   },
-  serviceCardWrapper: {
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  serviceCard: {
-    borderRadius: BorderRadius.xl,
+  serviceCardBlur: {
+    padding: Spacing.lg,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
     overflow: 'hidden',
   },
   serviceCardGlass: {

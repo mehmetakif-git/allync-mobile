@@ -3,12 +3,13 @@ import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Skeleton, SkeletonCircle } from '../Skeleton';
 import { useTheme } from '../../contexts/ThemeContext';
 import GlassSurface from '../GlassSurface';
+import MeshGlowBackground from '../MeshGlowBackground';
 
 export default function DashboardSkeleton() {
   const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <MeshGlowBackground>
       {/* Header Skeleton with Glassmorphism */}
       <GlassSurface style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 60 : 20 }]}>
         <View style={styles.headerContent}>
@@ -77,7 +78,7 @@ export default function DashboardSkeleton() {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </MeshGlowBackground>
   );
 }
 

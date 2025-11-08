@@ -1,13 +1,16 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
 import GlassSurface from '../../components/GlassSurface';
 import InvoicesSkeleton from '../../components/skeletons/InvoicesSkeleton';
 import InvoicePreviewModal from '../../components/InvoicePreviewModal';
+import MeshGlowBackground from '../../components/MeshGlowBackground';
 import {
   getInvoicesByCompany,
   formatCurrency,
@@ -94,7 +97,7 @@ export default function Invoices() {
   }
 
   return (
-    <View style={styles.container}>
+    <MeshGlowBackground>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -110,21 +113,25 @@ export default function Invoices() {
 
           {/* Stats Cards */}
           <View style={styles.statsContainer}>
-            <GlassSurface style={styles.statCard}>
-              <View style={[styles.statIconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
-                <Ionicons name="checkmark-circle" size={24} color={Colors.green[500]} />
+            <BlurView intensity={20} tint="dark" style={[styles.cardBlur, { flex: 1 }]}>
+              <View style={styles.statCard}>
+                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
+                  <Ionicons name="checkmark-circle" size={24} color={Colors.green[500]} />
+                </View>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Paid</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{formatCurrency(totalPaid)}</Text>
               </View>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Paid</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{formatCurrency(totalPaid)}</Text>
-            </GlassSurface>
+            </BlurView>
 
-            <GlassSurface style={styles.statCard}>
-              <View style={[styles.statIconContainer, { backgroundColor: 'rgba(234, 179, 8, 0.2)' }]}>
-                <Ionicons name="time" size={24} color={Colors.orange[500]} />
+            <BlurView intensity={20} tint="dark" style={[styles.cardBlur, { flex: 1 }]}>
+              <View style={styles.statCard}>
+                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(234, 179, 8, 0.2)' }]}>
+                  <Ionicons name="time" size={24} color={Colors.orange[500]} />
+                </View>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pending</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{formatCurrency(totalPending)}</Text>
               </View>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pending</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{formatCurrency(totalPending)}</Text>
-            </GlassSurface>
+            </BlurView>
           </View>
 
           {/* Filters */}
@@ -161,68 +168,72 @@ export default function Invoices() {
             filteredInvoices.map((invoice) => {
               const statusColors = getInvoiceStatusColor(invoice.status);
               return (
-                <GlassSurface key={invoice.id} style={styles.invoiceCard}>
-                  <View style={styles.invoiceHeader}>
-                    <View style={styles.invoiceInfo}>
-                      <Text style={[styles.invoiceNumber, { color: colors.text }]}>{invoice.invoice_number}</Text>
-                      <Text style={[styles.invoiceDate, { color: colors.textSecondary }]}>
-                        {formatDate(invoice.issue_date)}
+                <BlurView key={invoice.id} intensity={20} tint="dark" style={[styles.cardBlur, { marginBottom: 16 }]}>
+                  <View style={styles.invoiceCard}>
+                    <View style={styles.invoiceHeader}>
+                      <View style={styles.invoiceInfo}>
+                        <Text style={[styles.invoiceNumber, { color: colors.text }]}>{invoice.invoice_number}</Text>
+                        <Text style={[styles.invoiceDate, { color: colors.textSecondary }]}>
+                          {formatDate(invoice.issue_date)}
+                        </Text>
+                      </View>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          {
+                            backgroundColor: statusColors.bg,
+                            borderColor: statusColors.border,
+                          },
+                        ]}
+                      >
+                        <Ionicons name={getStatusIcon(invoice.status)} size={14} color={statusColors.text} />
+                        <Text style={[styles.statusText, { color: statusColors.text }]}>
+                          {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.invoiceAmount}>
+                      <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
+                      <Text style={[styles.amountValue, { color: colors.text }]}>
+                        {formatCurrency(invoice.total_amount, invoice.currency)}
                       </Text>
                     </View>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        {
-                          backgroundColor: statusColors.bg,
-                          borderColor: statusColors.border,
-                        },
-                      ]}
+
+                    {invoice.due_date && (
+                      <View style={styles.dueDate}>
+                        <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+                        <Text style={[styles.dueDateText, { color: colors.textSecondary }]}>
+                          Due: {formatDate(invoice.due_date)}
+                        </Text>
+                      </View>
+                    )}
+
+                    <TouchableOpacity
+                      style={[styles.viewButton, { backgroundColor: Colors.blue[500] }]}
+                      onPress={() => {
+                        setSelectedInvoice(invoice);
+                        setShowDetailsModal(true);
+                      }}
+                      activeOpacity={0.7}
                     >
-                      <Ionicons name={getStatusIcon(invoice.status)} size={14} color={statusColors.text} />
-                      <Text style={[styles.statusText, { color: statusColors.text }]}>
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </Text>
-                    </View>
+                      <Ionicons name="eye-outline" size={18} color="#FFFFFF" />
+                      <Text style={styles.viewButtonText}>View Details</Text>
+                    </TouchableOpacity>
                   </View>
-
-                  <View style={styles.invoiceAmount}>
-                    <Text style={[styles.amountLabel, { color: colors.textSecondary }]}>Amount</Text>
-                    <Text style={[styles.amountValue, { color: colors.text }]}>
-                      {formatCurrency(invoice.total_amount, invoice.currency)}
-                    </Text>
-                  </View>
-
-                  {invoice.due_date && (
-                    <View style={styles.dueDate}>
-                      <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
-                      <Text style={[styles.dueDateText, { color: colors.textSecondary }]}>
-                        Due: {formatDate(invoice.due_date)}
-                      </Text>
-                    </View>
-                  )}
-
-                  <TouchableOpacity
-                    style={[styles.viewButton, { backgroundColor: Colors.blue[500] }]}
-                    onPress={() => {
-                      setSelectedInvoice(invoice);
-                      setShowDetailsModal(true);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="eye-outline" size={18} color="#FFFFFF" />
-                    <Text style={styles.viewButtonText}>View Details</Text>
-                  </TouchableOpacity>
-                </GlassSurface>
+                </BlurView>
               );
             })
           ) : (
-            <GlassSurface style={styles.emptyCard}>
-              <Ionicons name="receipt-outline" size={64} color={colors.textSecondary} />
-              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No invoices found</Text>
-              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
-                {filterStatus !== 'all' ? 'Try adjusting your filter' : 'Invoices will appear here when created'}
-              </Text>
-            </GlassSurface>
+            <BlurView intensity={20} tint="dark" style={styles.cardBlur}>
+              <View style={styles.emptyCard}>
+                <Ionicons name="receipt-outline" size={64} color={colors.textSecondary} />
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No invoices found</Text>
+                <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+                  {filterStatus !== 'all' ? 'Try adjusting your filter' : 'Invoices will appear here when created'}
+                </Text>
+              </View>
+            </BlurView>
           )}
         </ScrollView>
 
@@ -481,7 +492,7 @@ export default function Invoices() {
             setSelectedInvoice(null);
           }}
         />
-      </View>
+      </MeshGlowBackground>
   );
 }
 
@@ -515,8 +526,14 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 24,
   },
+  cardBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
   statCard: {
-    flex: 1,
     padding: 16,
   },
   statIconContainer: {
@@ -551,7 +568,6 @@ const styles = StyleSheet.create({
   },
   invoiceCard: {
     padding: 16,
-    marginBottom: 16,
   },
   invoiceHeader: {
     flexDirection: 'row',

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
@@ -12,6 +13,8 @@ import { getCompanyById } from '../../lib/api/companies';
 import { getActivityLogs } from '../../lib/api/activityLogs';
 import { supabase } from '../../lib/supabase';
 import GlassSurface from '../../components/GlassSurface';
+import SettingsSkeleton from '../../components/skeletons/SettingsSkeleton';
+import MeshGlowBackground from '../../components/MeshGlowBackground';
 
 const AnimatedView = Animated.View;
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -152,17 +155,11 @@ export default function Settings() {
   ];
 
   if (loading) {
-    return (
-      <View style={[styles.container]}>
-        <View style={styles.loadingContainer}>
-          <Text style={[styles.loadingText, { color: colors.text }]}>Loading settings...</Text>
-        </View>
-      </View>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (
-    <View style={styles.container}>
+    <MeshGlowBackground>
         <ScrollView
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -195,31 +192,38 @@ export default function Settings() {
             {tabs.map((tab) => (
               <TouchableOpacity
                 key={tab.id}
-                style={[
-                  styles.filterButton,
-                  {
-                    backgroundColor: activeTab === tab.id ? Colors.blue[500] : 'rgba(255, 255, 255, 0.05)',
-                  },
-                ]}
                 onPress={() => setActiveTab(tab.id)}
                 activeOpacity={0.7}
               >
-                <Ionicons
-                  name={tab.icon}
-                  size={16}
-                  color={activeTab === tab.id ? '#FFFFFF' : colors.textSecondary}
-                />
-                <Text
+                <BlurView
+                  intensity={20}
+                  tint="dark"
                   style={[
-                    styles.filterButtonText,
+                    styles.filterButton,
+                    styles.cardBlur,
                     {
-                      color: activeTab === tab.id ? '#FFFFFF' : colors.textSecondary,
-                      fontWeight: activeTab === tab.id ? '700' : '500',
+                      backgroundColor: activeTab === tab.id ? Colors.blue[500] : 'rgba(255, 255, 255, 0.08)',
+                      borderColor: activeTab === tab.id ? 'rgba(59, 130, 246, 0.5)' : 'rgba(255, 255, 255, 0.1)',
                     },
                   ]}
                 >
-                  {tab.label}
-                </Text>
+                  <Ionicons
+                    name={tab.icon}
+                    size={16}
+                    color={activeTab === tab.id ? '#FFFFFF' : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.filterButtonText,
+                      {
+                        color: activeTab === tab.id ? '#FFFFFF' : colors.textSecondary,
+                        fontWeight: activeTab === tab.id ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                </BlurView>
               </TouchableOpacity>
             ))}
           </View>
@@ -507,28 +511,33 @@ export default function Settings() {
                       <AnimatedView
                         key={login.id}
                         entering={FadeInDown.delay(400 + index * 50)}
-                        style={[styles.historyItem]}
                       >
-                        <View style={styles.historyIconContainer}>
-                          <Ionicons name="desktop" size={20} color={Colors.green[500]} />
-                        </View>
-                        <View style={styles.historyContent}>
-                          <Text style={[styles.historyDevice, { color: colors.text }]}>
-                            {parseUserAgent(login)}
-                          </Text>
-                          <Text style={[styles.historyDate, { color: colors.textSecondary }]}>
-                            {new Date(login.created_at).toLocaleString()}
-                          </Text>
-                          <View style={styles.historyMeta}>
-                            <Ionicons name="globe-outline" size={12} color={colors.textTertiary} />
-                            <Text style={[styles.historyIp, { color: colors.textTertiary }]}>
-                              {login.ip_address || 'Unknown IP'}
-                            </Text>
+                        <BlurView
+                          intensity={20}
+                          tint="dark"
+                          style={[styles.historyItem, styles.cardBlur]}
+                        >
+                          <View style={styles.historyIconContainer}>
+                            <Ionicons name="desktop" size={20} color={Colors.green[500]} />
                           </View>
-                        </View>
-                        <View style={styles.successBadge}>
-                          <Text style={styles.successText}>Success</Text>
-                        </View>
+                          <View style={styles.historyContent}>
+                            <Text style={[styles.historyDevice, { color: colors.text }]}>
+                              {parseUserAgent(login)}
+                            </Text>
+                            <Text style={[styles.historyDate, { color: colors.textSecondary }]}>
+                              {new Date(login.created_at).toLocaleString()}
+                            </Text>
+                            <View style={styles.historyMeta}>
+                              <Ionicons name="globe-outline" size={12} color={colors.textTertiary} />
+                              <Text style={[styles.historyIp, { color: colors.textTertiary }]}>
+                                {login.ip_address || 'Unknown IP'}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.successBadge}>
+                            <Text style={styles.successText}>Success</Text>
+                          </View>
+                        </BlurView>
                       </AnimatedView>
                     ))}
                   </View>
@@ -537,7 +546,7 @@ export default function Settings() {
             </View>
           )}
         </ScrollView>
-      </View>
+      </MeshGlowBackground>
   );
 }
 
@@ -606,6 +615,13 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     fontSize: 14,
+  },
+  cardBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   tabContent: {
     gap: 16,
