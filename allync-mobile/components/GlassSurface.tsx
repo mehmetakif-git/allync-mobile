@@ -18,10 +18,19 @@ export default function GlassSurface({
   borderRadius = 20,
   borderWidth = 1,
 }: GlassSurfaceProps) {
+  // Extract flex from style if it exists
+  const containerStyle = StyleSheet.flatten([styles.container, { borderRadius }, style]);
+  const contentStyle = StyleSheet.flatten([styles.content, { borderRadius }]);
+
+  // If container has flex, content should also have flex
+  if (containerStyle.flex) {
+    contentStyle.flex = containerStyle.flex;
+  }
+
   if (Platform.OS === 'ios') {
     // iOS: Use real BlurView with gradient overlay
     return (
-      <View style={[styles.container, { borderRadius }, style]}>
+      <View style={containerStyle}>
         <BlurView
           intensity={95}
           tint={'dark'}
@@ -64,15 +73,15 @@ export default function GlassSurface({
           ]}
         />
         {/* Content */}
-        <View style={[styles.content, { borderRadius }]}>
-          {children ? <>{children}</> : null}
+        <View style={contentStyle}>
+          {children}
         </View>
       </View>
     );
   }
   // Android: Real blur with RNC BlurView (requires development build)
   return (
-    <View style={[styles.container, { borderRadius }, style]}>
+    <View style={containerStyle}>
       <RNCBlurView
         style={StyleSheet.absoluteFillObject}
         blurType={'dark'}
@@ -131,8 +140,8 @@ export default function GlassSurface({
         pointerEvents="none"
       />
       {/* Content */}
-      <View style={[styles.content, { borderRadius }]}>
-        {children ? <>{children}</> : null}
+      <View style={contentStyle}>
+        {children}
       </View>
     </View>
   );
