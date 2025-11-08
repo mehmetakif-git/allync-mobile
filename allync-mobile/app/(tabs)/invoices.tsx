@@ -265,8 +265,10 @@ export default function Invoices() {
                       setSelectedInvoice(null);
                       setShowDetailsModal(false);
                     }}
+                    style={styles.closeButton}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="close" size={24} color={colors.text} />
+                    <Ionicons name="close-circle" size={32} color={Colors.red[500]} />
                   </TouchableOpacity>
                 </View>
 
@@ -658,6 +660,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
+  },
+  closeButton: {
+    padding: 4,
+    borderRadius: 20,
   },
   detailRow: {
     flexDirection: 'row',
