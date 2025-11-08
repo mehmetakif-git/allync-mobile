@@ -6,13 +6,12 @@ import Animated, { FadeInDown, FadeIn, useAnimatedStyle, withSpring, withRepeat,
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useServiceNavigation } from '../../contexts/ServiceNavigationContext';
 import { useRouter } from 'expo-router';
 import { Colors, Gradients } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius, Shadows } from '../../constants/Spacing';
-import { getDashboardStats, getUserCompanyId, formatCurrency, type DashboardStats } from '../../lib/api/dashboard';
-import { getRecentActivityLogs, type ActivityLog } from '../../lib/api/activityLogs';
-import { PageTransition } from '../../components/PageTransition';
+import { getDashboardStats, getUserCompanyId, formatCurrency, getActiveServices, type DashboardStats, type ActiveService } from '../../lib/api/dashboard';
 import NotificationsPanel from '../../components/NotificationsPanel';
 import DashboardHeader from '../../components/DashboardHeader';
 import DashboardSkeleton from '../../components/skeletons/DashboardSkeleton';
@@ -22,6 +21,7 @@ export default function Home() {
   const { user, signOut } = useAuth();
   const { colors } = useTheme();
   const router = useRouter();
+  const { navigateToService } = useServiceNavigation();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -29,7 +29,7 @@ export default function Home() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(2); // Mock data
   const [hasNewNotification, setHasNewNotification] = useState(false);
-  const [recentActivity, setRecentActivity] = useState<ActivityLog[]>([]);
+  const [activeServices, setActiveServices] = useState<ActiveService[]>([]);
   const bellScale = useSharedValue(1);
   const bellAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: bellScale.value }],
@@ -55,13 +55,13 @@ export default function Home() {
     if (!companyId) return;
     try {
       setLoading(true);
-      const [statsData, activityData] = await Promise.all([
+      const [statsData, servicesData] = await Promise.all([
         getDashboardStats(companyId),
-        getRecentActivityLogs(companyId, 5),
+        getActiveServices(companyId),
       ]);
       setStats(statsData);
-      setRecentActivity(activityData);
-      console.log('📊 [Home] Recent activity logs:', activityData);
+      setActiveServices(servicesData);
+      console.log('🔧 [Home] Active services:', servicesData);
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       Alert.alert('Error', 'Failed to load dashboard data');
@@ -79,9 +79,7 @@ export default function Home() {
     if (Platform.OS === 'web') {
       const confirmed = window.confirm('Are you sure you want to sign out?');
       if (confirmed) {
-        signOut().then(() => {
-          router.replace('/');
-        });
+        signOut(); // AuthGuard will handle navigation automatically
       }
     } else {
       // Native platforms (iOS/Android) use Alert.alert
@@ -94,8 +92,7 @@ export default function Home() {
             text: 'Sign Out',
             style: 'destructive',
             onPress: async () => {
-              await signOut();
-              router.replace('/');
+              await signOut(); // AuthGuard will handle navigation automatically
             },
           },
         ]
@@ -180,16 +177,13 @@ export default function Home() {
   // Show loading state while fetching data
   if (loading && !stats) {
     return (
-      <PageTransition>
-        <View style={styles.container}>
-          <DashboardSkeleton />
-        </View>
-      </PageTransition>
+      <View style={styles.container}>
+        <DashboardSkeleton />
+      </View>
     );
   }
   return (
-    <PageTransition>
-      <View style={styles.container}>
+    <View style={styles.container}>
         {/* Header Component */}
         <DashboardHeader
           userName={user?.email?.split('@')[0] || 'User'}
@@ -343,129 +337,77 @@ export default function Home() {
             />
           </View>
         </AnimatedView>
-        {/* Recent Activity */}
+        {/* Active Services */}
         <AnimatedView
           entering={FadeInDown.duration(600).delay(400).springify()}
           style={styles.section}
         >
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Recent Activity</Text>
-            {recentActivity.length > 0 && (
-              <TouchableOpacity>
+            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Your Active Services</Text>
+            {activeServices.length > 0 && (
+              <TouchableOpacity onPress={() => router.push('/(tabs)/services')}>
                 <Text style={styles.viewAllText}>View All</Text>
               </TouchableOpacity>
             )}
           </View>
-          <View style={styles.activityCardWrapper}>
-            {/* Colored gradient background */}
-            <LinearGradient
-              colors={['rgba(59, 130, 246, 0.15)', 'rgba(6, 182, 212, 0.08)']}
-              style={StyleSheet.absoluteFillObject}
-            />
-            {/* Glass overlay */}
-            {Platform.OS === 'ios' ? (
-              <BlurView
-                intensity={40}
-                tint={'dark'}
-                style={[styles.activityCardGlass, {
-                  backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                }]}
-              >
-                {recentActivity.length === 0 ? (
-                  <View style={styles.activityCardContent}>
-                    <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
-                    <Text style={[styles.activityText, dynamicStyles.activityText]}>No recent activity</Text>
-                    <Text style={[styles.activitySubtext, dynamicStyles.activitySubtext]}>Your recent activity will appear here</Text>
-                  </View>
-                ) : (
-                  <View style={styles.activityList}>
-                    {recentActivity.map((activity, index) => (
-                      <View key={activity.id} style={styles.activityItem}>
-                        <View style={[styles.activityIconContainer, { backgroundColor: `${Colors.blue[500]}30` }]}>
-                          <Ionicons name="flash" size={16} color={Colors.blue[500]} />
-                        </View>
-                        <View style={styles.activityItemContent}>
-                          <Text style={[styles.activityItemTitle, { color: colors.text }]} numberOfLines={1}>
-                            {activity.action}
-                          </Text>
-                          <Text style={[styles.activityItemTime, { color: colors.textTertiary }]}>
-                            {new Date(activity.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                          </Text>
-                        </View>
+          <View style={styles.servicesGrid}>
+            {activeServices.length === 0 ? (
+              <View style={styles.emptyServicesCard}>
+                <View style={styles.emptyServicesWrapper}>
+                  <LinearGradient
+                    colors={['rgba(59, 130, 246, 0.15)', 'rgba(6, 182, 212, 0.08)']}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  {Platform.OS === 'ios' ? (
+                    <BlurView
+                      intensity={40}
+                      tint={'dark'}
+                      style={[styles.emptyServicesContent, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]}
+                    >
+                      <Ionicons name="server-outline" size={48} color={colors.textTertiary} />
+                      <Text style={[styles.emptyServicesText, { color: colors.text }]}>No active services</Text>
+                      <Text style={[styles.emptyServicesSubtext, { color: colors.textSecondary }]}>Contact support to get started</Text>
+                    </BlurView>
+                  ) : (
+                    <>
+                      <RNCBlurView
+                        style={StyleSheet.absoluteFillObject}
+                        blurType={'dark'}
+                        blurAmount={5}
+                        reducedTransparencyFallbackColor={'rgba(10, 14, 39, 0.85)'}
+                      >
+                        <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]} />
+                      </RNCBlurView>
+                      <View style={styles.emptyServicesContent}>
+                        <Ionicons name="server-outline" size={48} color={colors.textTertiary} />
+                        <Text style={[styles.emptyServicesText, { color: colors.text }]}>No active services</Text>
+                        <Text style={[styles.emptyServicesSubtext, { color: colors.textSecondary }]}>Contact support to get started</Text>
                       </View>
-                    ))}
-                  </View>
-                )}
-              </BlurView>
+                    </>
+                  )}
+                </View>
+              </View>
             ) : (
-              <>
-                <RNCBlurView
-                  style={StyleSheet.absoluteFillObject}
-                  blurType={'dark'}
-                  blurAmount={5}
-                  reducedTransparencyFallbackColor={
-                    'rgba(10, 14, 39, 0.85)'
-                  }
-                >
-                  <View
-                    style={[
-                      StyleSheet.absoluteFillObject,
-                      {
-                        backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                      },
-                    ]}
-                  />
-                  {/* Top edge highlight gradient */}
-                  <LinearGradient
-                    colors={
-                      true
-                        ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
-                        : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
+              activeServices.slice(0, 4).map((service, index) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  index={index}
+                  onPress={() => {
+                    const slug = service.service_type.slug;
+                    if (slug === 'mobile-app-development') {
+                      navigateToService('mobile-app', service.id);
+                      router.push('/(tabs)/services');
+                    } else if (slug === 'website-development') {
+                      navigateToService('website', service.id);
+                      router.push('/(tabs)/services');
+                    } else if (slug === 'whatsapp-service' || slug === 'whatsapp-automation') {
+                      navigateToService('whatsapp', service.id);
+                      router.push('/(tabs)/services');
                     }
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 0.5 }}
-                    style={StyleSheet.absoluteFillObject}
-                    pointerEvents="none"
-                  />
-                  {/* Bottom subtle shine */}
-                  <LinearGradient
-                    colors={
-                      true
-                        ? ['transparent', 'rgba(255, 255, 255, 0.04)']
-                        : ['transparent', 'rgba(255, 255, 255, 0.25)']
-                    }
-                    start={{ x: 0, y: 0.6 }}
-                    end={{ x: 0, y: 1 }}
-                    style={StyleSheet.absoluteFillObject}
-                    pointerEvents="none"
-                  />
-                </RNCBlurView>
-                {recentActivity.length === 0 ? (
-                  <View style={styles.activityCardContent}>
-                    <Ionicons name="time-outline" size={48} color={colors.textTertiary} />
-                    <Text style={[styles.activityText, dynamicStyles.activityText]}>No recent activity</Text>
-                    <Text style={[styles.activitySubtext, dynamicStyles.activitySubtext]}>Your recent activity will appear here</Text>
-                  </View>
-                ) : (
-                  <View style={styles.activityList}>
-                    {recentActivity.map((activity, index) => (
-                      <View key={activity.id} style={styles.activityItem}>
-                        <View style={[styles.activityIconContainer, { backgroundColor: `${Colors.blue[500]}30` }]}>
-                          <Ionicons name="flash" size={16} color={Colors.blue[500]} />
-                        </View>
-                        <View style={styles.activityItemContent}>
-                          <Text style={[styles.activityItemTitle, { color: colors.text }]} numberOfLines={1}>
-                            {activity.action}
-                          </Text>
-                          <Text style={[styles.activityItemTime, { color: colors.textTertiary }]}>
-                            {new Date(activity.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </>
+                  }}
+                />
+              ))
             )}
           </View>
         </AnimatedView>
@@ -478,9 +420,93 @@ export default function Home() {
         onMarkAllRead={() => setUnreadCount(0)}
       />
     </View>
-    </PageTransition>
   );
 }
+function ServiceCard({
+  service,
+  index,
+  onPress,
+}: {
+  service: ActiveService;
+  index: number;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+
+  const getServiceColor = (slug: string) => {
+    switch (slug) {
+      case 'mobile-app-development': return Colors.cyan[500];
+      case 'website-development': return Colors.purple[500];
+      case 'whatsapp-service': return Colors.green[500];
+      default: return Colors.blue[500];
+    }
+  };
+
+  const getServiceIcon = (slug: string) => {
+    switch (slug) {
+      case 'mobile-app-development': return 'phone-portrait-outline';
+      case 'website-development': return 'globe-outline';
+      case 'whatsapp-service': return 'logo-whatsapp';
+      default: return 'server-outline';
+    }
+  };
+
+  const serviceColor = getServiceColor(service.service_type.slug);
+  const gradient = [`${serviceColor}20`, `${serviceColor}05`];
+
+  return (
+    <AnimatedTouchable
+      entering={FadeInDown.duration(400).delay(index * 50)}
+      style={styles.serviceCard}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={styles.serviceCardWrapper}>
+        <LinearGradient colors={gradient} style={StyleSheet.absoluteFillObject} />
+        {Platform.OS === 'ios' ? (
+          <BlurView
+            intensity={40}
+            tint={'dark'}
+            style={[styles.serviceCardGlass, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]}
+          >
+            <View style={[styles.serviceIconContainer, { backgroundColor: `${serviceColor}30` }]}>
+              <Ionicons name={getServiceIcon(service.service_type.slug) as any} size={24} color={serviceColor} />
+            </View>
+            <Text style={[styles.serviceTitle, { color: colors.text }]} numberOfLines={1}>
+              {service.instance_name || service.service_type.name_en}
+            </Text>
+            <Text style={[styles.servicePackage, { color: serviceColor }]}>
+              {service.package}
+            </Text>
+          </BlurView>
+        ) : (
+          <>
+            <RNCBlurView
+              style={StyleSheet.absoluteFillObject}
+              blurType={'dark'}
+              blurAmount={5}
+              reducedTransparencyFallbackColor={'rgba(10, 14, 39, 0.85)'}
+            >
+              <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]} />
+            </RNCBlurView>
+            <View style={styles.serviceCardGlass}>
+              <View style={[styles.serviceIconContainer, { backgroundColor: `${serviceColor}30` }]}>
+                <Ionicons name={getServiceIcon(service.service_type.slug) as any} size={24} color={serviceColor} />
+              </View>
+              <Text style={[styles.serviceTitle, { color: colors.text }]} numberOfLines={1}>
+                {service.instance_name || service.service_type.name_en}
+              </Text>
+              <Text style={[styles.servicePackage, { color: serviceColor }]}>
+                {service.package}
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+    </AnimatedTouchable>
+  );
+}
+
 function QuickAction({
   icon,
   title,
@@ -737,63 +763,66 @@ const styles = StyleSheet.create({
     color: Colors.text.tertiary,
     textAlign: 'center',
   },
-  activityCardWrapper: {
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+  },
+  serviceCard: {
+    width: '48%',
+  },
+  serviceCardWrapper: {
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     borderWidth: 0.5,
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  activityCardGlass: {
-    // Glass overlay style
+  serviceCardGlass: {
+    padding: Spacing.lg,
+    alignItems: 'center',
+    minHeight: 140,
+    justifyContent: 'center',
   },
-  activityCard: {
+  serviceIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  serviceTitle: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold,
+    textAlign: 'center',
+    marginBottom: Spacing.xs,
+  },
+  servicePackage: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.medium,
+    textTransform: 'uppercase',
+  },
+  emptyServicesCard: {
+    width: '100%',
+  },
+  emptyServicesWrapper: {
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     borderWidth: 0.5,
     borderColor: 'rgba(255, 255, 255, 0.15)',
   },
-  activityCardContent: {
+  emptyServicesContent: {
     padding: Spacing['3xl'],
     alignItems: 'center',
   },
-  activityText: {
+  emptyServicesText: {
     fontSize: Typography.fontSize.base,
-    color: Colors.text.primary,
     fontWeight: Typography.fontWeight.medium,
     marginTop: Spacing.md,
     marginBottom: Spacing.xs,
   },
-  activitySubtext: {
+  emptyServicesSubtext: {
     fontSize: Typography.fontSize.sm,
-    color: Colors.text.tertiary,
     textAlign: 'center',
-  },
-  activityList: {
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  activityIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityItemContent: {
-    flex: 1,
-  },
-  activityItemTitle: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
-    marginBottom: 2,
-  },
-  activityItemTime: {
-    fontSize: Typography.fontSize.xs,
   },
 });

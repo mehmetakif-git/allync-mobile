@@ -51,7 +51,7 @@ export default function ConfirmationDialog({
             style={StyleSheet.absoluteFillObject}
           >
             <BlurView
-              intensity={true ? 95 : 100}
+              intensity={95}
               tint={'dark'}
               style={StyleSheet.absoluteFillObject}
             />

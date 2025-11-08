@@ -48,7 +48,7 @@ export default function MaintenanceGuard({ children }: MaintenanceGuardProps) {
   // Show loading while checking
   if (isChecking) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.loadingContainer]}>
         <ActivityIndicator size="large" color={Colors.blue[500]} />
         <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
           Checking system status...

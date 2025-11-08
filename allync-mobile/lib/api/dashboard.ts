@@ -14,6 +14,24 @@ export interface DashboardStats {
   currency: string;
 }
 
+export interface ActiveService {
+  id: string;
+  company_id: string;
+  service_type_id: string;
+  status: string;
+  package: string;
+  instance_name: string | null;
+  created_at: string;
+  service_type: {
+    id: string;
+    name_en: string;
+    name_tr: string;
+    slug: string;
+    icon: string | null;
+    status: string;
+  };
+}
+
 // =====================================================
 // GET COMPANY FROM USER
 // =====================================================
@@ -163,4 +181,35 @@ export function getChangeText(current: number, previous: number): string {
   if (diff === 0) return 'No change';
   if (diff > 0) return `+${diff} this month`;
   return `${diff} this month`;
+}
+
+// =====================================================
+// GET ACTIVE SERVICES
+// =====================================================
+
+/**
+ * Get all active services for a company
+ */
+export async function getActiveServices(companyId: string): Promise<ActiveService[]> {
+  console.log('🔧 [getActiveServices] Fetching active services for company:', companyId);
+
+  try {
+    const { data, error } = await supabase
+      .from('company_services')
+      .select(`
+        *,
+        service_type:service_types!service_type_id(id, name_en, name_tr, slug, icon, status)
+      `)
+      .eq('company_id', companyId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    console.log(`✅ [getActiveServices] Found ${data?.length || 0} active services`);
+    return (data as ActiveService[]) || [];
+  } catch (error) {
+    console.error('❌ [getActiveServices] Error:', error);
+    return [];
+  }
 }

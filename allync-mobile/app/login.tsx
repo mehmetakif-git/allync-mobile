@@ -11,9 +11,9 @@ import {
   Image,
   StyleSheet,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView, RNCBlurView } from '../components/BlurViewCompat';
-import BackgroundImage from '../components/BackgroundImage';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -241,11 +241,33 @@ function AnimatedInput({
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const { colors } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const router = useRouter();
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    loadSavedCredentials();
+  }, []);
+
+  const loadSavedCredentials = async () => {
+    try {
+      const savedEmail = await AsyncStorage.getItem('rememberedEmail');
+      const savedPassword = await AsyncStorage.getItem('rememberedPassword');
+      const savedRememberMe = await AsyncStorage.getItem('rememberMe');
+
+      if (savedRememberMe === 'true' && savedEmail && savedPassword) {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRememberMe(true);
+      }
+    } catch (error) {
+      console.error('Failed to load saved credentials:', error);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -260,6 +282,26 @@ export default function Login() {
       setLoading(false);
       Alert.alert('Login Failed', error.message);
     } else {
+      // Save credentials if Remember Me is checked
+      if (rememberMe) {
+        try {
+          await AsyncStorage.setItem('rememberedEmail', email);
+          await AsyncStorage.setItem('rememberedPassword', password);
+          await AsyncStorage.setItem('rememberMe', 'true');
+        } catch (err) {
+          console.error('Failed to save credentials:', err);
+        }
+      } else {
+        // Clear saved credentials if Remember Me is unchecked
+        try {
+          await AsyncStorage.removeItem('rememberedEmail');
+          await AsyncStorage.removeItem('rememberedPassword');
+          await AsyncStorage.removeItem('rememberMe');
+        } catch (err) {
+          console.error('Failed to clear credentials:', err);
+        }
+      }
+
       setTimeout(() => {
         setLoading(false);
         router.replace('/(tabs)');
@@ -268,7 +310,41 @@ export default function Login() {
   };
 
   return (
-    <BackgroundImage>
+    <LinearGradient
+      colors={[
+        '#0F172A', // Deep slate (top)
+        '#1E293B', // Dark slate
+        '#312E81', // Deep indigo
+        '#1E1B4B', // Deep violet
+        '#0F172A', // Back to deep slate (bottom)
+      ]}
+      locations={[0, 0.25, 0.5, 0.75, 1]}
+      style={{ flex: 1 }}
+    >
+      {/* Subtle glow effects */}
+      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <View style={{
+          position: 'absolute',
+          width: 400,
+          height: 400,
+          borderRadius: 200,
+          backgroundColor: '#6366F1',
+          opacity: 0.15,
+          top: -200,
+          right: -100,
+        }} />
+        <View style={{
+          position: 'absolute',
+          width: 300,
+          height: 300,
+          borderRadius: 150,
+          backgroundColor: '#8B5CF6',
+          opacity: 0.15,
+          bottom: -150,
+          left: -100,
+        }} />
+      </View>
+
       {/* Content (Logo, Form, Footer) */}
       <View style={{ ...StyleSheet.absoluteFillObject }} pointerEvents="box-none">
         {/* Language Toggle */}
@@ -426,6 +502,39 @@ export default function Login() {
                     />
                   </View>
 
+                  {/* Remember Me Checkbox */}
+                  <TouchableOpacity
+                    onPress={() => setRememberMe(!rememberMe)}
+                    disabled={loading}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginBottom: 8,
+                      gap: 10,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 4,
+                        borderWidth: 2,
+                        borderColor: rememberMe ? Colors.titanium : 'rgba(248, 249, 250, 0.3)',
+                        backgroundColor: rememberMe ? Colors.titanium : 'transparent',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {rememberMe && (
+                        <Ionicons name="checkmark" size={14} color={Colors.coal} />
+                      )}
+                    </View>
+                    <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '500' }}>
+                      {t.rememberMe}
+                    </Text>
+                  </TouchableOpacity>
+
                   <ShinyButton
                     onPress={handleLogin}
                     loading={loading}
@@ -480,11 +589,11 @@ export default function Login() {
                   {/* Content on top */}
                   <View style={{
                     paddingHorizontal: 24,
-                    paddingVertical: 10,
+                    paddingVertical: 12,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                    <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: 'center' }}>
+                    <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
                       {t.secureAccess}
                     </Text>
                   </View>
@@ -492,6 +601,6 @@ export default function Login() {
               </Animated.View>
         </View>
       </View>
-    </BackgroundImage>
+    </LinearGradient>
   );
 }

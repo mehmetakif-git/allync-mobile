@@ -29,7 +29,7 @@ export function SimpleAnimatedTabBar({
   return (
     <View style={styles.container}>
       <BlurView
-        intensity={true ? 95 : 100}
+        intensity={95}
         tint={'dark'}
         style={styles.blurContainer}
       >
@@ -86,8 +86,8 @@ function TabButton({ tab, index, activeIndex, onPress }: TabButtonProps) {
     ],
   }));
   const iconColor = isActive
-    ? (true ? '#3b82f6' : '#0D6EFD')
-    : (true ? 'rgba(248, 249, 250, 0.5)' : 'rgba(43, 44, 44, 0.5)');
+    ? '#3b82f6'
+    : 'rgba(248, 249, 250, 0.5)';
   return (
     <TouchableOpacity
       style={styles.tabButton}

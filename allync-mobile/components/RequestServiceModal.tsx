@@ -246,7 +246,7 @@ export default function RequestServiceModal({
             {/* Content */}
             <View style={styles.modalContent}>
               {/* Header */}
-              <View style={[styles.header, { borderBottomColor: true ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
+              <View style={[styles.header, { borderBottomColor: 'rgba(255, 255, 255, 0.1)' }]}>
                 <View style={styles.headerLeft}>
                   <Text style={[styles.headerTitle, { color: colors.text }]}>
                     {language === 'en' ? 'Request Service' : 'Servis Talep Et'}
@@ -285,11 +285,11 @@ export default function RequestServiceModal({
                             styles.packageCard,
                             {
                               backgroundColor: isSelected
-                                ? (true ? Colors.blue[500] + '25' : Colors.blue[500] + '20')
-                                : (true ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)'),
+                                ? Colors.blue[500] + '25'
+                                : 'rgba(255, 255, 255, 0.05)',
                               borderColor: isSelected
                                 ? Colors.blue[500]
-                                : (true ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)'),
+                                : 'rgba(255, 255, 255, 0.15)',
                               borderWidth: isSelected ? 2 : 1,
                             },
                           ]}
@@ -370,7 +370,7 @@ export default function RequestServiceModal({
                       {
                         color: colors.text,
                         backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                        borderColor: true ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
                       },
                     ]}
                   />
@@ -431,7 +431,7 @@ export default function RequestServiceModal({
                 </View>
               </ScrollView>
               {/* Action Buttons */}
-              <View style={[styles.footer, { borderTopColor: true ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }]}>
+              <View style={[styles.footer, { borderTopColor: 'rgba(255, 255, 255, 0.1)' }]}>
                 <TouchableOpacity
                   onPress={onClose}
                   activeOpacity={0.7}

@@ -156,7 +156,7 @@ export default function MaintenancePage() {
             styles.mainCard,
             {
               backgroundColor: 'rgba(43, 44, 44, 0.3)',
-              borderColor: true ? 'rgba(248, 249, 250, 0.15)' : 'rgba(43, 44, 44, 0.15)',
+              borderColor: 'rgba(248, 249, 250, 0.15)',
             },
           ]}
         >

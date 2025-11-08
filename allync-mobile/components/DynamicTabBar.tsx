@@ -143,7 +143,7 @@ export default function DynamicTabBar() {
     return (
       <View style={styles.container}>
         <BlurView
-          intensity={true ? 95 : 100}
+          intensity={95}
           tint={'dark'}
           style={styles.blurContainer}
         >
@@ -184,7 +184,7 @@ export default function DynamicTabBar() {
   return (
     <View style={styles.container}>
       <BlurView
-        intensity={true ? 95 : 100}
+        intensity={95}
         tint={'dark'}
         style={styles.blurContainer}
       >

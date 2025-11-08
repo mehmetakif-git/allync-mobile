@@ -47,11 +47,11 @@ export default function EnhancedTabBar() {
     { name: 'Support', icon: 'chatbubbles', route: '/(tabs)/support' },
   ];
 
-  // Expandable menu items: Services, Active Services, Invoices
+  // Expandable menu items: Services, Invoices, Settings
   const menuItems: MenuItemConfig[] = [
     { name: 'Services', icon: 'grid', route: '/(tabs)/services' },
-    { name: 'Active', icon: 'pulse', route: '/(tabs)/active-services' },
     { name: 'Invoices', icon: 'receipt', route: '/(tabs)/invoices' },
+    { name: 'Settings', icon: 'settings', route: '/(tabs)/settings' },
   ];
 
   console.log('EnhancedTabBar - menuItems:', menuItems);

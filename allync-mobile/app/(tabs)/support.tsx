@@ -1,16 +1,16 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, KeyboardAvoidingView, Modal, ActivityIndicator } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, Modal, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView, RNCBlurView } from '../../components/BlurViewCompat';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius, Shadows } from '../../constants/Spacing';
-import { PageTransition } from '../../components/PageTransition';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import SupportSkeleton from '../../components/skeletons/SupportSkeleton';
+import SupportTicketModal from '../../components/SupportTicketModal';
 import {
   getTicketsByCompany,
   getTicketMessages,
@@ -31,7 +31,6 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 export default function Support() {
   const { colors } = useTheme();
   const { user } = useAuth();
-  const scrollViewRef = useRef<ScrollView>(null);
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -102,10 +101,6 @@ export default function Support() {
       setLoadingMessages(true);
       const data = await getTicketMessages(ticketId, false);
       setMessages(data);
-      // Scroll to bottom after messages load
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
     } catch (error) {
       console.error('Error loading messages:', error);
     } finally {
@@ -124,7 +119,6 @@ export default function Support() {
       });
       await loadMessages(selectedTicket.id);
       setNewMessage('');
-      await loadTickets();
     } catch (error) {
       console.error('Error sending message:', error);
       Alert.alert('Error', 'Failed to send message. Please try again.');
@@ -179,12 +173,11 @@ export default function Support() {
     );
   }
   return (
-    <PageTransition>
-      <View style={styles.container}>
+    <View style={styles.container}>
         {/* Tickets List */}
         <View style={styles.ticketsSection}>
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+          <View style={[styles.header, { borderBottomColor: 'rgba(255,255,255,0.1)' }]}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>Support Tickets</Text>
             <TouchableOpacity
               onPress={() => setShowNewTicketModal(true)}
@@ -200,7 +193,7 @@ export default function Support() {
           </View>
           {/* Search and Filter */}
           <View style={styles.searchSection}>
-            <View style={[styles.searchContainer, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+            <View style={[styles.searchContainer, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }]}>
               <Ionicons name="search" size={20} color={colors.textTertiary} />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
@@ -305,137 +298,26 @@ export default function Support() {
             )}
           </ScrollView>
         </View>
-        {/* Messages View */}
-        {selectedTicket && (
-          <Modal
-            visible={!!selectedTicket}
-            animationType="slide"
-            onRequestClose={() => setSelectedTicket(null)}
-          >
-            <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-              {/* Modal Header */}
-              <View style={[styles.modalHeader, { borderBottomColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
-                <TouchableOpacity onPress={() => setSelectedTicket(null)} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <View style={styles.modalHeaderContent}>
-                  <Text style={[styles.modalHeaderTitle, { color: colors.text }]} numberOfLines={1}>{selectedTicket.subject}</Text>
-                  <Text style={[styles.modalHeaderSubtitle, { color: colors.textSecondary }]}>{selectedTicket.ticket_number}</Text>
-                </View>
-              </View>
-              {/* Ticket Info */}
-              <View style={[styles.ticketInfo, { backgroundColor: 'rgba(43, 44, 44, 0.3)' }]}>
-                <View style={[styles.ticketInfoBadge, { backgroundColor: `${getStatusColor(selectedTicket.status)}20`, borderColor: `${getStatusColor(selectedTicket.status)}40` }]}>
-                  <View style={[styles.ticketInfoDot, { backgroundColor: getStatusColor(selectedTicket.status) }]} />
-                  <Text style={[styles.ticketInfoBadgeText, { color: getStatusColor(selectedTicket.status) }]}>{getStatusDisplayName(selectedTicket.status)}</Text>
-                </View>
-                <View style={[styles.ticketInfoBadge, { backgroundColor: `${getPriorityColor(selectedTicket.priority)}20`, borderColor: `${getPriorityColor(selectedTicket.priority)}40` }]}>
-                  <Text style={[styles.ticketInfoBadgeText, { color: getPriorityColor(selectedTicket.priority) }]}>{selectedTicket.priority.toUpperCase()}</Text>
-                </View>
-                <Text style={[styles.ticketInfoCategory, { color: colors.textSecondary }]}>{selectedTicket.category}</Text>
-              </View>
-              {/* Messages */}
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.messagesContainer}
-                keyboardVerticalOffset={100}
-              >
-                <ScrollView
-                  ref={scrollViewRef}
-                  style={styles.messagesList}
-                  contentContainerStyle={styles.messagesListContent}
-                  onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-                >
-                  {loadingMessages ? (
-                    <View style={styles.messagesLoading}>
-                      <ActivityIndicator size="small" color={Colors.blue[500]} />
-                    </View>
-                  ) : messages.length === 0 ? (
-                    <View style={styles.emptyMessages}>
-                      <Ionicons name="chatbubble-outline" size={48} color={colors.textTertiary} />
-                      <Text style={[styles.emptyMessagesText, { color: colors.textSecondary }]}>No messages yet</Text>
-                    </View>
-                  ) : (
-                    messages.map((message) => (
-                      <View
-                        key={message.id}
-                        style={[
-                          styles.message,
-                          !message.is_from_support ? styles.messageUser : styles.messageSupport
-                        ]}
-                      >
-                        <Text style={[styles.messageSender, { color: message.is_from_support ? Colors.blue[400] : colors.textTertiary }]}>
-                          {message.is_from_support ? 'Support Team' : 'You'}
-                        </Text>
-                        <View
-                          style={[
-                            styles.messageContent,
-                            !message.is_from_support
-                              ? { backgroundColor: Colors.blue[600] }
-                              : { backgroundColor: 'rgba(43, 44, 44, 0.3)', borderWidth: 1, borderColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }
-                          ]}
-                        >
-                          <Text style={[styles.messageText, { color: !message.is_from_support ? Colors.titanium : colors.text }]}>
-                            {message.message}
-                          </Text>
-                        </View>
-                        <Text style={[styles.messageTime, { color: colors.textTertiary }]}>
-                          {formatTicketDate(message.created_at)}
-                        </Text>
-                      </View>
-                    ))
-                  )}
-                </ScrollView>
-                {/* Message Input */}
-                {selectedTicket.status !== 'closed' && selectedTicket.status !== 'resolved' ? (
-                  <View style={[styles.messageInput, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderTopColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
-                    <TextInput
-                      style={[styles.messageTextInput, { color: colors.text, backgroundColor: 'rgba(43, 44, 44, 0.3)', borderColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-                      placeholder="Type your message..."
-                      placeholderTextColor={colors.textTertiary}
-                      value={newMessage}
-                      onChangeText={setNewMessage}
-                      multiline
-                      numberOfLines={3}
-                      textAlignVertical="top"
-                    />
-                    <TouchableOpacity
-                      onPress={handleSendMessage}
-                      disabled={!newMessage.trim() || sendingMessage}
-                      style={[styles.sendButton, { opacity: !newMessage.trim() || sendingMessage ? 0.5 : 1 }]}
-                    >
-                      <LinearGradient
-                        colors={[Colors.blue[600], Colors.blue[700]]}
-                        style={styles.sendButtonGradient}
-                      >
-                        {sendingMessage ? (
-                          <ActivityIndicator size="small" color={Colors.titanium} />
-                        ) : (
-                          <Ionicons name="send" size={20} color={Colors.titanium} />
-                        )}
-                      </LinearGradient>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View style={[styles.closedTicketBanner, { backgroundColor: 'rgba(43, 44, 44, 0.5)' }]}>
-                    <Ionicons name="checkmark-circle" size={24} color={Colors.green[500]} />
-                    <Text style={[styles.closedTicketText, { color: colors.textSecondary }]}>
-                      This ticket is {selectedTicket.status}
-                    </Text>
-                  </View>
-                )}
-              </KeyboardAvoidingView>
-            </View>
-          </Modal>
-        )}
+        {/* Support Ticket Modal */}
+        <SupportTicketModal
+          ticket={selectedTicket}
+          visible={!!selectedTicket}
+          onClose={() => setSelectedTicket(null)}
+          messages={messages}
+          loadingMessages={loadingMessages}
+          newMessage={newMessage}
+          onMessageChange={setNewMessage}
+          onSendMessage={handleSendMessage}
+          sendingMessage={sendingMessage}
+        />
         {/* New Ticket Modal */}
         <Modal
           visible={showNewTicketModal}
           animationType="slide"
           onRequestClose={() => setShowNewTicketModal(false)}
         >
-          <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+          <View style={[styles.modalContainer]}>
+            <View style={[styles.modalHeader, { borderBottomColor: 'rgba(255,255,255,0.1)' }]}>
               <TouchableOpacity onPress={() => setShowNewTicketModal(false)} style={styles.backButton}>
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
@@ -448,7 +330,7 @@ export default function Support() {
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: colors.text }]}>Subject *</Text>
                 <TextInput
-                  style={[styles.formInput, { color: colors.text, backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                  style={[styles.formInput, { color: colors.text, backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }]}
                   placeholder="Brief description of your issue"
                   placeholderTextColor={colors.textTertiary}
                   value={newTicketForm.subject}
@@ -458,13 +340,13 @@ export default function Support() {
               <View style={styles.formRow}>
                 <View style={[styles.formGroup, { flex: 1, marginRight: Spacing.md }]}>
                   <Text style={[styles.formLabel, { color: colors.text }]}>Category *</Text>
-                  <View style={[styles.formPicker, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                  <View style={[styles.formPicker, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }]}>
                     <Text style={[styles.formPickerText, { color: colors.text }]}>{newTicketForm.category}</Text>
                   </View>
                 </View>
                 <View style={[styles.formGroup, { flex: 1 }]}>
                   <Text style={[styles.formLabel, { color: colors.text }]}>Priority *</Text>
-                  <View style={[styles.formPicker, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                  <View style={[styles.formPicker, { backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }]}>
                     <Text style={[styles.formPickerText, { color: colors.text }]}>{newTicketForm.priority}</Text>
                   </View>
                 </View>
@@ -472,7 +354,7 @@ export default function Support() {
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: colors.text }]}>Description *</Text>
                 <TextInput
-                  style={[styles.formTextArea, { color: colors.text, backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: true ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                  style={[styles.formTextArea, { color: colors.text, backgroundColor: 'rgba(43, 44, 44, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }]}
                   placeholder="Describe your issue in detail..."
                   placeholderTextColor={colors.textTertiary}
                   value={newTicketForm.description}
@@ -517,7 +399,6 @@ export default function Support() {
           </View>
         </Modal>
       </View>
-    </PageTransition>
   );
 }
 // Ticket Card Content Component
@@ -916,5 +797,47 @@ const styles = StyleSheet.create({
   createTicketButtonText: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.bold,
+  },
+  // Glassmorphism Modal Styles
+  ticketModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  ticketModalContent: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  ticketModalGlass: {
+    flex: 1,
+  },
+  ticketModalInner: {
+    flex: 1,
+  },
+  ticketModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.md,
+  },
+  ticketModalTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    lineHeight: Typography.lineHeight.xl * 1.2,
+  },
+  ticketModalSubtitle: {
+    fontSize: Typography.fontSize.sm,
+    marginTop: 4,
+    fontFamily: 'monospace',
+  },
+  ticketModalClose: {
+    padding: 4,
+  },
+  ticketModalBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.sm,
   },
 });

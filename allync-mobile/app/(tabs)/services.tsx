@@ -4,15 +4,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView, RNCBlurView } from '../../components/BlurViewCompat';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useServiceNavigation } from '../../contexts/ServiceNavigationContext';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
-import { PageTransition } from '../../components/PageTransition';
 import RequestServiceModal from '../../components/RequestServiceModal';
 import ServicesSkeleton from '../../components/skeletons/ServicesSkeleton';
+import MobileAppServiceView from '../../components/services/MobileAppServiceView';
 import {
   getActiveServices,
   getCompanyServices,
@@ -25,10 +27,13 @@ import {
 import { getUserCompanyId } from '../../lib/api/dashboard';
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 type Category = 'all' | 'ai' | 'digital';
+
 export default function Services() {
+  const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
   const { language } = useLanguage();
+  const { selectedServiceDetail, setSelectedServiceDetail } = useServiceNavigation();
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [services, setServices] = useState<Service[]>([]);
   const [companyServices, setCompanyServices] = useState<CompanyService[]>([]);
@@ -162,13 +167,46 @@ export default function Services() {
     }
     return [Colors.purple[500], Colors.purple[700]];
   };
+  // If a service detail is selected, show the detail view
+  if (selectedServiceDetail) {
+    if (selectedServiceDetail.type === 'mobile-app') {
+      return (
+        <View style={styles.container}>
+          <MobileAppServiceView
+            serviceId={selectedServiceDetail.serviceId}
+            onBack={() => setSelectedServiceDetail(null)}
+          />
+        </View>
+      );
+    }
+    // For other service types, show placeholder for now
+    return (
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setSelectedServiceDetail(null)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+            <Text style={[styles.backText, { color: colors.text }]}>Back to Services</Text>
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {selectedServiceDetail.type === 'website' ? 'Website Development' : 'WhatsApp Service'}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Service detail view coming soon...
+          </Text>
+        </ScrollView>
+      </View>
+    );
+  }
+
   if (loading) {
     return (
-      <PageTransition>
-        <View style={styles.container}>
-          <ServicesSkeleton />
-        </View>
-      </PageTransition>
+      <View style={styles.container}>
+        <ServicesSkeleton />
+      </View>
     );
   }
   const categoryButtons: { key: Category; labelEn: string; labelTr: string }[] = [
@@ -177,8 +215,7 @@ export default function Services() {
     { key: 'digital', labelEn: 'Digital', labelTr: 'Dijital' },
   ];
   return (
-    <PageTransition>
-      <View style={styles.container}>
+    <View style={styles.container}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
@@ -255,6 +292,21 @@ export default function Services() {
                   entering={FadeInDown.duration(600).delay(index * 100).springify()}
                   activeOpacity={0.8}
                   style={styles.serviceCardWrapper}
+                  onPress={() => {
+                    if (isActive) {
+                      const companyService = companyServices.find(cs => cs.service_type_id === service.id);
+                      if (companyService) {
+                        const slug = service.slug;
+                        if (slug === 'mobile-app-development') {
+                          setSelectedServiceDetail({ type: 'mobile-app', serviceId: companyService.id });
+                        } else if (slug === 'website-development') {
+                          setSelectedServiceDetail({ type: 'website', serviceId: companyService.id });
+                        } else if (slug === 'whatsapp-automation' || slug === 'whatsapp-service') {
+                          setSelectedServiceDetail({ type: 'whatsapp', serviceId: companyService.id });
+                        }
+                      }
+                    }
+                  }}
                 >
                   <View style={styles.serviceCard}>
                     {/* Colored gradient background */}
@@ -511,7 +563,6 @@ export default function Services() {
           onSubmit={handleSubmitRequest}
         />
       </View>
-    </PageTransition>
   );
 }
 const styles = StyleSheet.create({
@@ -620,5 +671,16 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    paddingVertical: 8,
+  },
+  backText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

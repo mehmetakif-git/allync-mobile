@@ -20,6 +20,7 @@ interface Translations {
   signInSubtitle: string;
   emailPlaceholder: string;
   passwordPlaceholder: string;
+  rememberMe: string;
   signInButton: string;
   signingIn: string;
   secureAccess: string;
@@ -40,9 +41,10 @@ const translations: Record<Language, Translations> = {
     signInSubtitle: 'Sign in to continue to your dashboard',
     emailPlaceholder: 'Email',
     passwordPlaceholder: 'Password',
+    rememberMe: 'Remember Me',
     signInButton: 'Sign In',
     signingIn: 'Signing in...',
-    secureAccess: 'Secure access to your company dashboard',
+    secureAccess: 'With your Allync credentials, you can manage all your services seamlessly. If you don\'t have login credentials, please contact your Allync system administrator.',
   },
   tr: {
     appName: 'Allync',
@@ -58,9 +60,10 @@ const translations: Record<Language, Translations> = {
     signInSubtitle: 'Kontrol panelinize devam etmek için giriş yapın',
     emailPlaceholder: 'E-posta',
     passwordPlaceholder: 'Şifre',
+    rememberMe: 'Beni Hatırla',
     signInButton: 'Giriş Yap',
     signingIn: 'Giriş yapılıyor...',
-    secureAccess: 'Şirket kontrol panelinize güvenli erişim',
+    secureAccess: 'Allync tarafından sizlere sunulan giriş bilgileriniz ile tüm servislerinizi yönetebilirsiniz. Eğer herhangi bir giriş bilginiz yok ise lütfen Allync sistem yöneticiniz ile iletişime geçin.',
   },
 };
 

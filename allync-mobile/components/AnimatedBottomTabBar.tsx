@@ -81,7 +81,7 @@ export function AnimatedBottomTabBar({
       {/* Glassmorphic background with animated notch */}
       <View style={styles.tabBarContainer}>
         <BlurView
-          intensity={true ? 95 : 100}
+          intensity={95}
           tint={'dark'}
           style={StyleSheet.absoluteFillObject}
         />
@@ -93,8 +93,8 @@ export function AnimatedBottomTabBar({
         >
           <AnimatedPath
             animatedProps={animatedProps}
-            fill={true ? 'rgba(43, 44, 44, 0.75)' : 'rgba(248, 249, 250, 0.75)'}
-            stroke={true ? 'rgba(248, 249, 250, 0.12)' : 'rgba(43, 44, 44, 0.12)'}
+            fill={'rgba(43, 44, 44, 0.75)'}
+            stroke={'rgba(248, 249, 250, 0.12)'}
             strokeWidth={1}
           />
         </Svg>
@@ -151,8 +151,8 @@ function TabButton({ tab, index, activeIndex, currentActiveIndex, onPress, tabWi
   // Determine icon color based on active state
   const isActive = currentActiveIndex === index;
   const iconColor = isActive
-    ? (true ? '#3b82f6' : '#0D6EFD')
-    : (true ? 'rgba(248, 249, 250, 0.5)' : 'rgba(43, 44, 44, 0.5)');
+    ? '#3b82f6'
+    : 'rgba(248, 249, 250, 0.5)';
   return (
     <TouchableOpacity
       style={[styles.tabButton, { width: tabWidth }]}

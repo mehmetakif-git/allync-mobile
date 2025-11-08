@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
-import { PageTransition } from '../../components/PageTransition';
 import GlassSurface from '../../components/GlassSurface';
 import InvoicesSkeleton from '../../components/skeletons/InvoicesSkeleton';
 import InvoicePreviewModal from '../../components/InvoicePreviewModal';
@@ -95,8 +94,7 @@ export default function Invoices() {
   }
 
   return (
-    <PageTransition>
-      <View style={styles.container}>
+    <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -484,7 +482,6 @@ export default function Invoices() {
           }}
         />
       </View>
-    </PageTransition>
   );
 }
 

@@ -218,7 +218,7 @@ export default function NotificationsPanel({
             style={StyleSheet.absoluteFillObject}
           >
             <BlurView
-              intensity={true ? 95 : 100}
+              intensity={95}
               tint={'dark'}
               style={StyleSheet.absoluteFillObject}
             />
@@ -332,7 +332,7 @@ export default function NotificationsPanel({
             {/* Actions */}
             {notifications.length > 0 && (
               <View style={[styles.actions, {
-                borderBottomColor: true ? 'rgba(248, 249, 250, 0.05)' : 'rgba(43, 44, 44, 0.05)',
+                borderBottomColor: 'rgba(248, 249, 250, 0.05)',
                 backgroundColor: 'rgba(43, 44, 44, 0.3)',
               }]}>
                 {unreadCount > 0 && (
