@@ -172,7 +172,7 @@ export async function getTicketMessages(ticketId: string, includeInternal: boole
       .from('support_ticket_messages')
       .select(`
         *,
-        sender:profiles!sender_id(id, full_name, email)
+        sender:profiles!support_ticket_messages_sender_id_fkey(id, full_name, email)
       `)
       .eq('ticket_id', ticketId)
       .order('created_at', { ascending: true });
@@ -219,7 +219,7 @@ export async function createTicketMessage(messageData: {
       }])
       .select(`
         *,
-        sender:profiles!sender_id(id, full_name, email)
+        sender:profiles!support_ticket_messages_sender_id_fkey(id, full_name, email)
       `)
       .single();
 
