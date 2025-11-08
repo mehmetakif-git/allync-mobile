@@ -64,7 +64,9 @@ export default function GlassSurface({
           ]}
         />
         {/* Content */}
-        <View style={[styles.content, { borderRadius }]}>{children}</View>
+        <View style={[styles.content, { borderRadius }]}>
+          {children ? <>{children}</> : null}
+        </View>
       </View>
     );
   }
@@ -129,7 +131,9 @@ export default function GlassSurface({
         pointerEvents="none"
       />
       {/* Content */}
-      <View style={[styles.content, { borderRadius }]}>{children}</View>
+      <View style={[styles.content, { borderRadius }]}>
+        {children ? <>{children}</> : null}
+      </View>
     </View>
   );
 }
