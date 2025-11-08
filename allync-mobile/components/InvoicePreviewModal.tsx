@@ -36,14 +36,22 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)} style={styles.modalOverlay}>
-        <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
+      <Animated.View entering={FadeIn.duration(250)} exiting={FadeOut.duration(200)} style={styles.modalOverlay}>
+        <TouchableOpacity
+          style={StyleSheet.absoluteFillObject}
+          onPress={onClose}
+          activeOpacity={1}
+        />
         <Animated.View
-          entering={SlideInDown.duration(400).springify()}
-          exiting={SlideOutDown.duration(300)}
+          entering={FadeIn.duration(300).delay(100)}
+          exiting={FadeOut.duration(200)}
           style={styles.modalContent}
         >
-          <GlassSurface style={styles.modalGlass}>
+          <TouchableOpacity
+            activeOpacity={1}
+            style={{ flex: 1 }}
+          >
+            <GlassSurface style={styles.modalGlass}>
             {/* Header with Close Button */}
             <View style={styles.header}>
               <View>
@@ -263,7 +271,8 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
                 </Text>
               </View>
             </ScrollView>
-          </GlassSurface>
+            </GlassSurface>
+          </TouchableOpacity>
         </Animated.View>
       </Animated.View>
     </Modal>
@@ -279,12 +288,11 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
-    maxHeight: '95%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    height: '100%',
     overflow: 'hidden',
   },
   modalGlass: {
+    flex: 1,
     padding: 20,
   },
   scrollView: {
