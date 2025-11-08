@@ -79,52 +79,35 @@ export default function GlassSurface({
       </View>
     );
   }
-  // Android: Real blur with RNC BlurView (requires development build)
+  // Android: Simple glassmorphism without blur (for better emulator performance)
   return (
     <View style={containerStyle}>
-      <RNCBlurView
-        style={StyleSheet.absoluteFillObject}
-        blurType={'dark'}
-        blurAmount={5}
-        reducedTransparencyFallbackColor={'rgba(10, 14, 39, 0.85)'}
-      >
-        {/* Glass tint overlay */}
-        <View
-          style={[
-            StyleSheet.absoluteFillObject,
-            {
-              borderRadius,
-              backgroundColor: true
-                ? `rgba(10, 14, 39, ${opacity * 0.45})`
-                : `rgba(248, 249, 250, ${opacity * 0.5})`,
-            },
-          ]}
-        />
-        {/* Top edge highlight gradient - creates glass effect */}
-        <LinearGradient
-          colors={
-            true
-              ? ['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']
-              : ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.15)', 'transparent']
-          }
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 0.5 }}
-          style={[StyleSheet.absoluteFillObject, { borderRadius }]}
-          pointerEvents="none"
-        />
-        {/* Bottom subtle shine */}
-        <LinearGradient
-          colors={
-            true
-              ? ['transparent', 'rgba(255, 255, 255, 0.04)']
-              : ['transparent', 'rgba(255, 255, 255, 0.25)']
-          }
-          start={{ x: 0, y: 0.6 }}
-          end={{ x: 0, y: 1 }}
-          style={[StyleSheet.absoluteFillObject, { borderRadius }]}
-          pointerEvents="none"
-        />
-      </RNCBlurView>
+      {/* Glass tint overlay */}
+      <View
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            borderRadius,
+            backgroundColor: 'rgba(10, 14, 39, 0.75)',
+          },
+        ]}
+      />
+      {/* Top edge highlight gradient - creates glass effect */}
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.03)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.5 }}
+        style={[StyleSheet.absoluteFillObject, { borderRadius }]}
+        pointerEvents="none"
+      />
+      {/* Bottom subtle shine */}
+      <LinearGradient
+        colors={['transparent', 'rgba(255, 255, 255, 0.04)']}
+        start={{ x: 0, y: 0.6 }}
+        end={{ x: 0, y: 1 }}
+        style={[StyleSheet.absoluteFillObject, { borderRadius }]}
+        pointerEvents="none"
+      />
       {/* Border with gradient effect */}
       <View
         style={[

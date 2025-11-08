@@ -154,15 +154,15 @@ export default function EnhancedTabBar() {
 
   return (
     <>
-      {/* Backdrop overlay */}
-      {isMenuOpen && (
+      {/* Backdrop overlay - TEMPORARILY DISABLED FOR TESTING */}
+      {/* {isMenuOpen && (
         <Pressable
           style={styles.backdrop}
           onPress={() => setIsMenuOpen(false)}
         >
           <Animated.View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />
         </Pressable>
-      )}
+      )} */}
 
       {/* Expandable Menu */}
       <ExpandableMenu

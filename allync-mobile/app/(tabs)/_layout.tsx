@@ -53,11 +53,11 @@ export default function TabsLayout() {
         locations={[0, 0.25, 0.5, 0.75, 1]}
         style={styles.container}
       >
-        {/* Subtle glow effect overlay */}
-        <View style={styles.glowOverlay}>
+        {/* Subtle glow effect overlay - TEMPORARILY DISABLED FOR TESTING */}
+        {/* <View style={styles.glowOverlay}>
           <View style={[styles.glow, styles.glowTop]} />
           <View style={[styles.glow, styles.glowBottom]} />
-        </View>
+        </View> */}
 
         {/* Content */}
         <Tabs
