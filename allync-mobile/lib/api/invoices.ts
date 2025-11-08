@@ -4,6 +4,19 @@ import { supabase } from '../supabase';
 // INTERFACES
 // =====================================================
 
+export interface Company {
+  id: string;
+  name: string;
+  email: string;
+  address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
+  tax_id?: string | null;
+  phone?: string | null;
+  payment_gateway?: string | null;
+}
+
 export interface Invoice {
   id: string;
   company_id: string;
@@ -37,6 +50,9 @@ export interface Invoice {
   // Timestamps
   created_at: string;
   updated_at: string;
+
+  // Relations
+  company?: Company;
 }
 
 // =====================================================
@@ -47,7 +63,21 @@ export interface Invoice {
 export async function getInvoicesByCompany(companyId: string) {
   const { data, error } = await supabase
     .from('invoices')
-    .select('*')
+    .select(`
+      *,
+      company:companies(
+        id,
+        name,
+        email,
+        address,
+        city,
+        postal_code,
+        country,
+        tax_id,
+        phone,
+        payment_gateway
+      )
+    `)
     .eq('company_id', companyId)
     .order('created_at', { ascending: false });
 

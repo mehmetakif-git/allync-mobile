@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
+import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,6 +8,7 @@ import { Colors } from '../../constants/Colors';
 import { PageTransition } from '../../components/PageTransition';
 import GlassSurface from '../../components/GlassSurface';
 import InvoicesSkeleton from '../../components/skeletons/InvoicesSkeleton';
+import InvoicePreviewModal from '../../components/InvoicePreviewModal';
 import {
   getInvoicesByCompany,
   formatCurrency,
@@ -28,6 +30,7 @@ export default function Invoices() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -226,98 +229,258 @@ export default function Invoices() {
         </ScrollView>
 
         {/* Invoice Details Modal */}
-        {selectedInvoice && showDetailsModal && (
-          <View style={styles.modalOverlay}>
-            <TouchableOpacity
-              style={StyleSheet.absoluteFillObject}
-              onPress={() => {
-                setSelectedInvoice(null);
-                setShowDetailsModal(false);
-              }}
-              activeOpacity={1}
-            />
-            <GlassSurface style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Invoice Details</Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    setSelectedInvoice(null);
-                    setShowDetailsModal(false);
-                  }}
-                >
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Invoice Number</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>{selectedInvoice.invoice_number}</Text>
+        <Modal
+          visible={showDetailsModal && !!selectedInvoice}
+          transparent
+          animationType="none"
+          onRequestClose={() => {
+            setSelectedInvoice(null);
+            setShowDetailsModal(false);
+          }}
+        >
+          {selectedInvoice && (
+            <Animated.View
+              entering={FadeIn.duration(300)}
+              exiting={FadeOut.duration(200)}
+              style={styles.modalOverlay}
+            >
+              <TouchableOpacity
+                style={StyleSheet.absoluteFillObject}
+                onPress={() => {
+                  setSelectedInvoice(null);
+                  setShowDetailsModal(false);
+                }}
+                activeOpacity={1}
+              />
+              <Animated.View
+                entering={SlideInDown.duration(400).springify()}
+                exiting={SlideOutDown.duration(300)}
+                style={styles.modalContent}
+              >
+                <GlassSurface style={styles.modalGlass}>
+                  <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>Invoice Details</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedInvoice(null);
+                      setShowDetailsModal(false);
+                    }}
+                  >
+                    <Ionicons name="close" size={24} color={colors.text} />
+                  </TouchableOpacity>
                 </View>
 
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Issue Date</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>{formatDate(selectedInvoice.issue_date)}</Text>
-                </View>
-
-                {selectedInvoice.due_date && (
-                  <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Due Date</Text>
-                    <Text style={[styles.detailValue, { color: colors.text }]}>{formatDate(selectedInvoice.due_date)}</Text>
-                  </View>
-                )}
-
-                <View style={styles.separator} />
-
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Subtotal</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>
-                    {formatCurrency(selectedInvoice.subtotal, selectedInvoice.currency)}
-                  </Text>
-                </View>
-
-                {selectedInvoice.tax_amount && selectedInvoice.tax_amount > 0 && (
-                  <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>
-                      Tax ({selectedInvoice.tax_rate}%)
-                    </Text>
-                    <Text style={[styles.detailValue, { color: colors.text }]}>
-                      {formatCurrency(selectedInvoice.tax_amount, selectedInvoice.currency)}
-                    </Text>
-                  </View>
-                )}
-
-                {selectedInvoice.discount_amount && selectedInvoice.discount_amount > 0 && (
-                  <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Discount</Text>
-                    <Text style={[styles.detailValue, { color: Colors.green[500] }]}>
-                      -{formatCurrency(selectedInvoice.discount_amount, selectedInvoice.currency)}
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <View style={styles.modalStatusContainer}>
+                    <View
+                      style={[
+                        styles.modalStatusBadge,
+                        {
+                          backgroundColor: getInvoiceStatusColor(selectedInvoice.status || 'pending').bg,
+                          borderColor: getInvoiceStatusColor(selectedInvoice.status || 'pending').border,
+                        },
+                      ]}
+                    >
+                    <Ionicons
+                      name={getStatusIcon(selectedInvoice.status || 'pending')}
+                      size={16}
+                      color={getInvoiceStatusColor(selectedInvoice.status || 'pending').text}
+                    />
+                    <Text
+                      style={[
+                        styles.modalStatusText,
+                        { color: getInvoiceStatusColor(selectedInvoice.status || 'pending').text },
+                      ]}
+                    >
+                      {(selectedInvoice.status || 'pending').toUpperCase()}
                     </Text>
                   </View>
-                )}
-
-                <View style={[styles.separator, { marginVertical: 12 }]} />
-
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: colors.text, fontWeight: '700', fontSize: 18 }]}>Total</Text>
-                  <Text style={[styles.detailValue, { color: colors.text, fontWeight: '700', fontSize: 20 }]}>
-                    {formatCurrency(selectedInvoice.total_amount, selectedInvoice.currency)}
-                  </Text>
                 </View>
 
-                {selectedInvoice.notes && (
-                  <>
-                    <View style={styles.separator} />
-                    <View style={styles.notesContainer}>
-                      <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Notes</Text>
-                      <Text style={[styles.notesText, { color: colors.text }]}>{selectedInvoice.notes}</Text>
+                {/* Invoice Info Grid */}
+                <View style={styles.infoGrid}>
+                  <View style={styles.infoGridItem}>
+                    <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Invoice Number</Text>
+                    <Text style={[styles.infoValue, { color: colors.text }]}>
+                      {selectedInvoice.invoice_number || 'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.infoGridItem}>
+                    <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Invoice Date</Text>
+                    <Text style={[styles.infoValue, { color: colors.text }]}>
+                      {selectedInvoice.issue_date ? formatDate(selectedInvoice.issue_date) : 'N/A'}
+                    </Text>
+                  </View>
+                  <View style={styles.infoGridItem}>
+                    <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Due Date</Text>
+                    <Text style={[styles.infoValue, { color: colors.text }]}>
+                      {selectedInvoice.due_date ? formatDate(selectedInvoice.due_date) : '-'}
+                    </Text>
+                  </View>
+                  <View style={styles.infoGridItem}>
+                    <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Amount</Text>
+                    <Text style={[styles.infoValue, { color: colors.text, fontSize: 18, fontWeight: '700' }]}>
+                      {formatCurrency(selectedInvoice.total_amount || 0, selectedInvoice.currency || 'USD')}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Payment Info (if paid) */}
+                {selectedInvoice.status === 'paid' && selectedInvoice.paid_at && (
+                  <View
+                    style={{
+                      padding: 16,
+                      marginBottom: 20,
+                      borderRadius: 16,
+                      backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                      borderColor: 'rgba(34, 197, 94, 0.3)',
+                      borderWidth: 1,
+                    }}
+                  >
+                    <View style={styles.paymentInfoRow}>
+                      <View>
+                        <Text style={[styles.paymentLabel, { color: 'rgba(34, 197, 94, 0.7)' }]}>
+                          Payment Method
+                        </Text>
+                        <Text style={[styles.paymentValue, { color: Colors.green[500] }]}>
+                          {String(selectedInvoice.payment_gateway || 'N/A')}
+                        </Text>
+                      </View>
+                      <View>
+                        <Text style={[styles.paymentLabel, { color: 'rgba(34, 197, 94, 0.7)' }]}>Paid On</Text>
+                        <Text style={[styles.paymentValue, { color: Colors.green[500] }]}>
+                          {selectedInvoice.paid_at ? formatDate(selectedInvoice.paid_at) : 'N/A'}
+                        </Text>
+                      </View>
                     </View>
-                  </>
+                  </View>
                 )}
-              </ScrollView>
-            </GlassSurface>
-          </View>
-        )}
+
+                {/* Amount Breakdown */}
+                <View style={styles.breakdownSection}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Amount Breakdown</Text>
+                  <GlassSurface style={styles.breakdownCard}>
+                    <View style={styles.breakdownRow}>
+                      <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>Subtotal</Text>
+                      <Text style={[styles.breakdownValue, { color: colors.text }]}>
+                        {formatCurrency(selectedInvoice.subtotal || 0, selectedInvoice.currency || 'USD')}
+                      </Text>
+                    </View>
+
+                    {selectedInvoice.tax_amount && selectedInvoice.tax_amount > 0 && (
+                      <View style={styles.breakdownRow}>
+                        <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>
+                          Tax ({selectedInvoice.tax_rate ? `${selectedInvoice.tax_rate}%` : '0%'})
+                        </Text>
+                        <Text style={[styles.breakdownValue, { color: colors.text }]}>
+                          {formatCurrency(selectedInvoice.tax_amount, selectedInvoice.currency || 'USD')}
+                        </Text>
+                      </View>
+                    )}
+
+                    {selectedInvoice.discount_amount && selectedInvoice.discount_amount > 0 && (
+                      <View style={styles.breakdownRow}>
+                        <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>Discount</Text>
+                        <Text style={[styles.breakdownValue, { color: Colors.green[500] }]}>
+                          -{formatCurrency(selectedInvoice.discount_amount, selectedInvoice.currency || 'USD')}
+                        </Text>
+                      </View>
+                    )}
+
+                    <View style={[styles.separator, { marginVertical: 12 }]} />
+
+                    <View style={styles.breakdownRow}>
+                      <Text style={[styles.breakdownLabel, { color: colors.text, fontWeight: '700', fontSize: 16 }]}>
+                        Total
+                      </Text>
+                      <Text style={[styles.breakdownValue, { color: colors.text, fontWeight: '700', fontSize: 18 }]}>
+                        {formatCurrency(selectedInvoice.total_amount || 0, selectedInvoice.currency || 'USD')}
+                      </Text>
+                    </View>
+                  </GlassSurface>
+                </View>
+
+                {/* Notes */}
+                {selectedInvoice.notes && (
+                  <View style={styles.notesSection}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Notes</Text>
+                    <GlassSurface style={styles.notesCard}>
+                      <Text style={[styles.notesText, { color: colors.text }]}>
+                        {String(selectedInvoice.notes)}
+                      </Text>
+                    </GlassSurface>
+                  </View>
+                )}
+
+                {/* Action Buttons */}
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}
+                    onPress={() => {
+                      setSelectedInvoice(null);
+                      setShowDetailsModal(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.modalButtonText, { color: colors.text }]}>Close</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: Colors.blue[500] }]}
+                    onPress={() => {
+                      setShowDetailsModal(false);
+                      setShowPreviewModal(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="document-text-outline" size={18} color="#FFFFFF" />
+                    <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Preview Invoice</Text>
+                  </TouchableOpacity>
+
+                  {selectedInvoice.status === 'pending' && (
+                    <TouchableOpacity
+                      style={[styles.modalButton, { backgroundColor: Colors.green[500] }]}
+                      onPress={() => {
+                        // TODO: Implement payment functionality
+                        console.log('Pay Now clicked for invoice:', selectedInvoice.invoice_number);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="card-outline" size={18} color="#FFFFFF" />
+                      <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Pay Now</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {selectedInvoice.status === 'paid' && selectedInvoice.pdf_url && (
+                    <TouchableOpacity
+                      style={[styles.modalButton, { backgroundColor: Colors.purple[500] }]}
+                      onPress={() => {
+                        // TODO: Implement PDF download
+                        console.log('Download PDF for invoice:', selectedInvoice.invoice_number);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="download-outline" size={18} color="#FFFFFF" />
+                      <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Download PDF</Text>
+                    </TouchableOpacity>
+                  )}
+                  </View>
+                </ScrollView>
+                </GlassSurface>
+              </Animated.View>
+            </Animated.View>
+          )}
+        </Modal>
+
+        {/* Invoice Preview Modal */}
+        <InvoicePreviewModal
+          invoice={selectedInvoice}
+          visible={showPreviewModal}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setSelectedInvoice(null);
+          }}
+        />
       </View>
     </PageTransition>
   );
@@ -471,21 +634,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'flex-end',
+    padding: 0,
   },
   modalContent: {
     width: '100%',
-    maxHeight: '80%',
+    maxHeight: '90%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
+  },
+  modalGlass: {
     padding: 20,
-    borderRadius: 24,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -522,5 +684,106 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
     lineHeight: 20,
+  },
+  modalStatusContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  modalStatusText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginBottom: 20,
+  },
+  infoGridItem: {
+    width: '47%',
+  },
+  infoLabel: {
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  paymentInfo: {
+    padding: 16,
+    marginBottom: 20,
+    borderRadius: 16,
+  },
+  paymentInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  paymentLabel: {
+    fontSize: 12,
+    marginBottom: 6,
+  },
+  paymentValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  breakdownSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  breakdownCard: {
+    padding: 16,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  breakdownLabel: {
+    fontSize: 14,
+  },
+  breakdownValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  notesSection: {
+    marginBottom: 20,
+  },
+  notesCard: {
+    padding: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 20,
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    minWidth: '47%',
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
