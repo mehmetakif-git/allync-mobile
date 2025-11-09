@@ -8,6 +8,9 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
+  ScrollView,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -224,6 +227,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Modal States
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showNeedHelp, setShowNeedHelp] = useState(false);
+
+  // Forgot Password States
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
   const { signIn } = useAuth();
   const { colors } = useTheme();
   const { language, setLanguage, t } = useLanguage();
@@ -380,38 +392,50 @@ export default function Login() {
                     />
                   </View>
 
-                  {/* Remember Me Checkbox */}
-                  <TouchableOpacity
-                    onPress={() => setRememberMe(!rememberMe)}
-                    disabled={loading}
-                    activeOpacity={0.7}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginBottom: 8,
-                      gap: 10,
-                    }}
-                  >
-                    <View
+                  {/* Remember Me & Forgot Password Row */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <TouchableOpacity
+                      onPress={() => setRememberMe(!rememberMe)}
+                      disabled={loading}
+                      activeOpacity={0.7}
                       style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: 4,
-                        borderWidth: 2,
-                        borderColor: rememberMe ? Colors.titanium : 'rgba(248, 249, 250, 0.3)',
-                        backgroundColor: rememberMe ? Colors.titanium : 'transparent',
+                        flexDirection: 'row',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: 10,
                       }}
                     >
-                      {rememberMe && (
-                        <Ionicons name="checkmark" size={14} color={Colors.coal} />
-                      )}
-                    </View>
-                    <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '500' }}>
-                      {t.rememberMe}
-                    </Text>
-                  </TouchableOpacity>
+                      <View
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: 4,
+                          borderWidth: 2,
+                          borderColor: rememberMe ? Colors.titanium : 'rgba(248, 249, 250, 0.3)',
+                          backgroundColor: rememberMe ? Colors.titanium : 'transparent',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {rememberMe && (
+                          <Ionicons name="checkmark" size={14} color={Colors.coal} />
+                        )}
+                      </View>
+                      <Text style={{ color: colors.textSecondary, fontSize: 14, fontWeight: '500' }}>
+                        {t.rememberMe}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Forgot Password Button */}
+                    <TouchableOpacity
+                      onPress={() => setShowForgotPassword(true)}
+                      disabled={loading}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ color: Colors.blue[400], fontSize: 14, fontWeight: '500' }}>
+                        Forgot Password?
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
 
                   <ShinyButton
                     onPress={handleLogin}
@@ -426,7 +450,7 @@ export default function Login() {
               {/* Footer */}
               <Animated.View
                 entering={FadeInUp.duration(800).delay(600).springify()}
-                style={{ alignItems: 'center', justifyContent: 'center' }}
+                style={{ alignItems: 'center', justifyContent: 'center', gap: 12 }}
                 pointerEvents="auto"
               >
                 <GlassSurface style={{
@@ -439,9 +463,292 @@ export default function Login() {
                     {t.secureAccess}
                   </Text>
                 </GlassSurface>
+
+                {/* Need Help Button */}
+                <TouchableOpacity
+                  onPress={() => setShowNeedHelp(true)}
+                  activeOpacity={0.7}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                  }}
+                >
+                  <Text style={{ color: Colors.blue[400], fontSize: 14, fontWeight: '500', textAlign: 'center' }}>
+                    Need help? Contact Administrator
+                  </Text>
+                </TouchableOpacity>
               </Animated.View>
         </View>
       </View>
+
+      {/* Forgot Password Modal */}
+      <Modal
+        visible={showForgotPassword}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowForgotPassword(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.8)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{
+            width: '100%',
+            maxWidth: 400,
+            backgroundColor: '#0B1429',
+            borderRadius: 16,
+            borderWidth: 2,
+            borderColor: Colors.blue[500] + '80',
+            overflow: 'hidden',
+          }}>
+            {/* Header */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: 20,
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderBottomWidth: 1,
+              borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Ionicons name="key" size={20} color={Colors.blue[400]} />
+                </View>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: Colors.text.primary }}>
+                  Reset Password
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowForgotPassword(false)}>
+                <Ionicons name="close" size={24} color={Colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <View style={{ padding: 20 }}>
+              <Text style={{ color: Colors.text.secondary, fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
+                Enter your email address and we'll send you a link to reset your password.
+              </Text>
+
+              <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 8, fontWeight: '500' }}>
+                Email Address
+              </Text>
+              <AnimatedInput
+                value={resetEmail}
+                onChangeText={setResetEmail}
+                placeholder="your@email.com"
+                keyboardType="email-address"
+                editable={!resetLoading}
+              />
+
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+                <TouchableOpacity
+                  onPress={() => setShowForgotPassword(false)}
+                  disabled={resetLoading}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: Colors.text.secondary, fontSize: 15, fontWeight: '600' }}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (!resetEmail) {
+                      Alert.alert('Error', 'Please enter your email address');
+                      return;
+                    }
+
+                    setResetLoading(true);
+                    try {
+                      const { supabase } = await import('../lib/supabase');
+                      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+                        redirectTo: 'allync://reset-password',
+                      });
+
+                      if (error) throw error;
+
+                      Alert.alert(
+                        'Success',
+                        'Password reset link has been sent to your email. Please check your inbox.',
+                        [
+                          {
+                            text: 'OK',
+                            onPress: () => {
+                              setShowForgotPassword(false);
+                              setResetEmail('');
+                            },
+                          },
+                        ]
+                      );
+                    } catch (error: any) {
+                      Alert.alert('Error', error.message || 'Failed to send reset email. Please try again.');
+                    } finally {
+                      setResetLoading(false);
+                    }
+                  }}
+                  disabled={resetLoading}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 14,
+                    backgroundColor: Colors.blue[500],
+                    borderRadius: 8,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {resetLoading ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '600' }}>
+                      Send Reset Link
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Need Help Modal */}
+      <Modal
+        visible={showNeedHelp}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowNeedHelp(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.8)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{
+            width: '100%',
+            maxWidth: 400,
+            backgroundColor: '#0B1429',
+            borderRadius: 16,
+            borderWidth: 2,
+            borderColor: Colors.blue[500] + '80',
+            overflow: 'hidden',
+          }}>
+            {/* Header */}
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: 20,
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderBottomWidth: 1,
+              borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Ionicons name="help-circle" size={20} color={Colors.blue[400]} />
+                </View>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: Colors.text.primary }}>
+                  Need Help?
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowNeedHelp(false)}>
+                <Ionicons name="close" size={24} color={Colors.text.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <View style={{ padding: 20 }}>
+              <Text style={{ color: Colors.text.secondary, fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
+                If you're having trouble logging in or need assistance, please contact your system administrator.
+              </Text>
+
+              {/* Contact Options */}
+              <View style={{ gap: 12 }}>
+                {/* Email Support */}
+                <TouchableOpacity
+                  onPress={() => {
+                    Linking.openURL('mailto:support@allync.com?subject=Login%20Support%20Request');
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 16,
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    borderRadius: 8,
+                    gap: 12,
+                  }}
+                >
+                  <Ionicons name="mail" size={24} color={Colors.blue[400]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: Colors.text.primary, fontSize: 15, fontWeight: '600', marginBottom: 2 }}>
+                      Email Support
+                    </Text>
+                    <Text style={{ color: Colors.text.tertiary, fontSize: 12 }}>
+                      support@allync.com
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={Colors.text.tertiary} />
+                </TouchableOpacity>
+
+                {/* Phone Support */}
+                <TouchableOpacity
+                  onPress={() => {
+                    Linking.openURL('tel:+1234567890');
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 16,
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    borderRadius: 8,
+                    gap: 12,
+                  }}
+                >
+                  <Ionicons name="call" size={24} color={Colors.green[400]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: Colors.text.primary, fontSize: 15, fontWeight: '600', marginBottom: 2 }}>
+                      Call Support
+                    </Text>
+                    <Text style={{ color: Colors.text.tertiary, fontSize: 12 }}>
+                      +1 (234) 567-890
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={Colors.text.tertiary} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Close Button */}
+              <TouchableOpacity
+                onPress={() => setShowNeedHelp(false)}
+                style={{
+                  marginTop: 20,
+                  paddingVertical: 14,
+                  backgroundColor: Colors.blue[500],
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '600' }}>
+                  Close
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </MeshGlowBackground>
   );
 }

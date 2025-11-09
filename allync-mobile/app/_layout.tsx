@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
+import { NotificationProvider } from '../contexts/NotificationContext';
 import '../global.css';
 
 // Create a client
@@ -54,20 +55,22 @@ export default function RootLayout() {
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
-              <AuthGuard>
-                <StatusBar style="light" />
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    animation: 'fade',
-                    animationDuration: 300,
-                  }}
-                >
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="login" />
-                  <Stack.Screen name="(tabs)" />
-                </Stack>
-              </AuthGuard>
+              <NotificationProvider>
+                <AuthGuard>
+                  <StatusBar style="light" />
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      animation: 'fade',
+                      animationDuration: 300,
+                    }}
+                  >
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="login" />
+                    <Stack.Screen name="(tabs)" />
+                  </Stack>
+                </AuthGuard>
+              </NotificationProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>

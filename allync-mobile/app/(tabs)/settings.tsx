@@ -8,6 +8,7 @@ import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { getCompanyById } from '../../lib/api/companies';
 import { getActivityLogs } from '../../lib/api/activityLogs';
 import { supabase } from '../../lib/supabase';
@@ -52,6 +53,7 @@ type TabType = 'account' | 'company' | 'security' | 'preferences';
 export default function Settings() {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { isNotificationEnabled, requestPermissions, sendTestNotification, expoPushToken } = useNotifications();
   const [activeTab, setActiveTab] = useState<TabType>('account');
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
   const [loginHistory, setLoginHistory] = useState<ActivityLog[]>([]);

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useServiceNavigation } from '../../contexts/ServiceNavigationContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { useRouter } from 'expo-router';
 import { Colors, Gradients } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
@@ -16,6 +17,7 @@ import NotificationsPanel from '../../components/NotificationsPanel';
 import DashboardHeader from '../../components/DashboardHeader';
 import DashboardSkeleton from '../../components/skeletons/DashboardSkeleton';
 import MeshGlowBackground from '../../components/MeshGlowBackground';
+import NotificationPermissionBanner from '../../components/NotificationPermissionBanner';
 const AnimatedView = Animated.View;
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 export default function Home() {
@@ -23,12 +25,12 @@ export default function Home() {
   const { colors } = useTheme();
   const router = useRouter();
   const { navigateToService } = useServiceNavigation();
+  const { unreadCount } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(2); // Mock data
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const [activeServices, setActiveServices] = useState<ActiveService[]>([]);
   const bellScale = useSharedValue(1);
@@ -202,6 +204,9 @@ export default function Home() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.blue[500]} />
         }
       >
+        {/* Notification Permission Banner */}
+        <NotificationPermissionBanner />
+
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
           {statCards.map((stat, index) => (
@@ -350,7 +355,8 @@ function ServiceCard({
     switch (slug) {
       case 'mobile-app-development': return 'phone-portrait-outline';
       case 'website-development': return 'globe-outline';
-      case 'whatsapp-service': return 'logo-whatsapp';
+      case 'whatsapp-service':
+      case 'whatsapp-automation': return 'logo-whatsapp';
       default: return 'server-outline';
     }
   };

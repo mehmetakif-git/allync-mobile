@@ -16,6 +16,7 @@ import RequestServiceModal from '../../components/RequestServiceModal';
 import ServicesSkeleton from '../../components/skeletons/ServicesSkeleton';
 import MobileAppServiceView from '../../components/services/MobileAppServiceView';
 import WebsiteDevelopmentView from '../../components/services/WebsiteDevelopmentView';
+import WhatsAppServiceView from '../../components/services/WhatsAppServiceView';
 import MeshGlowBackground from '../../components/MeshGlowBackground';
 import {
   getActiveServices,
@@ -191,6 +192,16 @@ export default function Services() {
         </View>
       );
     }
+    if (selectedServiceDetail.type === 'whatsapp') {
+      return (
+        <View style={styles.container}>
+          <WhatsAppServiceView
+            serviceId={selectedServiceDetail.serviceId}
+            onBack={() => setSelectedServiceDetail(null)}
+          />
+        </View>
+      );
+    }
     // For other service types, show placeholder for now
     return (
       <View style={styles.container}>
@@ -204,7 +215,7 @@ export default function Services() {
             <Text style={[styles.backText, { color: colors.text }]}>Back to Services</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>
-            {selectedServiceDetail.type === 'whatsapp' ? 'WhatsApp Service' : 'Service Details'}
+            Service Details
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Service detail view coming soon...
