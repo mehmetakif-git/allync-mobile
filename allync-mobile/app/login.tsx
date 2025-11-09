@@ -1,19 +1,16 @@
-// Login screen with interactive dot grid background and glassmorphism effects
+// Login screen with solid backgrounds and glassmorphism effects
 import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  Platform,
   ActivityIndicator,
   Alert,
   Image,
-  StyleSheet,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView, RNCBlurView } from '../components/BlurViewCompat';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -29,8 +26,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Colors } from '../constants/Colors';
+import MeshGlowBackground from '../components/MeshGlowBackground';
+import GlassSurface from '../components/GlassSurface';
 
-// Logo with smooth glow effect and blur circle background
+// Logo with smooth glow effect and solid circle background
 function LogoWithGlow() {
   const glowOpacity = useSharedValue(0.3);
 
@@ -53,36 +52,18 @@ function LogoWithGlow() {
 
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-      {/* Blur circle background */}
-      {Platform.OS === 'ios' ? (
-        <BlurView
-          intensity={40}
-          tint="dark"
-          style={{
-            position: 'absolute',
-            width: 120,
-            height: 120,
-            borderRadius: 60,
-            backgroundColor: 'rgba(43, 44, 44, 0.3)',
-            borderWidth: 1,
-            borderColor: 'rgba(248, 249, 250, 0.15)',
-          }}
-        />
-      ) : (
-        <RNCBlurView
-          blurType="dark"
-          blurAmount={2}
-          style={{
-            position: 'absolute',
-            width: 120,
-            height: 120,
-            borderRadius: 60,
-            backgroundColor: 'rgba(43, 44, 44, 0.4)',
-            borderWidth: 1,
-            borderColor: 'rgba(248, 249, 250, 0.15)',
-          }}
-        />
-      )}
+      {/* Solid circle background */}
+      <View
+        style={{
+          position: 'absolute',
+          width: 120,
+          height: 120,
+          borderRadius: 60,
+          backgroundColor: 'rgba(255, 255, 255, 0.12)',
+          borderWidth: 1,
+          borderColor: 'rgba(255, 255, 255, 0.15)',
+        }}
+      />
 
       {/* Glow effect layers */}
       <Animated.View
@@ -310,96 +291,29 @@ export default function Login() {
   };
 
   return (
-    <LinearGradient
-      colors={[
-        '#0F172A', // Deep slate (top)
-        '#1E293B', // Dark slate
-        '#312E81', // Deep indigo
-        '#1E1B4B', // Deep violet
-        '#0F172A', // Back to deep slate (bottom)
-      ]}
-      locations={[0, 0.25, 0.5, 0.75, 1]}
-      style={{ flex: 1 }}
-    >
-      {/* Subtle glow effects */}
-      <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-        <View style={{
-          position: 'absolute',
-          width: 400,
-          height: 400,
-          borderRadius: 200,
-          backgroundColor: '#6366F1',
-          opacity: 0.15,
-          top: -200,
-          right: -100,
-        }} />
-        <View style={{
-          position: 'absolute',
-          width: 300,
-          height: 300,
-          borderRadius: 150,
-          backgroundColor: '#8B5CF6',
-          opacity: 0.15,
-          bottom: -150,
-          left: -100,
-        }} />
-      </View>
-
+    <MeshGlowBackground>
       {/* Content (Logo, Form, Footer) */}
-      <View style={{ ...StyleSheet.absoluteFillObject }} pointerEvents="box-none">
+      <View style={{ flex: 1 }} pointerEvents="box-none">
         {/* Language Toggle */}
         <View style={{ position: 'absolute', top: 50, right: 20, zIndex: 100 }} pointerEvents="box-none">
           <TouchableOpacity
             onPress={() => setLanguage(language === 'en' ? 'tr' : 'en')}
             style={{
-              borderRadius: 20,
-              overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: 'rgba(248, 249, 250, 0.2)',
-            }}
-          >
-            {/* Blur background layer */}
-            {Platform.OS === 'ios' ? (
-              <BlurView
-                intensity={40}
-                tint="dark"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                }}
-              />
-            ) : (
-              <RNCBlurView
-                blurType="dark"
-                blurAmount={2}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(43, 44, 44, 0.4)',
-                }}
-              />
-            )}
-
-            {/* Content on top */}
-            <View style={{
               paddingHorizontal: 16,
               paddingVertical: 8,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-            }}>
-              <Ionicons name="language" size={20} color={colors.text} />
-              <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-                {language.toUpperCase()}
-              </Text>
-            </View>
+              borderRadius: 20,
+              backgroundColor: 'rgba(255, 255, 255, 0.12)',
+              borderWidth: 1,
+              borderColor: 'rgba(255, 255, 255, 0.15)',
+            }}
+          >
+            <Ionicons name="language" size={20} color={colors.text} />
+            <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
+              {language.toUpperCase()}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -432,46 +346,10 @@ export default function Login() {
               {/* Login Form */}
               <Animated.View
                 entering={FadeInUp.duration(800).delay(200).springify()}
-                style={{
-                  borderRadius: 16,
-                  overflow: 'hidden',
-                  marginBottom: 32,
-                  borderWidth: 1.5,
-                  borderColor: 'rgba(248, 249, 250, 0.2)',
-                }}
+                style={{ marginBottom: 32 }}
                 pointerEvents="auto"
               >
-                {/* Blur background layer */}
-                {Platform.OS === 'ios' ? (
-                  <BlurView
-                    intensity={40}
-                    tint="dark"
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                    }}
-                  />
-                ) : (
-                  <RNCBlurView
-                    blurType="dark"
-                    blurAmount={2}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundColor: 'rgba(43, 44, 44, 0.4)',
-                    }}
-                  />
-                )}
-
-                {/* Content on top of blur */}
-                <View style={{ padding: 24 }}>
+                <GlassSurface style={{ padding: 24 }}>
                   <Text style={{ color: colors.text, fontSize: 24, fontWeight: 'bold', marginBottom: 24, textAlign: 'center' }}>
                     {t.welcomeBack}
                   </Text>
@@ -542,7 +420,7 @@ export default function Login() {
                     text={t.signInButton}
                     loadingText={t.signingIn}
                   />
-                </View>
+                </GlassSurface>
               </Animated.View>
 
               {/* Footer */}
@@ -551,56 +429,19 @@ export default function Login() {
                 style={{ alignItems: 'center', justifyContent: 'center' }}
                 pointerEvents="auto"
               >
-                <View style={{
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  borderWidth: 1,
-                  borderColor: 'rgba(248, 249, 250, 0.1)',
+                <GlassSurface style={{
+                  paddingHorizontal: 24,
+                  paddingVertical: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}>
-                  {/* Blur background layer */}
-                  {Platform.OS === 'ios' ? (
-                    <BlurView
-                      intensity={30}
-                      tint="dark"
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(43, 44, 44, 0.2)',
-                      }}
-                    />
-                  ) : (
-                    <RNCBlurView
-                      blurType="dark"
-                      blurAmount={2}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(43, 44, 44, 0.3)',
-                      }}
-                    />
-                  )}
-
-                  {/* Content on top */}
-                  <View style={{
-                    paddingHorizontal: 24,
-                    paddingVertical: 12,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
-                      {t.secureAccess}
-                    </Text>
-                  </View>
-                </View>
+                  <Text style={{ color: colors.textTertiary, fontSize: 12, textAlign: 'center', lineHeight: 18 }}>
+                    {t.secureAccess}
+                  </Text>
+                </GlassSurface>
               </Animated.View>
         </View>
       </View>
-    </LinearGradient>
+    </MeshGlowBackground>
   );
 }
