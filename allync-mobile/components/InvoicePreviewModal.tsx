@@ -285,7 +285,7 @@ export default function InvoicePreviewModal({ invoice, visible, onClose }: Invoi
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: '#0B1429',
     justifyContent: 'flex-end',
     padding: 0,
   },
@@ -293,12 +293,15 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     overflow: 'hidden',
+    backgroundColor: '#1a2332',
   },
   modalGlassWrapper: {
     flex: 1,
+    backgroundColor: '#1a2332',
   },
   modalGlass: {
     flex: 1,
+    backgroundColor: '#1a2332',
   },
   innerContainer: {
     flex: 1,

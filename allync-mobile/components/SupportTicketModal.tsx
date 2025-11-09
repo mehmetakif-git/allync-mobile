@@ -204,16 +204,18 @@ export default function SupportTicketModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: '#0B1429',
   },
   keyboardView: {
     flex: 1,
   },
   modalContent: {
     flex: 1,
+    backgroundColor: '#1a2332',
   },
   glassContainer: {
     flex: 1,
+    backgroundColor: '#1a2332',
   },
   innerContainer: {
     flex: 1,

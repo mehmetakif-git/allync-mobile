@@ -17,25 +17,31 @@ export default function SettingsSkeleton() {
       >
         {/* Header Skeleton */}
         <View style={styles.header}>
-          <Skeleton width={140} height={32} borderRadius={8} style={{ marginBottom: 8 }} />
-          <Skeleton width="85%" height={16} borderRadius={4} />
+          <Skeleton width={120} height={28} borderRadius={6} style={{ marginBottom: 8 }} />
+          <Skeleton width="80%" height={16} borderRadius={4} />
         </View>
 
         {/* Notice Card Skeleton */}
         <GlassSurface style={styles.noticeCard}>
           <View style={styles.noticeContent}>
-            <SkeletonCircle size={40} />
-            <View style={{ flex: 1, marginLeft: 12 }}>
+            <View style={styles.noticeIconContainer}>
+              <SkeletonCircle size={20} />
+            </View>
+            <View style={{ flex: 1 }}>
               <Skeleton width="100%" height={14} borderRadius={4} style={{ marginBottom: 4 }} />
-              <Skeleton width="70%" height={14} borderRadius={4} />
+              <Skeleton width="65%" height={14} borderRadius={4} />
             </View>
           </View>
         </GlassSurface>
 
         {/* Tabs Skeleton */}
         <View style={styles.filtersContainer}>
-          {[1, 2, 3, 4].map((item) => (
-            <Skeleton key={item} width={90} height={38} borderRadius={19} style={{ marginRight: 8 }} />
+          {[1, 2, 3].map((item) => (
+            <View key={item} style={styles.filterButton}>
+              <View style={styles.cardBlur}>
+                <Skeleton width={80} height={20} borderRadius={4} />
+              </View>
+            </View>
           ))}
         </View>
 
@@ -43,17 +49,17 @@ export default function SettingsSkeleton() {
         <GlassSurface style={styles.card}>
           {/* Card Header */}
           <View style={styles.cardHeader}>
-            <Skeleton width={160} height={20} borderRadius={6} />
-            <Skeleton width={85} height={24} borderRadius={12} />
+            <Skeleton width={150} height={20} borderRadius={6} />
+            <Skeleton width={80} height={20} borderRadius={12} />
           </View>
 
           {/* Profile Header */}
           <View style={styles.profileHeader}>
-            <SkeletonCircle size={64} />
+            <SkeletonCircle size={80} />
             <View style={styles.profileInfo}>
-              <Skeleton width={150} height={20} borderRadius={6} style={{ marginBottom: 6 }} />
-              <Skeleton width={120} height={16} borderRadius={4} style={{ marginBottom: 4 }} />
-              <Skeleton width={100} height={14} borderRadius={4} />
+              <Skeleton width={140} height={18} borderRadius={6} style={{ marginBottom: 6 }} />
+              <Skeleton width={110} height={14} borderRadius={4} style={{ marginBottom: 4 }} />
+              <Skeleton width={90} height={12} borderRadius={4} />
             </View>
           </View>
 
@@ -63,41 +69,13 @@ export default function SettingsSkeleton() {
               <View key={item} style={styles.detailItem}>
                 <View style={styles.detailHeader}>
                   <SkeletonCircle size={16} style={{ marginRight: 6 }} />
-                  <Skeleton width={60} height={14} borderRadius={4} />
+                  <Skeleton width={60} height={12} borderRadius={4} />
                 </View>
-                <Skeleton width="80%" height={16} borderRadius={4} style={{ marginTop: 6 }} />
+                <Skeleton width="75%" height={14} borderRadius={4} style={{ marginTop: 6 }} />
               </View>
             ))}
           </View>
         </GlassSurface>
-
-        {/* Company Info Card Skeleton */}
-        <GlassSurface style={styles.card}>
-          {/* Card Header */}
-          <View style={styles.cardHeader}>
-            <Skeleton width={180} height={20} borderRadius={6} />
-            <Skeleton width={85} height={24} borderRadius={12} />
-          </View>
-
-          {/* Company Details Grid */}
-          <View style={styles.detailsGrid}>
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <View key={item} style={styles.detailItem}>
-                <View style={styles.detailHeader}>
-                  <SkeletonCircle size={16} style={{ marginRight: 6 }} />
-                  <Skeleton width={70} height={14} borderRadius={4} />
-                </View>
-                <Skeleton width="85%" height={16} borderRadius={4} style={{ marginTop: 6 }} />
-              </View>
-            ))}
-          </View>
-        </GlassSurface>
-
-        {/* Action Buttons Skeleton */}
-        <View style={styles.actionsContainer}>
-          <Skeleton width="100%" height={48} borderRadius={12} style={{ marginBottom: 12 }} />
-          <Skeleton width="100%" height={48} borderRadius={12} />
-        </View>
       </ScrollView>
     </MeshGlowBackground>
   );
@@ -116,24 +94,47 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   noticeCard: {
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   noticeContent: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  noticeIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   filtersContainer: {
     flexDirection: 'row',
+    gap: 8,
     marginBottom: 24,
     flexWrap: 'wrap',
   },
+  filterButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  cardBlur: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
   card: {
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -144,28 +145,26 @@ const styles = StyleSheet.create({
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    gap: 16,
     paddingBottom: 20,
+    marginBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   profileInfo: {
     flex: 1,
-    marginLeft: 16,
   },
   detailsGrid: {
     gap: 16,
   },
   detailItem: {
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 16,
+    borderRadius: 12,
   },
   detailHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  actionsContainer: {
-    marginTop: 12,
+    gap: 8,
+    marginBottom: 8,
   },
 });

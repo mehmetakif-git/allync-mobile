@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { Colors } from '../../constants/Colors';
 import { Typography } from '../../constants/Typography';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
@@ -194,36 +193,31 @@ export default function Settings() {
                 key={tab.id}
                 onPress={() => setActiveTab(tab.id)}
                 activeOpacity={0.7}
+                style={[
+                  styles.filterButton,
+                  {
+                    backgroundColor: activeTab === tab.id ? Colors.blue[500] : 'rgba(255, 255, 255, 0.12)',
+                    borderWidth: 1,
+                    borderColor: activeTab === tab.id ? 'rgba(59, 130, 246, 0.5)' : 'rgba(255, 255, 255, 0.15)',
+                  },
+                ]}
               >
-                <BlurView
-                  intensity={20}
-                  tint="dark"
+                <Ionicons
+                  name={tab.icon}
+                  size={16}
+                  color={activeTab === tab.id ? '#FFFFFF' : colors.textSecondary}
+                />
+                <Text
                   style={[
-                    styles.filterButton,
-                    styles.cardBlur,
+                    styles.filterButtonText,
                     {
-                      backgroundColor: activeTab === tab.id ? Colors.blue[500] : 'rgba(255, 255, 255, 0.08)',
-                      borderColor: activeTab === tab.id ? 'rgba(59, 130, 246, 0.5)' : 'rgba(255, 255, 255, 0.1)',
+                      color: activeTab === tab.id ? '#FFFFFF' : colors.textSecondary,
+                      fontWeight: activeTab === tab.id ? '700' : '500',
                     },
                   ]}
                 >
-                  <Ionicons
-                    name={tab.icon}
-                    size={16}
-                    color={activeTab === tab.id ? '#FFFFFF' : colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      styles.filterButtonText,
-                      {
-                        color: activeTab === tab.id ? '#FFFFFF' : colors.textSecondary,
-                        fontWeight: activeTab === tab.id ? '700' : '500',
-                      },
-                    ]}
-                  >
-                    {tab.label}
-                  </Text>
-                </BlurView>
+                  {tab.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -511,33 +505,28 @@ export default function Settings() {
                       <AnimatedView
                         key={login.id}
                         entering={FadeInDown.delay(400 + index * 50)}
+                        style={styles.historyItem}
                       >
-                        <BlurView
-                          intensity={20}
-                          tint="dark"
-                          style={[styles.historyItem, styles.cardBlur]}
-                        >
-                          <View style={styles.historyIconContainer}>
-                            <Ionicons name="desktop" size={20} color={Colors.green[500]} />
-                          </View>
-                          <View style={styles.historyContent}>
-                            <Text style={[styles.historyDevice, { color: colors.text }]}>
-                              {parseUserAgent(login)}
+                        <View style={styles.historyIconContainer}>
+                          <Ionicons name="desktop" size={20} color={Colors.green[500]} />
+                        </View>
+                        <View style={styles.historyContent}>
+                          <Text style={[styles.historyDevice, { color: colors.text }]}>
+                            {parseUserAgent(login)}
+                          </Text>
+                          <Text style={[styles.historyDate, { color: colors.textSecondary }]}>
+                            {new Date(login.created_at).toLocaleString()}
+                          </Text>
+                          <View style={styles.historyMeta}>
+                            <Ionicons name="globe-outline" size={12} color={colors.textTertiary} />
+                            <Text style={[styles.historyIp, { color: colors.textTertiary }]}>
+                              {login.ip_address || 'Unknown IP'}
                             </Text>
-                            <Text style={[styles.historyDate, { color: colors.textSecondary }]}>
-                              {new Date(login.created_at).toLocaleString()}
-                            </Text>
-                            <View style={styles.historyMeta}>
-                              <Ionicons name="globe-outline" size={12} color={colors.textTertiary} />
-                              <Text style={[styles.historyIp, { color: colors.textTertiary }]}>
-                                {login.ip_address || 'Unknown IP'}
-                              </Text>
-                            </View>
                           </View>
-                          <View style={styles.successBadge}>
-                            <Text style={styles.successText}>Success</Text>
-                          </View>
-                        </BlurView>
+                        </View>
+                        <View style={styles.successBadge}>
+                          <Text style={styles.successText}>Success</Text>
+                        </View>
                       </AnimatedView>
                     ))}
                   </View>
@@ -616,13 +605,6 @@ const styles = StyleSheet.create({
   filterButtonText: {
     fontSize: 14,
   },
-  cardBlur: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
   tabContent: {
     gap: 16,
   },
@@ -698,6 +680,7 @@ const styles = StyleSheet.create({
   detailItem: {
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
   detailHeader: {
     flexDirection: 'row',
@@ -766,8 +749,9 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   historyIconContainer: {
     width: 40,

@@ -15,6 +15,7 @@ import { Spacing, BorderRadius } from '../../constants/Spacing';
 import RequestServiceModal from '../../components/RequestServiceModal';
 import ServicesSkeleton from '../../components/skeletons/ServicesSkeleton';
 import MobileAppServiceView from '../../components/services/MobileAppServiceView';
+import WebsiteDevelopmentView from '../../components/services/WebsiteDevelopmentView';
 import MeshGlowBackground from '../../components/MeshGlowBackground';
 import {
   getActiveServices,
@@ -180,6 +181,16 @@ export default function Services() {
         </View>
       );
     }
+    if (selectedServiceDetail.type === 'website') {
+      return (
+        <View style={styles.container}>
+          <WebsiteDevelopmentView
+            serviceId={selectedServiceDetail.serviceId}
+            onBack={() => setSelectedServiceDetail(null)}
+          />
+        </View>
+      );
+    }
     // For other service types, show placeholder for now
     return (
       <View style={styles.container}>
@@ -193,7 +204,7 @@ export default function Services() {
             <Text style={[styles.backText, { color: colors.text }]}>Back to Services</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: colors.text }]}>
-            {selectedServiceDetail.type === 'website' ? 'Website Development' : 'WhatsApp Service'}
+            {selectedServiceDetail.type === 'whatsapp' ? 'WhatsApp Service' : 'Service Details'}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Service detail view coming soon...
@@ -217,15 +228,9 @@ export default function Services() {
   ];
   return (
     <MeshGlowBackground>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.blue[500]} />
-          }
-        >
-          {/* Header */}
+      <View style={styles.container}>
+        {/* Sticky Header */}
+        <View style={styles.stickyHeader}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>
               {language === 'en' ? 'Services Catalog' : 'Servis Kataloğu'}
@@ -234,6 +239,7 @@ export default function Services() {
               {language === 'en' ? 'Explore and manage your services' : 'Servislerinizi keşfedin ve yönetin'}
             </Text>
           </View>
+
           {/* Category Filters */}
           <ScrollView
             horizontal
@@ -275,6 +281,17 @@ export default function Services() {
               );
             })}
           </ScrollView>
+        </View>
+
+        {/* Scrollable Content */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.blue[500]} />
+          }
+        >
           {/* Services Grid */}
           <View style={styles.servicesGrid}>
             {filteredServices.map((service, index) => {
@@ -396,7 +413,7 @@ export default function Services() {
                             style={[
                               styles.actionButton,
                               {
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                backgroundColor: 'rgba(255, 255, 255, 0.15)',
                               },
                             ]}
                             disabled
@@ -414,6 +431,7 @@ export default function Services() {
             })}
           </View>
         </ScrollView>
+
         {/* Request Service Modal */}
         <RequestServiceModal
           visible={modalVisible}
@@ -424,19 +442,28 @@ export default function Services() {
           }}
           onSubmit={handleSubmitRequest}
         />
-      </MeshGlowBackground>
+      </View>
+    </MeshGlowBackground>
   );
 }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  stickyHeader: {
+    backgroundColor: '#0B1429',
+    paddingTop: Spacing['5xl'],
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
   scrollView: {
     flex: 1,
   },
   content: {
-    paddingTop: Spacing['5xl'],
     paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
     paddingBottom: Platform.OS === 'ios' ? 120 : 100,
   },
   loadingContainer: {
@@ -449,7 +476,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
   },
   header: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.md,
   },
   title: {
     fontSize: Typography.fontSize['3xl'],
@@ -460,7 +487,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
   },
   filtersContainer: {
-    marginBottom: Spacing.xl,
+    marginTop: Spacing.sm,
   },
   filtersContent: {
     gap: Spacing.sm,
@@ -481,9 +508,9 @@ const styles = StyleSheet.create({
   },
   serviceCardBlur: {
     padding: Spacing.lg,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 20,
     overflow: 'hidden',
   },

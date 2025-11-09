@@ -13,7 +13,6 @@ import { useRouter, usePathname } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Colors } from '../constants/Colors';
-import GlassSurface from './GlassSurface';
 
 interface TabConfig {
   name: string;
@@ -154,15 +153,13 @@ export default function EnhancedTabBar() {
 
   return (
     <>
-      {/* Backdrop overlay - TEMPORARILY DISABLED FOR TESTING */}
-      {/* {isMenuOpen && (
+      {/* Backdrop overlay - Solid dark overlay for Android compatibility */}
+      {isMenuOpen && (
         <Pressable
           style={styles.backdrop}
           onPress={() => setIsMenuOpen(false)}
-        >
-          <Animated.View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />
-        </Pressable>
-      )} */}
+        />
+      )}
 
       {/* Expandable Menu */}
       <ExpandableMenu
@@ -185,13 +182,7 @@ export default function EnhancedTabBar() {
 
       {/* Main Tab Bar */}
       <View style={styles.container} pointerEvents="box-none">
-        <GlassSurface
-          style={styles.glassContainer}
-          borderRadius={30}
-          borderWidth={1}
-          opacity={0.95}
-          brightness={50}
-        >
+        <View style={styles.glassContainer}>
           <View style={styles.innerContainer}>
             <View style={styles.tabsRow}>
               {/* Home Tab */}
@@ -214,7 +205,7 @@ export default function EnhancedTabBar() {
               />
             </View>
           </View>
-        </GlassSurface>
+        </View>
       </View>
     </>
   );
@@ -359,13 +350,7 @@ function MenuIcon({ item, index, isOpen, isActive, onPress, position }: any) {
   return (
     <Animated.View style={[positionStyle, animatedStyle]}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-        <GlassSurface
-          style={styles.menuIconContainer}
-          borderRadius={30}
-          borderWidth={1}
-          opacity={0.95}
-          brightness={50}
-        >
+        <View style={styles.menuIconContainer}>
           <View style={styles.menuIconWrapper}>
             <Ionicons
               name={item.icon}
@@ -373,7 +358,7 @@ function MenuIcon({ item, index, isOpen, isActive, onPress, position }: any) {
               color={isActive ? Colors.blue[400] : 'rgba(255, 255, 255, 0.5)'}
             />
           </View>
-        </GlassSurface>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -417,17 +402,11 @@ function PlusButton({ isOpen, isActive, onPress, colors }: any) {
       onPress={handlePress}
       activeOpacity={0.8}
     >
-      <GlassSurface
-        style={styles.plusCircle}
-        borderRadius={34}
-        borderWidth={1}
-        opacity={0.95}
-        brightness={50}
-      >
+      <View style={styles.plusCircle}>
         <Animated.View style={[animatedStyle, { width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center' }]}>
           <Ionicons name="add-circle" size={72} color={iconColor} />
         </Animated.View>
-      </GlassSurface>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -497,10 +476,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 998,
+    backgroundColor: '#0B1429',
+    zIndex: 9998,
   },
   glassContainer: {
     flex: 1,
+    backgroundColor: '#1a2332',
+    borderWidth: 1,
+    borderColor: '#2a3442',
+    borderRadius: 30,
+    overflow: 'hidden',
   },
   innerContainer: {
     flex: 1,
@@ -541,7 +526,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 1000,
+    zIndex: 10000,
   },
   plusSpacer: {
     flex: 1,
@@ -554,6 +539,10 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    backgroundColor: '#1a2332',
+    borderWidth: 1,
+    borderColor: '#2a3442',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -562,7 +551,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 999,
+    zIndex: 9999,
     height: 200,
     alignItems: 'center',
   },
@@ -570,6 +559,10 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
+    backgroundColor: '#1a2332',
+    borderWidth: 1,
+    borderColor: '#2a3442',
+    overflow: 'hidden',
   },
   menuIconWrapper: {
     width: '100%',

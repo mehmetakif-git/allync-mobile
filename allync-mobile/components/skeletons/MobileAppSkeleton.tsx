@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Colors } from '../../constants/Colors';
 import { Spacing, BorderRadius } from '../../constants/Spacing';
 import GlassSurface from '../GlassSurface';
+import MeshGlowBackground from '../MeshGlowBackground';
 
 const { width } = Dimensions.get('window');
 
@@ -44,7 +45,7 @@ export default function MobileAppSkeleton() {
   const SkeletonBox = ({ width, height, style }: { width: number | string; height: number; style?: any }) => (
     <View style={[styles.skeletonBox, { width, height }, style]}>
       <LinearGradient
-        colors={['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.08)', 'rgba(255, 255, 255, 0.05)']}
+        colors={['rgba(255, 255, 255, 0.12)', 'rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.12)']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={StyleSheet.absoluteFillObject}
@@ -67,8 +68,9 @@ export default function MobileAppSkeleton() {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Back Button Skeleton */}
+    <MeshGlowBackground>
+      <View style={styles.container}>
+        {/* Back Button Skeleton */}
       <View style={styles.backButton}>
         <SkeletonBox width={24} height={24} style={styles.backIcon} />
         <SkeletonBox width={120} height={20} style={styles.backText} />
@@ -207,7 +209,8 @@ export default function MobileAppSkeleton() {
           </View>
         </View>
       </GlassSurface>
-    </View>
+      </View>
+    </MeshGlowBackground>
   );
 }
 
@@ -221,7 +224,7 @@ const styles = StyleSheet.create({
   skeletonBox: {
     borderRadius: BorderRadius.md,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
   shimmer: {
     width: '100%',
@@ -329,7 +332,7 @@ const styles = StyleSheet.create({
   storeItem: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
   },
   storeInfo: {
     flexDirection: 'row',
@@ -352,9 +355,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: BorderRadius.lg,
     marginBottom: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
   },
   milestoneHeader: {
     flexDirection: 'row',

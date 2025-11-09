@@ -10,72 +10,88 @@ export default function DashboardSkeleton() {
 
   return (
     <MeshGlowBackground>
-      {/* Header Skeleton with Glassmorphism */}
-      <GlassSurface style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 60 : 20 }]}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerLeft}>
-            <Skeleton width={100} height={18} borderRadius={4} style={{ marginBottom: 8 }} />
-            <Skeleton width={160} height={32} borderRadius={6} />
-          </View>
-          <View style={styles.headerRight}>
-            <View style={styles.headerButtons}>
-              <SkeletonCircle size={44} />
-              <SkeletonCircle size={44} />
+      {/* Header Skeleton - Matches DashboardHeader component */}
+      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 60 : 20 }]}>
+        <View style={styles.headerBlur}>
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft}>
+              <Skeleton width={80} height={16} borderRadius={4} style={{ marginBottom: 8 }} />
+              <Skeleton width={140} height={28} borderRadius={6} />
+            </View>
+            <View style={styles.headerRight}>
+              <View style={styles.headerButtons}>
+                <SkeletonCircle size={44} />
+                <SkeletonCircle size={44} />
+              </View>
             </View>
           </View>
         </View>
-      </GlassSurface>
+      </View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats Grid Skeleton - 2x2 Grid */}
+        {/* Stats Grid Skeleton - 2x2 Grid matching actual stat cards */}
         <View style={styles.statsGrid}>
           {[1, 2, 3, 4].map((item) => (
             <View key={item} style={styles.statCard}>
-              <GlassSurface style={styles.statCardGlass}>
-                <View style={styles.statHeader}>
-                  <SkeletonCircle size={44} />
-                  <SkeletonCircle size={8} />
+              <View style={styles.statCardBlur}>
+                <View style={styles.statCardGlass}>
+                  <View style={styles.statHeader}>
+                    <SkeletonCircle size={40} />
+                    <SkeletonCircle size={8} />
+                  </View>
+                  <Skeleton width="70%" height={28} borderRadius={6} style={{ marginTop: 12, marginBottom: 8 }} />
+                  <Skeleton width="85%" height={14} borderRadius={4} style={{ marginBottom: 4 }} />
+                  <Skeleton width="60%" height={12} borderRadius={4} />
                 </View>
-                <Skeleton width="60%" height={32} borderRadius={6} style={{ marginTop: 12, marginBottom: 8 }} />
-                <Skeleton width="80%" height={16} borderRadius={4} style={{ marginBottom: 4 }} />
-                <Skeleton width="50%" height={14} borderRadius={4} />
-              </GlassSurface>
+              </View>
             </View>
           ))}
         </View>
 
-        {/* Quick Actions Skeleton */}
+        {/* Quick Actions Skeleton - 3 items in a row */}
         <View style={styles.section}>
-          <Skeleton width={120} height={24} borderRadius={6} style={{ marginBottom: 16 }} />
-          <View style={styles.actionsGrid}>
-            {[1, 2, 3, 4].map((item) => (
-              <GlassSurface key={item} style={styles.actionCard}>
-                <SkeletonCircle size={48} />
-                <Skeleton width="80%" height={16} borderRadius={4} style={{ marginTop: 12 }} />
-                <Skeleton width="60%" height={12} borderRadius={4} style={{ marginTop: 4 }} />
-              </GlassSurface>
+          <View style={{ marginBottom: 16 }}>
+            <Skeleton width={120} height={24} borderRadius={6} style={{ marginBottom: 4 }} />
+            <Skeleton width={180} height={14} borderRadius={4} />
+          </View>
+          <View style={styles.actionsContainer}>
+            {[1, 2, 3].map((item) => (
+              <View key={item} style={styles.actionButton}>
+                <View style={styles.actionButtonBlur}>
+                  <View style={styles.actionButtonGlass}>
+                    <SkeletonCircle size={48} />
+                    <Skeleton width="80%" height={14} borderRadius={4} style={{ marginTop: 12 }} />
+                    <Skeleton width="60%" height={12} borderRadius={4} style={{ marginTop: 4 }} />
+                  </View>
+                </View>
+              </View>
             ))}
           </View>
         </View>
 
-        {/* Recent Activity Skeleton */}
+        {/* Active Services Skeleton - 2x2 grid */}
         <View style={styles.section}>
-          <Skeleton width={140} height={24} borderRadius={6} style={{ marginBottom: 16 }} />
-          {[1, 2, 3].map((item) => (
-            <GlassSurface key={item} style={styles.activityCard}>
-              <View style={styles.activityHeader}>
-                <SkeletonCircle size={40} />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Skeleton width="70%" height={16} borderRadius={4} style={{ marginBottom: 6 }} />
-                  <Skeleton width="50%" height={12} borderRadius={4} />
+          <View style={styles.sectionHeader}>
+            <Skeleton width={180} height={24} borderRadius={6} />
+            <Skeleton width={60} height={18} borderRadius={4} />
+          </View>
+          <View style={styles.servicesGrid}>
+            {[1, 2, 3, 4].map((item) => (
+              <View key={item} style={styles.serviceCard}>
+                <View style={styles.serviceCardBlur}>
+                  <View style={styles.serviceCardGlass}>
+                    <SkeletonCircle size={48} />
+                    <Skeleton width="85%" height={14} borderRadius={4} style={{ marginTop: 12, marginBottom: 6 }} />
+                    <Skeleton width="60%" height={12} borderRadius={4} />
+                  </View>
                 </View>
               </View>
-            </GlassSurface>
-          ))}
+            ))}
+          </View>
         </View>
       </ScrollView>
     </MeshGlowBackground>
@@ -89,6 +105,14 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 16,
+  },
+  headerBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    padding: 16,
+    overflow: 'hidden',
   },
   headerContent: {
     flexDirection: 'row',
@@ -110,51 +134,81 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 120,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -6,
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    gap: 12,
   },
   statCard: {
-    width: '50%',
-    padding: 6,
+    width: '48%',
+  },
+  statCardBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   statCardGlass: {
     padding: 16,
-    borderRadius: 20,
-    minHeight: 140,
   },
   statHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
   },
   section: {
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    marginTop: 32,
   },
-  actionsGrid: {
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  actionButtonBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  actionButtonGlass: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -6,
+    gap: 12,
   },
-  actionCard: {
-    width: '50%',
+  serviceCard: {
+    width: '48%',
+  },
+  serviceCardBlur: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  serviceCardGlass: {
     padding: 16,
-    margin: 6,
     alignItems: 'center',
-    borderRadius: 16,
-  },
-  activityCard: {
-    padding: 16,
-    marginBottom: 12,
-    borderRadius: 16,
-  },
-  activityHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    minHeight: 140,
+    justifyContent: 'center',
   },
 });

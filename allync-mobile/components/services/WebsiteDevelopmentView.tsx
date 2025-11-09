@@ -16,37 +16,35 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Colors } from '../../constants/Colors';
 import GlassSurface from '../GlassSurface';
-import MobileAppSkeleton from '../skeletons/MobileAppSkeleton';
+import WebsiteDevelopmentSkeleton from '../skeletons/WebsiteDevelopmentSkeleton';
 import MeshGlowBackground from '../MeshGlowBackground';
 import {
-  getMobileAppProjectByCompanyService,
+  getWebsiteProjectByCompanyService,
   formatDate,
   getTimeAgo,
-  platformLabels,
-  storeStatusLabels,
+  projectTypeLabels,
   getMilestoneStatusColor,
-  getStoreStatusColor,
-  type MobileAppProject,
-  type MobileAppMilestone,
-} from '../../lib/api/mobileAppProjects';
+  type WebsiteProject,
+  type WebsiteMilestone,
+} from '../../lib/api/websiteProjects';
 
 type TabType = 'dashboard' | 'details' | 'support';
 
 const AnimatedView = Animated.View;
 
-interface MobileAppServiceViewProps {
+interface WebsiteDevelopmentViewProps {
   serviceId: string;
   onBack: () => void;
 }
 
-export default function MobileAppServiceView({ serviceId, onBack }: MobileAppServiceViewProps) {
+export default function WebsiteDevelopmentView({ serviceId, onBack }: WebsiteDevelopmentViewProps) {
   const { colors } = useTheme();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [project, setProject] = useState<MobileAppProject | null>(null);
+  const [project, setProject] = useState<WebsiteProject | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -63,8 +61,8 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
       setLoading(true);
       setError(null);
 
-      console.log('📱 [MobileAppServiceView] Fetching project for service:', serviceId);
-      const projectData = await getMobileAppProjectByCompanyService(serviceId);
+      console.log('🌐 [WebsiteDevelopmentView] Fetching project for service:', serviceId);
+      const projectData = await getWebsiteProjectByCompanyService(serviceId);
 
       if (!projectData) {
         setError('No project found for this service');
@@ -72,7 +70,7 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
         setProject(projectData);
       }
     } catch (err) {
-      console.error('❌ [MobileAppServiceView] Error:', err);
+      console.error('❌ [WebsiteDevelopmentView] Error:', err);
       setError('Failed to load project data');
     } finally {
       setLoading(false);
@@ -83,14 +81,6 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  };
-
-  const handleStoreLink = (url: string | null | undefined, storeName: string) => {
-    if (url) {
-      Linking.openURL(url);
-    } else {
-      Alert.alert('Not Available', `${storeName} link is not available yet.`);
-    }
   };
 
   const getMilestoneIcon = (status: string) => {
@@ -109,7 +99,7 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
   ];
 
   if (loading) {
-    return <MobileAppSkeleton />;
+    return <WebsiteDevelopmentSkeleton />;
   }
 
   if (error || !project) {
@@ -128,7 +118,7 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
               {error || 'Project Not Found'}
             </Text>
             <Text style={[styles.errorText, { color: colors.textSecondary }]}>
-              This mobile app service hasn't been configured yet. Please contact support.
+              This website service hasn't been configured yet. Please contact support.
             </Text>
             <TouchableOpacity
               style={styles.retryButton}
@@ -149,11 +139,7 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
     );
   }
 
-  const platformColor = project.platform === 'android'
-    ? Colors.green[500]
-    : project.platform === 'ios'
-    ? Colors.blue[500]
-    : Colors.cyan[500];
+  const projectTypeColor = Colors.purple[500];
 
   return (
     <MeshGlowBackground>
@@ -169,20 +155,20 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTop}>
-              <View style={[styles.headerIcon, { backgroundColor: `${platformColor}20` }]}>
-                <Ionicons name="phone-portrait" size={32} color={platformColor} />
+              <View style={[styles.headerIcon, { backgroundColor: `${projectTypeColor}20` }]}>
+                <Ionicons name="globe-outline" size={32} color={projectTypeColor} />
               </View>
               <View style={styles.headerInfo}>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>
-                  {project.project_name || project.app_name}
+                  {project.project_name}
                 </Text>
-                <View style={styles.platformBadge}>
+                <View style={styles.projectTypeBadge}>
                   <LinearGradient
-                    colors={[platformColor, platformColor + 'CC']}
-                    style={styles.platformBadgeGradient}
+                    colors={[projectTypeColor, projectTypeColor + 'CC']}
+                    style={styles.projectTypeBadgeGradient}
                   >
-                    <Text style={styles.platformBadgeText}>
-                      {platformLabels[project.platform]}
+                    <Text style={styles.projectTypeBadgeText}>
+                      {projectTypeLabels[project.project_type]}
                     </Text>
                   </LinearGradient>
                 </View>
@@ -240,7 +226,7 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
                 <Ionicons name="information-circle" size={20} color={Colors.blue[400]} />
               </View>
               <Text style={[styles.noticeText, { color: colors.textSecondary }]}>
-                App settings are managed by Allync. View-only access for tracking progress.
+                Website settings are managed by Allync. View-only access for tracking progress.
               </Text>
             </View>
           </GlassSurface>
@@ -252,14 +238,14 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
             <GlassSurface style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={[styles.cardTitle, { color: colors.text }]}>Overall Progress</Text>
-                <Text style={[styles.progressPercentage, { color: platformColor }]}>
+                <Text style={[styles.progressPercentage, { color: projectTypeColor }]}>
                   {project.overall_progress || 0}%
                 </Text>
               </View>
               <View style={styles.progressBarContainer}>
                 <View style={[styles.progressBar, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
                   <LinearGradient
-                    colors={[platformColor, platformColor + '80']}
+                    colors={[projectTypeColor, projectTypeColor + '80']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     style={[styles.progressFill, { width: `${project.overall_progress || 0}%` }]}
@@ -271,18 +257,18 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
             {/* Stats Grid */}
             <View style={styles.statsGrid}>
               <GlassSurface style={styles.statCard}>
-                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
-                  <Ionicons name="phone-portrait" size={24} color={Colors.blue[400]} />
+                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(168, 85, 247, 0.2)' }]}>
+                  <Ionicons name="globe-outline" size={24} color={Colors.purple[400]} />
                 </View>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Platform</Text>
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {platformLabels[project.platform]}
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Project Type</Text>
+                <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
+                  {projectTypeLabels[project.project_type]}
                 </Text>
               </GlassSurface>
 
               <GlassSurface style={styles.statCard}>
-                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(234, 179, 8, 0.2)' }]}>
-                  <Ionicons name="calendar" size={24} color={Colors.orange[500]} />
+                <View style={[styles.statIconContainer, { backgroundColor: 'rgba(59, 130, 246, 0.2)' }]}>
+                  <Ionicons name="calendar" size={24} color={Colors.blue[400]} />
                 </View>
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Est. Completion</Text>
                 <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
@@ -291,81 +277,26 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
               </GlassSurface>
             </View>
 
-            {/* App Store Status */}
-            <GlassSurface style={styles.card}>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>App Store Status</Text>
-
-              {(project.platform === 'android' || project.platform === 'both') && (
-                <TouchableOpacity
-                  style={styles.storeItem}
-                  onPress={() => handleStoreLink(project.play_store_url, 'Google Play')}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.storeInfo}>
-                    <Ionicons name="logo-google-playstore" size={24} color={Colors.green[500]} />
-                    <View style={styles.storeTextContainer}>
-                      <Text style={[styles.storeName, { color: colors.text }]}>Google Play Store</Text>
-                      <View style={[
-                        styles.storeStatusBadge,
-                        {
-                          backgroundColor: getStoreStatusColor(project.play_store_status || 'pending').bg,
-                          borderColor: getStoreStatusColor(project.play_store_status || 'pending').border,
-                        },
-                      ]}>
-                        <Text style={[
-                          styles.storeStatusText,
-                          { color: getStoreStatusColor(project.play_store_status || 'pending').text },
-                        ]}>
-                          {storeStatusLabels[project.play_store_status || 'pending']}
-                        </Text>
-                      </View>
-                    </View>
+            {project.last_update && (
+              <GlassSurface style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.updateHeader}>
+                    <Ionicons name="time-outline" size={20} color={Colors.green[400]} />
+                    <Text style={[styles.cardTitle, { color: colors.text }]}>Last Update</Text>
                   </View>
-                  {project.play_store_url && (
-                    <Ionicons name="open-outline" size={20} color={colors.textSecondary} />
-                  )}
-                </TouchableOpacity>
-              )}
-
-              {(project.platform === 'ios' || project.platform === 'both') && (
-                <TouchableOpacity
-                  style={styles.storeItem}
-                  onPress={() => handleStoreLink(project.app_store_url, 'App Store')}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.storeInfo}>
-                    <Ionicons name="logo-apple" size={24} color={Colors.blue[500]} />
-                    <View style={styles.storeTextContainer}>
-                      <Text style={[styles.storeName, { color: colors.text }]}>Apple App Store</Text>
-                      <View style={[
-                        styles.storeStatusBadge,
-                        {
-                          backgroundColor: getStoreStatusColor(project.app_store_status || 'pending').bg,
-                          borderColor: getStoreStatusColor(project.app_store_status || 'pending').border,
-                        },
-                      ]}>
-                        <Text style={[
-                          styles.storeStatusText,
-                          { color: getStoreStatusColor(project.app_store_status || 'pending').text },
-                        ]}>
-                          {storeStatusLabels[project.app_store_status || 'pending']}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                  {project.app_store_url && (
-                    <Ionicons name="open-outline" size={20} color={colors.textSecondary} />
-                  )}
-                </TouchableOpacity>
-              )}
-            </GlassSurface>
+                </View>
+                <Text style={[styles.updateText, { color: colors.text }]}>
+                  {getTimeAgo(project.last_update)}
+                </Text>
+              </GlassSurface>
+            )}
 
             {/* Milestones */}
             {project.milestones && project.milestones.length > 0 && (
               <GlassSurface style={styles.card}>
-                <Text style={[styles.cardTitle, { color: colors.text }]}>Development Milestones</Text>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>Project Milestones</Text>
                 <View style={styles.milestonesList}>
-                  {project.milestones.map((milestone: MobileAppMilestone, index: number) => (
+                  {project.milestones.map((milestone: WebsiteMilestone, index: number) => (
                     <AnimatedView
                       key={milestone.id}
                       entering={FadeInDown.duration(400).delay(index * 50)}
@@ -429,56 +360,49 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
               <View style={styles.detailItem}>
                 <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Project Name</Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {project.project_name || 'N/A'}
+                  {project.project_name}
                 </Text>
               </View>
 
               <View style={styles.detailItem}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>App Name</Text>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Project Type</Text>
                 <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {project.app_name}
+                  {projectTypeLabels[project.project_type]}
                 </Text>
               </View>
 
-              <View style={styles.detailItem}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Platform</Text>
-                <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {platformLabels[project.platform]}
-                </Text>
-              </View>
-
-              {(project.platform === 'android' || project.platform === 'both') && project.package_name && (
+              {project.domain && (
                 <View style={styles.detailItem}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Package Name (Android)</Text>
+                  <View style={styles.detailLabelRow}>
+                    <Ionicons name="globe-outline" size={14} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Domain</Text>
+                  </View>
                   <Text style={[styles.detailValue, { color: colors.text }]} selectable>
-                    {project.package_name}
+                    {project.domain}
                   </Text>
                 </View>
               )}
 
-              {(project.platform === 'ios' || project.platform === 'both') && project.bundle_id && (
+              {project.email && (
                 <View style={styles.detailItem}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Bundle ID (iOS)</Text>
+                  <View style={styles.detailLabelRow}>
+                    <Ionicons name="mail-outline" size={14} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Email Address</Text>
+                  </View>
                   <Text style={[styles.detailValue, { color: colors.text }]} selectable>
-                    {project.bundle_id}
+                    {project.email}
                   </Text>
                 </View>
               )}
 
               {project.estimated_completion && (
                 <View style={styles.detailItem}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Estimated Completion</Text>
+                  <View style={styles.detailLabelRow}>
+                    <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
+                    <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Estimated Completion</Text>
+                  </View>
                   <Text style={[styles.detailValue, { color: colors.text }]}>
                     {formatDate(project.estimated_completion)}
-                  </Text>
-                </View>
-              )}
-
-              {project.last_update && (
-                <View style={styles.detailItem}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Last Update</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>
-                    {getTimeAgo(project.last_update)}
                   </Text>
                 </View>
               )}
@@ -493,7 +417,7 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
               <Ionicons name="help-circle" size={64} color={Colors.blue[500]} style={{ alignSelf: 'center', marginBottom: 16 }} />
               <Text style={[styles.cardTitle, { color: colors.text, textAlign: 'center' }]}>Need Help?</Text>
               <Text style={[styles.supportText, { color: colors.textSecondary }]}>
-                For questions about your mobile app development project, please contact our support team through the Support tab.
+                For questions about your website development project, please contact our support team through the Support tab.
               </Text>
               <TouchableOpacity
                 style={styles.supportButton}
@@ -544,24 +468,6 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
-  },
-  spinner: {
-    width: 48,
-    height: 48,
-    borderWidth: 4,
-    borderColor: Colors.blue[500] + '30',
-    borderTopColor: Colors.blue[500],
-    borderRadius: 24,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
   },
   errorCard: {
     padding: 32,
@@ -619,16 +525,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  platformBadge: {
+  projectTypeBadge: {
     alignSelf: 'flex-start',
     borderRadius: 12,
     overflow: 'hidden',
   },
-  platformBadgeGradient: {
+  projectTypeBadgeGradient: {
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  platformBadgeText: {
+  projectTypeBadgeText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
@@ -729,37 +635,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  storeItem: {
+  updateHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+    gap: 8,
   },
-  storeInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  storeTextContainer: {
-    flex: 1,
-  },
-  storeName: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  storeStatusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  storeStatusText: {
-    fontSize: 11,
+  updateText: {
+    fontSize: 16,
     fontWeight: '600',
   },
   milestonesList: {
@@ -804,6 +686,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  detailLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
   },
   detailLabel: {
     fontSize: 12,

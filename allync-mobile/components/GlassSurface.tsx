@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Platform, ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
+
 export interface GlassSurfaceProps {
   children?: React.ReactNode;
   style?: ViewStyle;
@@ -9,6 +9,7 @@ export interface GlassSurfaceProps {
   borderRadius?: number;
   borderWidth?: number;
 }
+
 export default function GlassSurface({
   children,
   style,
@@ -19,30 +20,19 @@ export default function GlassSurface({
 }: GlassSurfaceProps) {
   // Extract flex from style if it exists
   const containerStyle = StyleSheet.flatten([styles.container, { borderRadius }, style]);
-  const contentStyle = StyleSheet.flatten([styles.content, { borderRadius }]);
 
-  // If container has flex, content should also have flex
-  if (containerStyle.flex) {
-    contentStyle.flex = containerStyle.flex;
-  }
-
-  // Use BlurView for glassmorphism on all platforms
   return (
     <View style={containerStyle}>
-      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFillObject}>
-        {/* Content */}
-        <View style={contentStyle}>
-          {children}
-        </View>
-      </BlurView>
+      {children}
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 20,
     overflow: 'hidden',
     ...Platform.select({
@@ -56,9 +46,5 @@ const styles = StyleSheet.create({
         elevation: 8,
       },
     }),
-  },
-  content: {
-    position: 'relative',
-    zIndex: 1,
   },
 });

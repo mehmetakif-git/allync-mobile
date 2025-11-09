@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Colors } from '../../constants/Colors';
@@ -98,11 +97,9 @@ export default function Invoices() {
 
   return (
     <MeshGlowBackground>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.blue[500]} />}
-        >
+      <View style={styles.container}>
+        {/* Sticky Header */}
+        <View style={styles.stickyHeader}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>Invoices</Text>
@@ -113,7 +110,7 @@ export default function Invoices() {
 
           {/* Stats Cards */}
           <View style={styles.statsContainer}>
-            <BlurView intensity={20} tint="dark" style={[styles.cardBlur, { flex: 1 }]}>
+            <View style={[styles.cardBlur, { flex: 1 }]}>
               <View style={styles.statCard}>
                 <View style={[styles.statIconContainer, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
                   <Ionicons name="checkmark-circle" size={24} color={Colors.green[500]} />
@@ -121,9 +118,9 @@ export default function Invoices() {
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Paid</Text>
                 <Text style={[styles.statValue, { color: colors.text }]}>{formatCurrency(totalPaid)}</Text>
               </View>
-            </BlurView>
+            </View>
 
-            <BlurView intensity={20} tint="dark" style={[styles.cardBlur, { flex: 1 }]}>
+            <View style={[styles.cardBlur, { flex: 1 }]}>
               <View style={styles.statCard}>
                 <View style={[styles.statIconContainer, { backgroundColor: 'rgba(234, 179, 8, 0.2)' }]}>
                   <Ionicons name="time" size={24} color={Colors.orange[500]} />
@@ -131,7 +128,7 @@ export default function Invoices() {
                 <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pending</Text>
                 <Text style={[styles.statValue, { color: colors.text }]}>{formatCurrency(totalPending)}</Text>
               </View>
-            </BlurView>
+            </View>
           </View>
 
           {/* Filters */}
@@ -142,7 +139,7 @@ export default function Invoices() {
                 style={[
                   styles.filterButton,
                   {
-                    backgroundColor: filterStatus === status ? Colors.blue[500] : 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: filterStatus === status ? Colors.blue[500] : 'rgba(255, 255, 255, 0.12)',
                   },
                 ]}
                 onPress={() => setFilterStatus(status)}
@@ -162,13 +159,21 @@ export default function Invoices() {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        {/* Scrollable Content */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.blue[500]} />}
+          contentContainerStyle={styles.scrollContent}
+        >
 
           {/* Invoices List */}
           {filteredInvoices.length > 0 ? (
             filteredInvoices.map((invoice) => {
               const statusColors = getInvoiceStatusColor(invoice.status);
               return (
-                <BlurView key={invoice.id} intensity={20} tint="dark" style={[styles.cardBlur, { marginBottom: 16 }]}>
+                <View key={invoice.id} style={[styles.cardBlur, { marginBottom: 16 }]}>
                   <View style={styles.invoiceCard}>
                     <View style={styles.invoiceHeader}>
                       <View style={styles.invoiceInfo}>
@@ -221,11 +226,11 @@ export default function Invoices() {
                       <Text style={styles.viewButtonText}>View Details</Text>
                     </TouchableOpacity>
                   </View>
-                </BlurView>
+                </View>
               );
             })
           ) : (
-            <BlurView intensity={20} tint="dark" style={styles.cardBlur}>
+            <View style={styles.cardBlur}>
               <View style={styles.emptyCard}>
                 <Ionicons name="receipt-outline" size={64} color={colors.textSecondary} />
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No invoices found</Text>
@@ -233,7 +238,7 @@ export default function Invoices() {
                   {filterStatus !== 'all' ? 'Try adjusting your filter' : 'Invoices will appear here when created'}
                 </Text>
               </View>
-            </BlurView>
+            </View>
           )}
         </ScrollView>
 
@@ -426,7 +431,7 @@ export default function Invoices() {
                 {/* Action Buttons */}
                 <View style={styles.modalActions}>
                   <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}
+                    style={[styles.modalButton, { backgroundColor: 'rgba(255, 255, 255, 0.15)' }]}
                     onPress={() => {
                       setSelectedInvoice(null);
                       setShowDetailsModal(false);
@@ -492,7 +497,8 @@ export default function Invoices() {
             setSelectedInvoice(null);
           }}
         />
-      </MeshGlowBackground>
+      </View>
+    </MeshGlowBackground>
   );
 }
 
@@ -505,9 +511,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  stickyHeader: {
+    backgroundColor: '#0B1429',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 16,
     paddingBottom: 100,
   },
   header: {
@@ -527,9 +541,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   cardBlur: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 20,
     overflow: 'hidden',
   },
@@ -650,7 +664,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: '#0B1429',
     justifyContent: 'flex-end',
     padding: 0,
   },
@@ -660,9 +674,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
+    backgroundColor: '#1a2332',
   },
   modalGlass: {
     padding: 20,
+    backgroundColor: '#1a2332',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -693,7 +709,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     marginVertical: 8,
   },
   notesContainer: {

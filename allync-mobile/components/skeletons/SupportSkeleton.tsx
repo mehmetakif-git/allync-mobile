@@ -12,16 +12,16 @@ export default function SupportSkeleton() {
     <MeshGlowBackground>
       {/* Header Skeleton */}
       <View style={styles.header}>
-        <Skeleton width={160} height={26} borderRadius={6} />
+        <Skeleton width={150} height={24} borderRadius={6} />
         <SkeletonCircle size={44} />
       </View>
 
       {/* Search Bar Skeleton */}
       <View style={styles.searchSection}>
-        <GlassSurface style={styles.searchContainer}>
+        <View style={styles.searchContainerBlur}>
           <SkeletonCircle size={20} />
-          <Skeleton width="80%" height={16} borderRadius={4} style={{ marginLeft: 12 }} />
-        </GlassSurface>
+          <Skeleton width="75%" height={16} borderRadius={4} style={{ marginLeft: 12 }} />
+        </View>
 
         {/* Filter Chips Skeleton */}
         <ScrollView
@@ -31,7 +31,11 @@ export default function SupportSkeleton() {
           contentContainerStyle={styles.filterScrollContent}
         >
           {[1, 2, 3, 4, 5].map((item) => (
-            <Skeleton key={item} width={100} height={36} borderRadius={18} style={{ marginRight: 8 }} />
+            <View key={item} style={styles.filterChipWrapper}>
+              <View style={styles.filterChipBlur}>
+                <Skeleton width={90} height={20} borderRadius={4} />
+              </View>
+            </View>
           ))}
         </ScrollView>
       </View>
@@ -39,39 +43,30 @@ export default function SupportSkeleton() {
       {/* Tickets List Skeleton */}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.ticketsListContent}>
         {[1, 2, 3, 4, 5].map((item) => (
-          <GlassSurface key={item} style={styles.ticketCard}>
-            {/* Ticket Header */}
-            <View style={styles.ticketHeader}>
-              <View style={{ flex: 1 }}>
-                <Skeleton width="70%" height={18} borderRadius={4} style={{ marginBottom: 6 }} />
-                <Skeleton width="40%" height={14} borderRadius={4} />
-              </View>
-              <Skeleton width={80} height={26} borderRadius={13} />
-            </View>
+          <View key={item} style={styles.ticketCard}>
+            <View style={styles.ticketCardBlur}>
+              <View style={styles.ticketCardGlass}>
+                {/* Ticket Header */}
+                <View style={styles.ticketCardHeader}>
+                  <Skeleton width="35%" height={12} borderRadius={4} />
+                  <Skeleton width={80} height={24} borderRadius={12} />
+                </View>
 
-            {/* Ticket Subject */}
-            <View style={styles.ticketSubject}>
-              <Skeleton width="90%" height={16} borderRadius={4} style={{ marginBottom: 4 }} />
-              <Skeleton width="80%" height={14} borderRadius={4} />
-            </View>
+                {/* Ticket Title */}
+                <Skeleton width="85%" height={16} borderRadius={4} style={{ marginBottom: 8 }} />
 
-            {/* Ticket Footer */}
-            <View style={styles.ticketFooter}>
-              <View style={styles.ticketMeta}>
-                <SkeletonCircle size={16} />
-                <Skeleton width={100} height={12} borderRadius={4} style={{ marginLeft: 6 }} />
-              </View>
-              <View style={styles.ticketMeta}>
-                <SkeletonCircle size={16} />
-                <Skeleton width={80} height={12} borderRadius={4} style={{ marginLeft: 6 }} />
+                {/* Ticket Description */}
+                <Skeleton width="100%" height={14} borderRadius={4} style={{ marginBottom: 4 }} />
+                <Skeleton width="75%" height={14} borderRadius={4} style={{ marginBottom: 12 }} />
+
+                {/* Ticket Footer */}
+                <View style={styles.ticketFooter}>
+                  <Skeleton width={60} height={12} borderRadius={4} />
+                  <Skeleton width={90} height={12} borderRadius={4} />
+                </View>
               </View>
             </View>
-
-            {/* Priority Badge */}
-            <View style={styles.priorityBadge}>
-              <Skeleton width={70} height={22} borderRadius={11} />
-            </View>
-          </GlassSurface>
+          </View>
         ))}
       </ScrollView>
     </MeshGlowBackground>
@@ -88,7 +83,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
-    paddingBottom: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
@@ -96,55 +91,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
-  searchContainer: {
+  searchContainerBlur: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
   },
   filterScrollView: {
-    marginHorizontal: -20,
-    paddingHorizontal: 20,
+    flexGrow: 0,
   },
   filterScrollContent: {
-    paddingRight: 20,
+    gap: 8,
+  },
+  filterChipWrapper: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  filterChipBlur: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 20,
   },
   ticketsListContent: {
-    paddingBottom: 120,
+    padding: 20,
+    paddingBottom: 100,
   },
   ticketCard: {
-    padding: 16,
     marginBottom: 12,
-    borderRadius: 16,
   },
-  ticketHeader: {
+  ticketCardBlur: {
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  ticketCardGlass: {
+    padding: 16,
+  },
+  ticketCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  ticketSubject: {
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 8,
   },
   ticketFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  ticketMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  priorityBadge: {
-    alignSelf: 'flex-start',
   },
 });
