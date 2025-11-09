@@ -1,7 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Platform, Modal, ActivityIndicator } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
@@ -12,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import SupportSkeleton from '../../components/skeletons/SupportSkeleton';
 import SupportTicketModal from '../../components/SupportTicketModal';
 import MeshGlowBackground from '../../components/MeshGlowBackground';
+import GlassSurface from '../../components/GlassSurface';
 import {
   getTicketsByCompany,
   getTicketMessages,
@@ -194,7 +194,7 @@ export default function Support() {
           </View>
           {/* Search and Filter */}
           <View style={styles.searchSection}>
-            <BlurView intensity={20} tint="dark" style={styles.searchContainerBlur}>
+            <View style={styles.searchContainerGlass}>
               <Ionicons name="search" size={20} color={colors.textTertiary} />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
@@ -203,7 +203,7 @@ export default function Support() {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
-            </BlurView>
+            </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -214,20 +214,15 @@ export default function Support() {
                 <TouchableOpacity
                   key={status}
                   onPress={() => setFilterStatus(status)}
-                  style={styles.filterChipWrapper}
+                  style={[
+                    styles.filterChipGlass,
+                    filterStatus === status && styles.filterChipActive
+                  ]}
+                  activeOpacity={0.7}
                 >
-                  <BlurView
-                    intensity={20}
-                    tint="dark"
-                    style={[
-                      styles.filterChipBlur,
-                      filterStatus === status && styles.filterChipActive
-                    ]}
-                  >
-                    <Text style={[styles.filterChipText, { color: filterStatus === status ? Colors.titanium : colors.textSecondary }]}>
-                      {status === 'all' ? 'All' : getStatusDisplayName(status)}
-                    </Text>
-                  </BlurView>
+                  <Text style={[styles.filterChipText, { color: filterStatus === status ? Colors.titanium : colors.textSecondary }]}>
+                    {status === 'all' ? 'All' : getStatusDisplayName(status)}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -246,17 +241,11 @@ export default function Support() {
                   key={ticket.id}
                   entering={FadeInDown.duration(400).delay(index * 50).springify()}
                   onPress={() => setSelectedTicket(ticket)}
-                  style={[
-                    styles.ticketCard,
-                    selectedTicket?.id === ticket.id && styles.ticketCardSelected
-                  ]}
                   activeOpacity={0.7}
                 >
-                  <BlurView intensity={20} tint="dark" style={styles.ticketCardBlur}>
-                    <View style={styles.ticketCardGlass}>
-                      <TicketCardContent ticket={ticket} colors={colors} />
-                    </View>
-                  </BlurView>
+                  <GlassSurface style={styles.ticketCardGlass}>
+                    <TicketCardContent ticket={ticket} colors={colors} />
+                  </GlassSurface>
                 </AnimatedTouchable>
               ))
             )}
@@ -279,17 +268,19 @@ export default function Support() {
           visible={showNewTicketModal}
           animationType="slide"
           onRequestClose={() => setShowNewTicketModal(false)}
+          statusBarTranslucent
         >
-          <View style={[styles.modalContainer]}>
-            <View style={[styles.modalHeader, { borderBottomColor: 'rgba(255,255,255,0.1)' }]}>
-              <TouchableOpacity onPress={() => setShowNewTicketModal(false)} style={styles.backButton}>
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-              <View style={styles.modalHeaderContent}>
-                <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Create Support Ticket</Text>
-                <Text style={[styles.modalHeaderSubtitle, { color: colors.textSecondary }]}>We'll respond within 24 hours</Text>
+          <MeshGlowBackground>
+            <View style={styles.modalContainer}>
+              <View style={[styles.modalHeader, { borderBottomColor: 'rgba(255,255,255,0.1)' }]}>
+                <TouchableOpacity onPress={() => setShowNewTicketModal(false)} style={styles.backButton}>
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
+                <View style={styles.modalHeaderContent}>
+                  <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Create Support Ticket</Text>
+                  <Text style={[styles.modalHeaderSubtitle, { color: colors.textSecondary }]}>We'll respond within 24 hours</Text>
+                </View>
               </View>
-            </View>
             <ScrollView style={styles.newTicketForm} contentContainerStyle={styles.newTicketFormContent}>
               <View style={styles.formGroup}>
                 <Text style={[styles.formLabel, { color: colors.text }]}>Subject *</Text>
@@ -360,7 +351,8 @@ export default function Support() {
                 </LinearGradient>
               </TouchableOpacity>
             </ScrollView>
-          </View>
+            </View>
+          </MeshGlowBackground>
         </Modal>
       </MeshGlowBackground>
   );
@@ -429,7 +421,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
   },
-  searchContainerBlur: {
+  searchContainerGlass: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
@@ -438,7 +430,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 20,
-    overflow: 'hidden',
     marginBottom: Spacing.md,
   },
   searchInput: {
@@ -452,22 +443,17 @@ const styles = StyleSheet.create({
   filterScrollContent: {
     gap: Spacing.sm,
   },
-  filterChipWrapper: {
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-  },
-  filterChipBlur: {
+  filterChipGlass: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 20,
-    overflow: 'hidden',
   },
   filterChipActive: {
     backgroundColor: Colors.blue[600],
-    ...Shadows.sm,
+    borderColor: Colors.blue[700],
   },
   filterChipText: {
     fontSize: Typography.fontSize.xs,
@@ -495,23 +481,9 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     marginTop: Spacing.xs,
   },
-  ticketCard: {
-    marginBottom: Spacing.md,
-  },
-  ticketCardSelected: {
-    transform: [{ scale: 0.98 }],
-  },
-  ticketCardBlur: {
-    padding: Spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 20,
-    overflow: 'hidden',
-    ...Shadows.md,
-  },
   ticketCardGlass: {
-    padding: Spacing.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   ticketCardHeader: {
     flexDirection: 'row',
@@ -569,7 +541,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingTop: Platform.OS === 'ios' ? Spacing['5xl'] : Spacing['4xl'],
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
   },
   backButton: {

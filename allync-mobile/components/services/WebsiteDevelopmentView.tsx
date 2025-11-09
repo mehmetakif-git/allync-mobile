@@ -8,6 +8,9 @@ import {
   RefreshControl,
   Linking,
   Alert,
+  Image,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,8 +30,13 @@ import {
   type WebsiteProject,
   type WebsiteMilestone,
 } from '../../lib/api/websiteProjects';
+import {
+  getProjectMedia,
+  getMediaPublicUrl,
+  type ProjectMedia,
+} from '../../lib/api/projectMedia';
 
-type TabType = 'dashboard' | 'details' | 'support';
+type TabType = 'dashboard' | 'details' | 'support' | 'gallery';
 
 const AnimatedView = Animated.View;
 
@@ -47,6 +55,11 @@ export default function WebsiteDevelopmentView({ serviceId, onBack }: WebsiteDev
   const [project, setProject] = useState<WebsiteProject | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Gallery state
+  const [projectMedia, setProjectMedia] = useState<ProjectMedia[]>([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<ProjectMedia | null>(null);
+
   useEffect(() => {
     if (serviceId) {
       loadData();
@@ -55,6 +68,36 @@ export default function WebsiteDevelopmentView({ serviceId, onBack }: WebsiteDev
       setLoading(false);
     }
   }, [serviceId]);
+
+  // Load media when gallery tab is opened
+  useEffect(() => {
+    const loadMedia = async () => {
+      if (activeTab === 'gallery' && project?.id) {
+        setLoadingMedia(true);
+        try {
+          console.log('📱🎨 Loading media for project:', project.id);
+          const media = await getProjectMedia(project.id, 'website');
+
+          // Generate signed URLs for each media item
+          const mediaWithUrls = await Promise.all(
+            media.map(async (item) => ({
+              ...item,
+              signedUrl: await getMediaPublicUrl(item.file_path)
+            }))
+          );
+
+          setProjectMedia(mediaWithUrls);
+          console.log('✅ Loaded', mediaWithUrls.length, 'media items');
+        } catch (err) {
+          console.error('❌ Error loading media:', err);
+          Alert.alert('Error', 'Failed to load media files');
+        } finally {
+          setLoadingMedia(false);
+        }
+      }
+    };
+    loadMedia();
+  }, [activeTab, project?.id]);
 
   const loadData = async () => {
     try {
@@ -96,6 +139,7 @@ export default function WebsiteDevelopmentView({ serviceId, onBack }: WebsiteDev
     { key: 'dashboard', label: 'Dashboard', icon: 'grid' },
     { key: 'details', label: 'Details', icon: 'document-text' },
     { key: 'support', label: 'Support', icon: 'help-circle' },
+    { key: 'gallery', label: 'Media Gallery', icon: 'images' },
   ];
 
   if (loading) {
@@ -435,7 +479,180 @@ export default function WebsiteDevelopmentView({ serviceId, onBack }: WebsiteDev
             </GlassSurface>
           </View>
         )}
+
+        {/* Media Gallery Tab */}
+        {activeTab === 'gallery' && (
+          <View style={styles.tabContent}>
+            <GlassSurface style={styles.card}>
+              <View style={styles.galleryHeader}>
+                <View>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>Project Media Gallery</Text>
+                  <Text style={[styles.gallerySubtitle, { color: colors.textSecondary }]}>
+                    View images and videos uploaded by your project manager
+                  </Text>
+                </View>
+                {projectMedia.length > 0 && (
+                  <Text style={[styles.mediaCount, { color: colors.textSecondary }]}>
+                    {projectMedia.length} {projectMedia.length === 1 ? 'item' : 'items'}
+                  </Text>
+                )}
+              </View>
+
+              {loadingMedia ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color={Colors.purple[500]} />
+                  <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading media...</Text>
+                </View>
+              ) : projectMedia.length === 0 ? (
+                <View style={styles.emptyGallery}>
+                  <Ionicons name="images-outline" size={64} color={colors.textTertiary} />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No Media Yet</Text>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    Your project manager will upload images and videos as your website development progresses.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.mediaGrid}>
+                  {projectMedia.map((media, index) => (
+                    <TouchableOpacity
+                      key={media.id}
+                      style={styles.mediaItem}
+                      onPress={() => setSelectedMedia(media)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.mediaThumbnail}>
+                        {media.file_type === 'image' ? (
+                          <Image
+                            source={{ uri: media.signedUrl }}
+                            style={styles.mediaImage}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View style={styles.videoPlaceholder}>
+                            <LinearGradient
+                              colors={[Colors.purple[500] + '30', Colors.blue[500] + '30']}
+                              style={StyleSheet.absoluteFillObject}
+                            />
+                            <Ionicons name="play-circle" size={48} color={Colors.purple[400]} />
+                          </View>
+                        )}
+                        {media.is_featured && (
+                          <View style={styles.featuredBadge}>
+                            <Text style={styles.featuredText}>Featured</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.mediaInfo}>
+                        <Text style={[styles.mediaTitle, { color: colors.text }]} numberOfLines={1}>
+                          {media.title || media.file_name}
+                        </Text>
+                        {media.milestone_name && (
+                          <Text style={[styles.milestoneName, { color: Colors.blue[400] }]} numberOfLines={1}>
+                            📍 {media.milestone_name}
+                          </Text>
+                        )}
+                        {media.description && (
+                          <Text style={[styles.mediaDescription, { color: colors.textSecondary }]} numberOfLines={2}>
+                            {media.description}
+                          </Text>
+                        )}
+                        <View style={styles.mediaFooter}>
+                          <View style={styles.mediaType}>
+                            <Ionicons
+                              name={media.file_type === 'image' ? 'image' : 'videocam'}
+                              size={12}
+                              color={colors.textTertiary}
+                            />
+                            <Text style={[styles.mediaTypeText, { color: colors.textTertiary }]}>
+                              {media.file_type.toUpperCase()}
+                            </Text>
+                          </View>
+                          <Text style={[styles.mediaSize, { color: colors.textTertiary }]}>
+                            {(media.file_size / 1024 / 1024).toFixed(2)} MB
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </GlassSurface>
+          </View>
+        )}
       </ScrollView>
+
+      {/* Media Viewer Modal */}
+      {selectedMedia && (
+        <Modal
+          visible={!!selectedMedia}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedMedia(null)}
+          statusBarTranslucent
+        >
+          <View style={styles.modalOverlay}>
+            <TouchableOpacity
+              style={StyleSheet.absoluteFillObject}
+              onPress={() => setSelectedMedia(null)}
+              activeOpacity={1}
+            />
+            <View style={styles.modalContent}>
+              {/* Close Button */}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setSelectedMedia(null)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close-circle" size={36} color={Colors.red[500]} />
+              </TouchableOpacity>
+
+              {/* Media Display */}
+              <View style={styles.modalMediaContainer}>
+                {selectedMedia.file_type === 'image' ? (
+                  <Image
+                    source={{ uri: selectedMedia.signedUrl }}
+                    style={styles.modalImage}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <View style={styles.videoPlaceholder}>
+                    <Ionicons name="play-circle" size={64} color={Colors.purple[400]} />
+                    <Text style={[styles.videoText, { color: colors.text }]}>
+                      Video playback not supported in preview
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Media Info */}
+              <View style={styles.modalInfo}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  {selectedMedia.title || selectedMedia.file_name}
+                </Text>
+                {selectedMedia.description && (
+                  <Text style={[styles.modalDescription, { color: colors.textSecondary }]}>
+                    {selectedMedia.description}
+                  </Text>
+                )}
+                <View style={styles.modalFooter}>
+                  <View style={styles.modalFooterItem}>
+                    <Ionicons name="document" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.modalFooterText, { color: colors.textSecondary }]}>
+                      {selectedMedia.file_name}
+                    </Text>
+                  </View>
+                  <View style={styles.modalFooterItem}>
+                    <Ionicons name="resize" size={16} color={colors.textSecondary} />
+                    <Text style={[styles.modalFooterText, { color: colors.textSecondary }]}>
+                      {(selectedMedia.file_size / 1024 / 1024).toFixed(2)} MB
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
       </View>
     </MeshGlowBackground>
   );
@@ -722,5 +939,188 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // Media Gallery Styles
+  galleryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  gallerySubtitle: {
+    fontSize: 13,
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  mediaCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    borderRadius: 12,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 14,
+    marginTop: 12,
+  },
+  emptyGallery: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  mediaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -6,
+  },
+  mediaItem: {
+    width: '50%',
+    padding: 6,
+  },
+  mediaThumbnail: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#1a2332',
+    position: 'relative',
+  },
+  mediaImage: {
+    width: '100%',
+    height: '100%',
+  },
+  videoPlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1a2332',
+  },
+  videoText: {
+    fontSize: 12,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  featuredBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(251, 191, 36, 0.95)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  featuredText: {
+    color: '#0B1429',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  mediaInfo: {
+    marginTop: 8,
+  },
+  mediaTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  milestoneName: {
+    fontSize: 11,
+    marginBottom: 4,
+  },
+  mediaDescription: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  mediaFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mediaType: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  mediaTypeText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  mediaSize: {
+    fontSize: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '85%',
+    backgroundColor: '#0B1429',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 18,
+  },
+  modalMediaContainer: {
+    width: '100%',
+    height: 400,
+    backgroundColor: '#000000',
+  },
+  modalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modalInfo: {
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  modalDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  modalFooter: {
+    gap: 12,
+  },
+  modalFooterItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalFooterText: {
+    fontSize: 13,
   },
 });

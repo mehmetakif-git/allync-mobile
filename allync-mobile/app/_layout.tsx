@@ -30,23 +30,19 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     const inAuthGroup = segments[0] === '(tabs)';
     const isLoginPage = segments[0] === 'login';
 
-    // If no session and trying to access protected routes, redirect to login
-    if (!session && inAuthGroup) {
+    console.log('🔐 [AuthGuard]', { session: !!session, inAuthGroup, isLoginPage, segments });
+
+    // If no session and not on login page, redirect to login
+    if (!session && !isLoginPage) {
+      console.log('🔐 [AuthGuard] No session, redirecting to login');
       router.replace('/login');
     }
     // If has session and on login page, redirect to home
     else if (session && isLoginPage) {
+      console.log('🔐 [AuthGuard] Has session on login page, redirecting to home');
       router.replace('/(tabs)');
     }
-    // If has session but not in any specific route, go to home
-    else if (session && !inAuthGroup && !isLoginPage && segments.length === 0) {
-      router.replace('/(tabs)');
-    }
-    // If no session and not on login, go to login
-    else if (!session && !isLoginPage && segments.length === 0) {
-      router.replace('/login');
-    }
-  }, [session, loading, segments]);
+  }, [session, loading]);
 
   return <>{children}</>;
 }

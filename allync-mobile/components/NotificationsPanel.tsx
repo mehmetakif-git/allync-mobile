@@ -29,41 +29,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { Colors } from '../constants/Colors';
 import { Typography } from '../constants/Typography';
 import { Spacing, BorderRadius } from '../constants/Spacing';
-// Mock API functions - replace with actual API
-const getUserNotifications = async (userId: string, options?: { limit?: number }) => {
-  return [
-    {
-      id: '1',
-      user_notification_id: 'un1',
-      title: 'Welcome to Allync AI',
-      message: 'Thank you for joining us! Explore our services and get started.',
-      type: 'info',
-      is_read: false,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      user_notification_id: 'un2',
-      title: 'Service Request Approved',
-      message: 'Your WhatsApp Automation service request has been approved.',
-      type: 'success',
-      is_read: false,
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-    },
-  ];
-};
-const getUnreadCount = async (userId: string) => {
-  return 2;
-};
-const markAsRead = async (userNotificationId: string) => {
-  console.log('Marking notification as read:', userNotificationId);
-};
-const markAllAsRead = async (userId: string) => {
-  console.log('Marking all notifications as read for user:', userId);
-};
-const clearReadNotifications = async (userId: string) => {
-  console.log('Clearing read notifications for user:', userId);
-};
+import {
+  getUserNotifications,
+  getUnreadCount,
+  markAsRead,
+  markAllAsRead,
+  clearReadNotifications,
+  subscribeToUserNotifications,
+  unsubscribeFromNotifications,
+  type NotificationWithReadStatus,
+} from '../lib/api/notifications';
 interface NotificationsPanelProps {
   visible: boolean;
   onClose: () => void;
@@ -79,15 +54,58 @@ export default function NotificationsPanel({
 }: NotificationsPanelProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<NotificationWithReadStatus[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [newNotificationIds, setNewNotificationIds] = useState<Set<string>>(new Set());
+
+  // Fetch notifications on mount and when visible
   useEffect(() => {
-    if (visible) {
+    if (visible && user?.id) {
       fetchNotifications();
     }
   }, [visible, user?.id]);
+
+  // Realtime subscription
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('🔔 [Mobile Panel] Setting up realtime notifications subscription');
+
+    const subscription = subscribeToUserNotifications(
+      user.id,
+      (newNotification) => {
+        console.log('🔔🔔 [Mobile Panel] New notification received:', newNotification);
+
+        // Add to beginning of list
+        setNotifications(prev => {
+          console.log('📝 [Mobile Panel] Adding notification to list, current count:', prev.length);
+          return [newNotification, ...prev];
+        });
+        setUnreadCount(prev => prev + 1);
+
+        // Mark as new for animation (remove after 3 seconds)
+        if (newNotification.id) {
+          console.log('✨ [Mobile Panel] Adding animation for notification:', newNotification.id);
+          setNewNotificationIds(prev => new Set(prev).add(newNotification.id));
+          setTimeout(() => {
+            console.log('🔇 [Mobile Panel] Removing animation for notification:', newNotification.id);
+            setNewNotificationIds(prev => {
+              const updated = new Set(prev);
+              updated.delete(newNotification.id);
+              return updated;
+            });
+          }, 3000);
+        }
+      }
+    );
+
+    return () => {
+      console.log('🔕 [Mobile Panel] Cleaning up notifications subscription');
+      unsubscribeFromNotifications(subscription);
+    };
+  }, [user?.id]);
   const fetchNotifications = async () => {
     if (!user?.id) return;
     try {
@@ -402,6 +420,9 @@ export default function NotificationsPanel({
                 <View style={styles.notificationsList}>
                   {notifications.map((notification, index) => {
                     const { icon, color, bg } = getNotificationStyle(notification.type);
+                    const isNew = newNotificationIds.has(notification.id);
+                    const isUrgent = notification.type === 'warning' && !notification.is_read;
+
                     return (
                       <AnimatedTouchable
                         key={notification.user_notification_id}
@@ -417,12 +438,13 @@ export default function NotificationsPanel({
                           {
                             backgroundColor: notification.is_read
                               ? 'transparent'
-                              : true
-                              ? `${Colors.blue[500]}10`
-                              : `${Colors.blue[500]}05`,
-                            borderColor: true
-                              ? 'rgba(248, 249, 250, 0.05)'
-                              : 'rgba(43, 44, 44, 0.05)',
+                              : `${Colors.blue[500]}10`,
+                            borderColor: isNew
+                              ? Colors.blue[500]
+                              : isUrgent
+                              ? Colors.yellow[500]
+                              : 'rgba(248, 249, 250, 0.05)',
+                            borderLeftWidth: isNew || isUrgent ? 4 : 1,
                           },
                         ]}
                       >
@@ -436,6 +458,9 @@ export default function NotificationsPanel({
                               numberOfLines={2}
                             >
                               {notification.title}
+                              {isNew && (
+                                <Text style={styles.newBadge}> NEW</Text>
+                              )}
                             </Text>
                             {!notification.is_read && (
                               <View style={[styles.unreadDot, { backgroundColor: Colors.blue[500] }]} />
@@ -649,6 +674,16 @@ const styles = StyleSheet.create({
   },
   notificationTime: {
     fontSize: Typography.fontSize.xs,
+  },
+  newBadge: {
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.blue[500],
+    backgroundColor: `${Colors.blue[500]}20`,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 4,
   },
   footer: {
     paddingHorizontal: Spacing.xl,
