@@ -49,8 +49,9 @@
       "supabaseUrl": "https://rlrnurzpeanloppntldg.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJscm51cnpwZWFubG9wcG50bGRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMDY5NTYsImV4cCI6MjA3NTc4Mjk1Nn0.d50ICp_1Rgg57c3kUCeZfTM86qZegaWXv56mQLAX6UQ",
       "eas": {
-        "projectId": "your-eas-project-id"
+        "projectId": "5df19231-3146-45ec-a4de-4ec30cd18b93"
       }
-    }
+    },
+    "owner": "allync-ai"
   }
 }
