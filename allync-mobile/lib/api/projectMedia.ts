@@ -88,18 +88,31 @@ export async function getCompanyMedia(companyId: string, projectType?: 'website'
 /**
  * Get signed URL for media file (for private bucket)
  * Returns a temporary URL that expires in 1 hour
+ * Returns null if file doesn't exist or bucket not configured
  */
-export async function getMediaPublicUrl(filePath: string): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from('project-media')
-    .createSignedUrl(filePath, 3600); // 1 hour expiry
+export async function getMediaPublicUrl(filePath: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.storage
+      .from('project-media')
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-  if (error) {
-    console.error('❌ Error creating signed URL:', error);
-    throw error;
+    if (error) {
+      // Check if it's "object not found" error (file doesn't exist yet)
+      if (error.message?.includes('not found')) {
+        console.warn('⚠️ Media file not found in storage:', filePath);
+        return null;
+      }
+
+      // For other errors, log and return null (graceful degradation)
+      console.error('❌ Error creating signed URL:', error);
+      return null;
+    }
+
+    return data.signedUrl;
+  } catch (err) {
+    console.error('❌ Unexpected error getting signed URL:', err);
+    return null;
   }
-
-  return data.signedUrl;
 }
 
 /**

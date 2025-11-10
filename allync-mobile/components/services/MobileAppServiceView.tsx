@@ -115,11 +115,19 @@ export default function MobileAppServiceView({ serviceId, onBack }: MobileAppSer
             }))
           );
 
-          setProjectMedia(mediaWithUrls);
-          console.log('✅ Loaded', mediaWithUrls.length, 'media items');
+          // Filter out media items that don't have valid signed URLs
+          const validMedia = mediaWithUrls.filter(item => item.signedUrl !== null);
+
+          if (validMedia.length < mediaWithUrls.length) {
+            console.warn(`⚠️ ${mediaWithUrls.length - validMedia.length} media items skipped (files not found in storage)`);
+          }
+
+          setProjectMedia(validMedia);
+          console.log('✅ Loaded', validMedia.length, 'media items with valid URLs');
         } catch (err) {
           console.error('❌ Error loading media:', err);
-          Alert.alert('Error', 'Failed to load media files');
+          // Don't show alert - gracefully show empty state instead
+          setProjectMedia([]);
         } finally {
           setLoadingMedia(false);
         }
