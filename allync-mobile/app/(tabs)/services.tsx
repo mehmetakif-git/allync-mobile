@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, RefreshControl, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -46,6 +46,8 @@ export default function Services() {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [selectedRejectionReason, setSelectedRejectionReason] = useState<ServiceRequest | null>(null);
   useEffect(() => {
     if (user?.id) {
       fetchCompanyId();
@@ -91,6 +93,18 @@ export default function Services() {
     setSelectedService(service);
     setModalVisible(true);
   };
+
+  const handleViewRejectionReason = (request: ServiceRequest) => {
+    setSelectedRejectionReason(request);
+    setShowRejectionModal(true);
+  };
+
+  const handleRequestAgain = (service: Service) => {
+    setShowRejectionModal(false);
+    setSelectedRejectionReason(null);
+    handleRequestService(service);
+  };
+
   const handleSubmitRequest = async (packageType: 'basic' | 'standard' | 'premium', notes: string) => {
     if (!selectedService || !companyId || !user?.id) return;
     await createServiceRequest({
@@ -372,12 +386,29 @@ export default function Services() {
                           </View>
                         )}
                         {status && status.status === 'rejected' && (
-                          <View style={[styles.statusBadge, { backgroundColor: `${Colors.red[500]}20`, borderColor: `${Colors.red[500]}30` }]}>
-                            <Ionicons name="close-circle" size={14} color={Colors.red[500]} />
-                            <Text style={[styles.statusText, { color: Colors.red[500] }]}>
-                              {language === 'en' ? 'Rejected' : 'Reddedildi'}
-                            </Text>
-                          </View>
+                          <>
+                            <View style={[styles.statusBadge, { backgroundColor: `${Colors.red[500]}20`, borderColor: `${Colors.red[500]}30` }]}>
+                              <Ionicons name="close-circle" size={14} color={Colors.red[500]} />
+                              <Text style={[styles.statusText, { color: Colors.red[500] }]}>
+                                {language === 'en' ? 'Rejected' : 'Reddedildi'}
+                              </Text>
+                            </View>
+                            <TouchableOpacity
+                              style={[
+                                styles.rejectionButton,
+                                {
+                                  backgroundColor: `${Colors.red[500]}10`,
+                                  borderColor: `${Colors.red[500]}30`,
+                                },
+                              ]}
+                              activeOpacity={0.7}
+                              onPress={() => handleViewRejectionReason(status)}
+                            >
+                              <Text style={[styles.rejectionButtonText, { color: Colors.red[400] }]}>
+                                {language === 'en' ? 'View Rejection Reason' : 'Red Sebebini Gör'}
+                              </Text>
+                            </TouchableOpacity>
+                          </>
                         )}
                         {isInMaintenance && (
                           <View style={[styles.statusBadge, { backgroundColor: `${Colors.orange[500]}20`, borderColor: `${Colors.orange[500]}30` }]}>
@@ -388,7 +419,7 @@ export default function Services() {
                           </View>
                         )}
                         {/* Action Button */}
-                        {!isActive && !isInMaintenance && (
+                        {!isActive && !isInMaintenance && !status && (
                           <TouchableOpacity
                             style={[
                               styles.actionButton,
@@ -404,20 +435,70 @@ export default function Services() {
                             </Text>
                           </TouchableOpacity>
                         )}
-                        {isActive && (
+                        {status && status.status === 'rejected' && (
                           <TouchableOpacity
                             style={[
                               styles.actionButton,
                               {
-                                backgroundColor: Colors.blue[500],
+                                backgroundColor: Colors.orange[600],
                               },
                             ]}
                             activeOpacity={0.7}
+                            onPress={() => handleRequestAgain(service)}
                           >
                             <Text style={[styles.actionButtonText, { color: '#FFFFFF' }]}>
-                              {language === 'en' ? 'View Dashboard' : 'Paneli Gör'}
+                              {language === 'en' ? 'Request Again' : 'Tekrar Talep Et'}
                             </Text>
                           </TouchableOpacity>
+                        )}
+                        {status && status.status === 'pending' && (
+                          <TouchableOpacity
+                            style={[
+                              styles.actionButton,
+                              {
+                                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                              },
+                            ]}
+                            disabled
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.actionButtonText, { color: colors.textSecondary }]}>
+                              {language === 'en' ? 'Request Pending' : 'Talep Beklemede'}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                        {isActive && (
+                          <>
+                            <TouchableOpacity
+                              style={[
+                                styles.actionButton,
+                                {
+                                  backgroundColor: Colors.blue[500],
+                                },
+                              ]}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={[styles.actionButtonText, { color: '#FFFFFF' }]}>
+                                {language === 'en' ? 'View Dashboard' : 'Paneli Gör'}
+                              </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[
+                                styles.secondaryActionButton,
+                                {
+                                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                                  borderColor: 'rgba(255, 255, 255, 0.2)',
+                                },
+                              ]}
+                              activeOpacity={0.7}
+                              onPress={() => handleRequestService(service)}
+                            >
+                              <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
+                              <Text style={[styles.secondaryActionButtonText, { color: '#FFFFFF' }]}>
+                                {language === 'en' ? 'Request Another Instance' : 'Yeni Örnek Talep Et'}
+                              </Text>
+                            </TouchableOpacity>
+                          </>
                         )}
                         {isInMaintenance && (
                           <TouchableOpacity
@@ -453,6 +534,96 @@ export default function Services() {
           }}
           onSubmit={handleSubmitRequest}
         />
+
+        {/* Rejection Reason Modal */}
+        {showRejectionModal && selectedRejectionReason && (
+          <Modal
+            visible={showRejectionModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowRejectionModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <TouchableOpacity
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                activeOpacity={1}
+                onPress={() => setShowRejectionModal(false)}
+              />
+              <BlurView intensity={20} tint="dark" style={styles.modalContent}>
+                {/* Modal Header */}
+                <View style={styles.modalHeader}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Ionicons name="close-circle" size={24} color={Colors.red[500]} />
+                    <Text style={styles.modalTitle}>
+                      {language === 'en' ? 'Service Request Rejected' : 'Servis Talebi Reddedildi'}
+                    </Text>
+                  </View>
+                  <Text style={styles.modalSubtitle}>
+                    {services.find(s => s.id === selectedRejectionReason.service_type_id)?.name_en || 'Service'}
+                  </Text>
+                </View>
+
+                {/* Modal Body */}
+                <View style={styles.modalBody}>
+                  {/* Warning */}
+                  <View style={styles.modalWarning}>
+                    <Text style={styles.modalWarningText}>
+                      ⚠️ {language === 'en'
+                        ? 'Your service request has been rejected by the Super Admin. Please review the reason below and make necessary adjustments before requesting again.'
+                        : 'Servis talebiniz Süper Yönetici tarafından reddedildi. Lütfen aşağıdaki nedeni inceleyin ve tekrar talep etmeden önce gerekli ayarlamaları yapın.'}
+                    </Text>
+                  </View>
+
+                  {/* Rejection Reason */}
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalSectionLabel}>
+                      {language === 'en' ? 'Rejection Reason:' : 'Red Nedeni:'}
+                    </Text>
+                    <View style={styles.modalReasonBox}>
+                      <Text style={styles.modalReasonText}>
+                        {selectedRejectionReason.admin_notes || (language === 'en' ? 'No reason provided' : 'Neden belirtilmedi')}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Info */}
+                  <View style={styles.modalInfo}>
+                    <Text style={styles.modalInfoText}>
+                      💡 {language === 'en'
+                        ? 'You can request this service again after addressing the concerns mentioned above.'
+                        : 'Yukarıda belirtilen endişeleri giderdikten sonra bu servisi tekrar talep edebilirsiniz.'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Modal Footer */}
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}
+                    activeOpacity={0.7}
+                    onPress={() => setShowRejectionModal(false)}
+                  >
+                    <Text style={[styles.modalButtonText, { color: colors.textSecondary }]}>
+                      {language === 'en' ? 'Close' : 'Kapat'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: Colors.green[600] }]}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      const service = services.find(s => s.id === selectedRejectionReason.service_type_id);
+                      if (service) handleRequestAgain(service);
+                    }}
+                  >
+                    <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>
+                      {language === 'en' ? 'Request Again' : 'Tekrar Talep Et'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </BlurView>
+            </View>
+          </Modal>
+        )}
       </View>
     </MeshGlowBackground>
   );
@@ -517,6 +688,9 @@ const styles = StyleSheet.create({
   servicesGrid: {
     gap: Spacing.lg,
   },
+  serviceCardWrapper: {
+    marginBottom: Spacing.md,
+  },
   serviceCardBlur: {
     padding: Spacing.lg,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
@@ -570,6 +744,32 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
   },
+  secondaryActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    marginTop: Spacing.sm,
+  },
+  secondaryActionButtonText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+  },
+  rejectionButton: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.sm,
+  },
+  rejectionButtonText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    textAlign: 'center',
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -580,5 +780,101 @@ const styles = StyleSheet.create({
   backText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 500,
+    backgroundColor: '#0B1429',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: '#FFFFFF',
+    marginBottom: Spacing.xs,
+  },
+  modalSubtitle: {
+    fontSize: Typography.fontSize.sm,
+    color: 'rgba(255, 255, 255, 0.6)',
+  },
+  modalBody: {
+    padding: Spacing.lg,
+  },
+  modalWarning: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  modalWarningText: {
+    fontSize: Typography.fontSize.sm,
+    color: '#EF4444',
+    lineHeight: Typography.lineHeight.sm * 1.3,
+  },
+  modalSection: {
+    marginBottom: Spacing.lg,
+  },
+  modalSectionLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginBottom: Spacing.sm,
+  },
+  modalReasonBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+  },
+  modalReasonText: {
+    fontSize: Typography.fontSize.base,
+    color: '#FFFFFF',
+    lineHeight: Typography.lineHeight.base * 1.4,
+  },
+  modalInfo: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+  },
+  modalInfoText: {
+    fontSize: Typography.fontSize.sm,
+    color: '#3B82F6',
+    lineHeight: Typography.lineHeight.sm * 1.3,
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    padding: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });
